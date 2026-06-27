@@ -28,10 +28,10 @@ Generated end-to-end by the kit — no hand-placed coordinates, real stencils, v
 
 ```bash
 git clone https://github.com/sparklabx/drawio-ai-kit.git && cd drawio-ai-kit
-bash install.sh           # unified installer (Claude Code, Claude Desktop, and more)
+bash install.sh
 ```
 
-Then **restart the app** (MCP + skills load at startup) and ask *"draw an AWS architecture diagram …"*. Per-host details further down.
+The installer detects which agents are on your machine (Claude Code, Claude Desktop, Cursor, Gemini CLI, Codex), asks you to pick, then wires the MCP server and skill into each one. **Restart the agent after installing** — MCP servers load only at startup.
 
 ## Is it safe to install?
 
@@ -117,85 +117,39 @@ brew install python@3.11              # then: python3.11 --version
 
 A thin **`SKILL.md`** wraps these tools into a full build-with-engine → validate → **render + vision self-check** → final-export workflow. Vendored helpers in `vendor/`: `autolayout.py` (Graphviz layout for >15-node graphs), `aiicons.py`, `repair_png.py`, `encode_drawio_url.py` (browser fallback).
 
-## Install into Claude Code
+## Per-agent install
 
-There are **two parts** and they do different jobs:
+If the interactive installer doesn't detect your agent (e.g. Cursor before first launch), target it directly:
 
-- **MCP server** → gives Claude the *tools* (`search_icon`, `validate_diagram`, …).
-- **Skill** → tells Claude *when and how* to use those tools (the generate → validate → vision self-check workflow). The skill is just this folder (it has a `SKILL.md`).
+- **Claude Code:** `node src/install.mjs --mode mcp --agents claude-code`
+- **Claude Desktop:** `node src/install.mjs --mode mcp --agents claude-desktop`
+- **Cursor:** `node src/install.mjs --mode mcp --agents cursor`
+- **Gemini CLI:** `node src/install.mjs --mode mcp --agents gemini-cli`
+- **Codex:** `node src/install.mjs --mode mcp --agents codex`
 
-You can install one or both, but they work best together.
-
-### Quick install (one line, from scratch)
-
-Clones the repo and runs the installer (`npm install` → register MCP → link skill → verify):
-
-```bash
-git clone https://github.com/sparklabx/drawio-ai-kit.git && cd drawio-ai-kit && bash install.sh
-```
-
-Then **restart Claude Code** (MCP + skills load only at session start). That's it — skip the manual steps below.
-
----
-
-Prefer to do it by hand? Clone and install dependencies once:
-
-```bash
-git clone https://github.com/sparklabx/drawio-ai-kit.git
-cd drawio-ai-kit && npm install          # pulls @modelcontextprotocol/sdk
-KIT="$(pwd)"                              # remember the absolute path for the steps below
-```
-
-### 1. MCP server (the tools)
-
-```bash
-claude mcp add drawio-ai-kit --scope user -- "$(which node)" "$KIT/src/mcp-server.mjs"
-```
-
-- `"$(which node)"` writes the **absolute** node path — needed, because Claude Code probes the server with a bare environment and a relative `node` often isn't found.
-- `--scope user` registers it in your user config so it's available in **every** project (without it, `claude mcp add` only registers for the current directory).
-
-### 2. Skill (the workflow)
-
-Symlink this folder into your skills directory:
-
-```bash
-mkdir -p ~/.agents/skills
-ln -sfn "$KIT" ~/.agents/skills/drawio-aws-architect
-```
-
-### 3. Verify, then restart
-
-```bash
-claude mcp list | grep drawio-ai-kit     # expect: ... ✔ Connected
-ls -l ~/.agents/skills/drawio-aws-architect   # expect: a symlink to your kit
-```
-
-> ⚠️ **Restart Claude Code after installing.** MCP servers and skills are loaded only at session start — they won't appear in a session that was already open. After restarting, ask *"draw an AWS architecture diagram …"* (or run `/drawio-aws-architect`) and the skill kicks in.
+Clone first: `git clone https://github.com/sparklabx/drawio-ai-kit.git && cd drawio-ai-kit`
 
 <details>
-<summary>Alternative: register the MCP server via <code>settings.json</code></summary>
-
-```json
-{
-  "mcpServers": {
-    "drawio-ai-kit": { "command": "/absolute/path/to/node", "args": ["/absolute/path/to/drawio-ai-kit/src/mcp-server.mjs"] }
-  }
-}
-```
-Use absolute paths for both `command` and the script.
-</details>
-
-## Install into Claude Desktop
-
-Run the unified installer — it handles Claude Desktop MCP config along with Claude Code and other agents:
+<summary>Claude Code — manual install (MCP + skill separately, no installer)</summary>
 
 ```bash
 git clone https://github.com/sparklabx/drawio-ai-kit.git
-cd drawio-ai-kit && bash install.sh
+cd drawio-ai-kit && npm install
+KIT="$(pwd)"
+
+# MCP server (the tools)
+claude mcp add drawio-ai-kit --scope user -- "$(which node)" "$KIT/src/mcp-server.mjs"
+
+# Skill (the workflow)
+mkdir -p ~/.agents/skills
+ln -sfn "$KIT" ~/.agents/skills/drawio-aws-architect
+
+# Verify
+claude mcp list | grep drawio-ai-kit
 ```
 
-Then **restart Claude Desktop** (MCP servers load at startup). The script is idempotent — safe to re-run.
+`--scope user` makes the MCP server available in every project. Absolute node path is required — Claude Code probes the server in a bare environment.
+</details>
 
 ## Other hosts (Coworker AI, Agent SDK, …)
 

@@ -75,6 +75,9 @@ const report = d.validate({ strict: true }); // { ok, errors, warnings, audit, s
 | `scripts/*.py` | Catalog regenerators (Python 3.11, stdlib only). |
 | `vendor/*.py` | Runtime helpers (third-party/MIT): autolayout, encode URL, repair PNG, aiicons. |
 | `test/` | `core.test.mjs` (engine) + `installer.test.mjs` (installer). |
+| `install.sh` | Thin shell entry point — `exec node src/install.mjs "$@"`. |
+| `src/install.mjs` | Installer orchestrator: prereq check → source resolution → agent detection → MCP wiring → skill placement. Exports `orchestrate(io, opts)` + `buildIo()` for testability. |
+| `src/installer.mjs` | Installer primitives: `AGENT_REGISTRY` (Claude Code, Claude Desktop, Codex, Gemini CLI, …), `mcpPayload`, `claudeCodeAddCommand`, `resolveSource`, `detectAgents`, `mergeJsonServers`, `mergeTomlServers`. Pure logic, no I/O. |
 
 ## Important Files
 
@@ -86,6 +89,8 @@ const report = d.validate({ strict: true }); // { ok, errors, warnings, audit, s
 - **`src/theme.mjs`** — `THEME` tokens (light-dark pairs, stages, subnetPublic/Private, gaps, fonts); `stageFill(i)`, `stageStroke(i)`. One edit restyles every diagram.
 - **`src/mcp-server.mjs`** — MCP server, 6 tools: `search_icon`, `get_icon_style`, `validate_diagram`, `get_principles`, `render_diagram`, `brand_logo`. Top-level `await server.connect(transport)`.
 - **`src/cli.mjs`** — 8 subcommands: `search`, `style`, `validate`, `audit`, `logo`, `categories`, `types`, `principles`. All output JSON except `principles` (concatenates rules). Exits 2 on `validate` failure.
+- **`src/installer.mjs`** — pure installer primitives (no I/O): `AGENT_REGISTRY` (one entry per supported agent — Claude Code, Claude Desktop, Codex, Gemini CLI; each carries `id`, `kind`, `configPath`, `present` probe); `mcpPayload`, `claudeCodeAddCommand`, `resolveSource`, `detectAgents`, `mergeJsonServers`, `mergeTomlServers`.
+- **`src/install.mjs`** — installer orchestrator (impure, all I/O injected via `io`): `orchestrate(io, opts)` runs prereq → source resolution → agent detection → npm install → MCP wiring → restart guidance. `buildIo({dryRun})` builds the real I/O object. Entry point: `node src/install.mjs [--mode mcp|cli] [--agents <id,...>] [--dry-run]`.
 - **`SKILL.md`** — Claude skill manifest (YAML frontmatter) + mandatory AI workflow (template-first → `search_icon` → build → `validate_diagram` → render → vision self-check).
 
 ## Development Commands
