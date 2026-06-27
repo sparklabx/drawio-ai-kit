@@ -28,7 +28,7 @@ Generated end-to-end by the kit — no hand-placed coordinates, real stencils, v
 
 ```bash
 git clone https://github.com/sparklabx/drawio-ai-kit.git && cd drawio-ai-kit
-bash install.sh           # Claude Code  (use install_desktop.sh for Claude Desktop)
+bash install.sh           # unified installer (Claude Code, Claude Desktop, and more)
 ```
 
 Then **restart the app** (MCP + skills load at startup) and ask *"draw an AWS architecture diagram …"*. Per-host details further down.
@@ -188,11 +188,11 @@ Use absolute paths for both `command` and the script.
 
 ## Install into Claude Desktop
 
-One command (macOS) — installs deps, links the skill into `~/.claude/skills`, and registers the MCP server in Claude Desktop's config:
+Run the unified installer — it handles Claude Desktop MCP config along with Claude Code and other agents:
 
 ```bash
 git clone https://github.com/sparklabx/drawio-ai-kit.git
-cd drawio-ai-kit && bash install_desktop.sh
+cd drawio-ai-kit && bash install.sh
 ```
 
 Then **restart Claude Desktop** (MCP servers load at startup). The script is idempotent — safe to re-run.

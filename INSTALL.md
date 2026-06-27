@@ -1,25 +1,16 @@
-# Cài drawio-aws-architect cho Claude Desktop
+# Install drawio-aws-architect (Claude Desktop + Claude Code + more)
 
-## Yêu cầu
-- macOS
-- Node.js 18+ (`brew install node`)
-- Claude Desktop đã cài
+## Requirements
+- Node.js 18+
+- `claude` CLI (for Claude Code) — https://docs.claude.com/claude-code
 
-## Cài đặt
+## Install
 
-1. Copy thư mục `drawio-ai-kit` về máy
-2. Chạy:
-   ```bash
-   cd drawio-ai-kit
-   bash install_desktop.sh
-   ```
-3. **Restart Claude Desktop**
+```bash
+cd drawio-ai-kit
+bash install.sh
+```
 
-Xong. Thử ngay: *"Vẽ kiến trúc AWS 3-tier web app"*
+Then restart your Claude app. Try: *"draw an AWS 3-tier web app"*
 
----
-
-Script tự động:
-- Cài npm deps
-- Tạo symlink skill `drawio-aws-architect`
-- Đăng ký MCP server `drawio-ai-kit` vào `~/Library/Application Support/Claude/claude_desktop_config.json`
+The unified installer handles MCP server registration and skill placement for all supported agents.
