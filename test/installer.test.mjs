@@ -50,7 +50,7 @@ test("detectAgents returns Claude Code when claude is present, empty otherwise",
   assert.equal(absent.length, 0);
 });
 
-test("dry-run orchestrate records 3 expected Claude Code MCP actions, no writes, no real exec", async () => {
+test("dry-run orchestrate records Claude Code MCP path (place+install+remove+add), no writes", async () => {
   const fakeHome = path.join(os.tmpdir(), `drawio-test-${process.pid}`);
   const nodeBin = process.execPath;
   const mjsPath = path.join(CANONICAL_DIR, MCP_SERVER_MJS);
@@ -73,7 +73,7 @@ test("dry-run orchestrate records 3 expected Claude Code MCP actions, no writes,
   const result = await orchestrate(io, { dryRun: true, mode: "mcp", agents: ["claude-code"] });
 
   assert.equal(result.ok, true);
-  assert.equal(actions.length, 3);
+  // Claude Code MCP path: npx add → npm install → claude mcp remove → claude mcp add
 
   // 1) npx skills add -g -a claude-code .
   assert.equal(actions[0].cmd, "npx");
@@ -85,9 +85,11 @@ test("dry-run orchestrate records 3 expected Claude Code MCP actions, no writes,
   assert.deepEqual(actions[1].args, ["install", "--silent"]);
   assert.equal(actions[1].cwd, CANONICAL_DIR);
 
-  // 3) claude mcp add drawio-ai-kit --scope user -- <node> <mjs>
-  assert.equal(actions[2].cmd, "claude");
-  assert.deepEqual(actions[2].args, [
+  // 3) claude mcp remove (idempotent) then claude mcp add drawio-ai-kit --scope user -- <node> <mjs>
+  const claudeSubs = actions.filter((a) => a.cmd === "claude").map((a) => a.args[1]);
+  assert.ok(claudeSubs.indexOf("remove") < claudeSubs.indexOf("add"), "remove before add");
+  const addCmd = actions.find((a) => a.cmd === "claude" && a.args[1] === "add");
+  assert.deepEqual(addCmd.args, [
     "mcp", "add", MCP_NAME, "--scope", "user", "--", nodeBin, mjsPath,
   ]);
 
@@ -124,7 +126,7 @@ test("dry-run with no optAgents selects all detected agents, never calls prompt"
     },
     readFile: async () => "",
     writeFile: async () => {},
-    exists: () => true,
+    exists: (p) => p === "src/mcp-server.mjs",
     prompt: async () => { prompted.called = true; throw new Error("prompt must not be called in dry-run"); },
     log: () => {},
     readPkg: () => ({ name: "drawio-ai-kit" }),
@@ -298,7 +300,7 @@ test("dry-run CLI mode: zero MCP writes, placement + install still present", asy
     exec: async (cmd, args, opts) => { execs.push({ cmd, args, cwd: opts?.cwd }); return { code: 0, stdout: "", stderr: "" }; },
     readFile: async () => "",
     writeFile: async (p, content) => writes.push({ p, content }),
-    exists: () => true,
+    exists: (p) => p === "src/mcp-server.mjs",
     prompt: async () => "claude-code",
     log: () => {},
     readPkg: () => ({ name: "drawio-ai-kit" }),
@@ -345,4 +347,124 @@ test("dry-run json-mcp action has {write} shape, no .cmd/.args that would crash 
     else printed += `${a.cmd} ${(a.args || []).join(" ")}\n`;
   }
   assert.ok(printed.includes("write →"), "printer produces write→ line");
+});
+
+// --- #8 continued: interactive mode prompt ---
+
+test("non-dry-run with mode unset prompts for backend mode", async () => {
+  let prompted = false;
+  let promptQuestion = "";
+  const io = {
+    exec: async () => ({ code: 0, stdout: "", stderr: "" }),
+    readFile: async () => "",
+    writeFile: async () => {},
+    exists: () => true,
+    prompt: async (q, choices) => { prompted = true; promptQuestion = q; return "mcp"; },
+    log: () => {},
+    readPkg: () => ({ name: "drawio-ai-kit" }),
+  };
+
+  await orchestrate(io, { dryRun: false, agents: ["claude-code"] });
+  assert.equal(prompted, true, "should prompt for backend mode when mode unset and not dryRun");
+  assert.ok(promptQuestion.includes("Backend mode"), "prompt question should mention Backend mode");
+});
+
+test("dry-run with mode unset does NOT prompt, defaults to mcp", async () => {
+  let prompted = false;
+  const io = {
+    exec: async () => ({ code: 0, stdout: "", stderr: "" }),
+    readFile: async () => "",
+    writeFile: async () => {},
+    exists: () => true,
+    prompt: async (q, choices) => { prompted = true; return "claude-code"; },
+    log: () => {},
+    readPkg: () => ({ name: "drawio-ai-kit" }),
+  };
+
+  const result = await orchestrate(io, { dryRun: true, agents: ["claude-code"] });
+  assert.equal(result.ok, true);
+  // Should have prompted for agents (not backend mode) and taken mcp path
+  assert.equal(prompted, false, "dry-run should NOT prompt for backend mode");
+  // claude-code selected → claude mcp add should be in actions (mcp mode default)
+  assert.ok(result.actions.some((a) => a.cmd === "claude"), "dry-run defaults to mcp mode");
+});
+
+// --- #9: idempotent re-runs + restart guidance ---
+
+test("#9 place step runs 'npx skills update' when canonical dir already exists", async () => {
+  const execs = [];
+  const io = {
+    exec: async (cmd, args, opts) => { execs.push({ cmd, args, cwd: opts?.cwd }); return { code: 0, stdout: "", stderr: "" }; },
+    readFile: async () => "", writeFile: async () => {},
+    exists: (p) => p === "src/mcp-server.mjs" || p === CANONICAL_DIR,
+    prompt: async () => { throw new Error("no prompt in dry-run"); },
+    log: () => {}, readPkg: () => ({ name: "drawio-ai-kit" }),
+  };
+  await orchestrate(io, { dryRun: true, mode: "mcp", agents: ["claude-code"] });
+  const place = execs.find((e) => e.cmd === "npx");
+  assert.deepEqual(place.args, ["skills", "update"], "canonical present → skills update");
+});
+
+test("#9 place step runs 'npx skills add' on first install (canonical absent)", async () => {
+  const execs = [];
+  const io = {
+    exec: async (cmd, args, opts) => { execs.push({ cmd, args, cwd: opts?.cwd }); return { code: 0, stdout: "", stderr: "" }; },
+    readFile: async () => "", writeFile: async () => {},
+    exists: (p) => p === "src/mcp-server.mjs",
+    prompt: async () => { throw new Error("no prompt"); },
+    log: () => {}, readPkg: () => ({ name: "drawio-ai-kit" }),
+  };
+  await orchestrate(io, { dryRun: true, mode: "mcp", agents: ["claude-code"] });
+  const place = execs.find((e) => e.cmd === "npx");
+  assert.deepEqual(place.args.slice(0, 2), ["skills", "add"]);
+  assert.ok(place.args.includes("claude-code"), "first install targets the agent");
+});
+
+test("#9 claude-code runs 'claude mcp remove' before 'add'", async () => {
+  const execs = [];
+  const io = {
+    exec: async (cmd, args, opts) => { execs.push({ cmd, args: args || [], cwd: opts?.cwd }); return { code: 0, stdout: "", stderr: "" }; },
+    readFile: async () => "", writeFile: async () => {},
+    exists: (p) => p === "src/mcp-server.mjs",
+    prompt: async () => { throw new Error("no prompt"); },
+    log: () => {}, readPkg: () => ({ name: "drawio-ai-kit" }),
+  };
+  await orchestrate(io, { dryRun: true, mode: "mcp", agents: ["claude-code"] });
+  const sub = execs.filter((e) => e.cmd === "claude").map((e) => e.args[1]);
+  assert.ok(sub.includes("remove"), "runs claude mcp remove");
+  assert.ok(sub.includes("add"), "runs claude mcp add");
+  assert.ok(sub.indexOf("remove") < sub.indexOf("add"), "remove before add");
+});
+
+test("#9 logs a restart guidance notice on success", async () => {
+  const logs = [];
+  const io = {
+    exec: async () => ({ code: 0, stdout: "", stderr: "" }),
+    readFile: async () => "", writeFile: async () => {},
+    exists: (p) => p === "src/mcp-server.mjs",
+    prompt: async () => { throw new Error("no prompt"); },
+    log: (m) => logs.push(m), readPkg: () => ({ name: "drawio-ai-kit" }),
+  };
+  await orchestrate(io, { dryRun: true, mode: "mcp", agents: ["claude-code"] });
+  assert.ok(logs.some((m) => /restart/i.test(m)), "should log a restart notice");
+});
+
+test("#9 re-running is idempotent: 2nd run writes byte-identical config, no duplicate table", async () => {
+  const store = new Map();
+  const mkIo = () => ({
+    exec: async () => ({ code: 0, stdout: "", stderr: "" }),
+    readFile: async (p) => store.get(p) ?? "",
+    writeFile: async (p, c) => { store.set(p, c); },
+    exists: (p) => p === "src/mcp-server.mjs",
+    prompt: async () => { throw new Error("no prompt"); },
+    log: () => {}, readPkg: () => ({ name: "drawio-ai-kit" }),
+  });
+  const opts = { dryRun: true, mode: "mcp", agents: ["codex"] };
+  await orchestrate(mkIo(), opts);
+  const first = [...store.values()].join("");
+  await orchestrate(mkIo(), opts);
+  const second = [...store.values()].join("");
+  assert.equal(first, second, "re-run must not drift");
+  const tables = (second.match(/\[mcp_servers\.drawio-ai-kit\]/g) || []).length;
+  assert.equal(tables, 1, "exactly one drawio-ai-kit table after re-run");
 });

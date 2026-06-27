@@ -35,10 +35,21 @@ export async function orchestrate(io, opts = {}) {
   // 3. Detect agents
   const present = detectAgents(io.probe || { cmd: () => false, path: () => false });
 
-  // 3b. No agents guard
+  // 3b. No agents guard — bail before any prompt
   if (present.length === 0 && !optAgents) {
     io.log("No supported agents detected.");
     return { ok: false, reason: "no-agents" };
+  }
+
+  // 3c. Resolve backend mode (interactive only when not dry-run)
+  let resolvedMode = mode;
+  if (!resolvedMode && dryRun) resolvedMode = "mcp";
+  else if (!resolvedMode && !dryRun) {
+    const answer = await io.prompt("Backend mode", [
+      { id: "mcp", label: "MCP (live tool-calling)" },
+      { id: "cli", label: "CLI (fallback, no MCP config)" },
+    ]);
+    resolvedMode = Array.isArray(answer) ? answer[0] : (answer || "mcp");
   }
 
   // 4. Multi-select targets
@@ -53,22 +64,29 @@ export async function orchestrate(io, opts = {}) {
     selected = Array.isArray(answer) ? answer : [answer];
   }
 
-  // 5. Place: npx skills add
+  // 5. Place: refresh the canonical copy if present, else add (idempotent re-runs)
   const nodeBin = process.execPath;
-  await io.exec("npx", ["skills", "add", "-g", "-a", selected.join(","), source]);
-  actions.push({ cmd: "npx", args: ["skills", "add", "-g", "-a", selected.join(","), source] });
+  const canonicalExists = io.exists(CANONICAL_DIR);
+  const placeArgs = canonicalExists
+    ? ["skills", "update"]
+    : ["skills", "add", "-g", "-a", selected.join(","), source];
+  await io.exec("npx", placeArgs);
+  actions.push({ cmd: "npx", args: placeArgs });
 
   // 6. npm install in canonical dir
   await io.exec("npm", ["install", "--silent"], { cwd: CANONICAL_DIR });
   actions.push({ cmd: "npm", args: ["install", "--silent"], cwd: CANONICAL_DIR });
 
-  // 7. Wire MCP (if mode !== 'cli')
-  if (mode !== "cli") {
+  // 7. Wire MCP (if resolvedMode !== 'cli')
+  if (resolvedMode !== "cli") {
     const agentMap = new Map(AGENT_REGISTRY.map((a) => [a.id, a]));
     const payload = mcpPayload(nodeBin, CANONICAL_DIR);
     for (const agent of selected) {
       const info = agentMap.get(agent);
       if (agent === "claude-code") {
+        // idempotent: clear any prior registration before re-adding (failure tolerated)
+        await io.exec("claude", ["mcp", "remove", MCP_NAME, "--scope", "user"]);
+        actions.push({ cmd: "claude", args: ["mcp", "remove", MCP_NAME, "--scope", "user"] });
         const claudeCmd = claudeCodeAddCommand(MCP_NAME, nodeBin, CANONICAL_DIR);
         await io.exec(claudeCmd.cmd, claudeCmd.args);
         actions.push({ cmd: claudeCmd.cmd, args: claudeCmd.args });
@@ -86,6 +104,13 @@ export async function orchestrate(io, opts = {}) {
     }
   }
 
+  // 8. Restart guidance — MCP servers & Skills load only at agent startup
+  const restartLabels = selected.map((id) => {
+    const info = AGENT_REGISTRY.find((a) => a.id === id);
+    return info ? info.label : id;
+  });
+  const loaded = resolvedMode === "cli" ? "Skill" : "Skill + MCP server";
+  io.log(`\n✓ Done. Restart: ${restartLabels.join(", ")} — the ${loaded} loads only at agent startup.`);
   return { ok: true, actions };
 }
 
