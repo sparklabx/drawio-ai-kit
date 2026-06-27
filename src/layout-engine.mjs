@@ -48,12 +48,12 @@ export const grid = (id, gname, label = "", opts = {}, children = []) => ({
 // ---- themed creators (apply the THEME so diagrams inherit the house style by default) ----
 // Big frames use a WHITE (theme-aware) background; the AWS icons carry the color. A per-stage
 // border colour keeps layers distinguishable without tinting the fill.
-/** Pipeline STAGE frame i (0-based) → pale per-stage tint fill + matching coloured border. */
+/** Pipeline STAGE frame i (0-based) → white fill, per-stage coloured border. */
 export const stage = (id, i, label, children = [], opts = {}) =>
-  group(id, null, label, { dir: "col", gap: THEME.gaps.item, fill: stageFill(i), stroke: stageStroke(i), ...opts }, children);
-/** Cross-cutting band (governance / security / ops) — pale neutral tint fill, laid out as a row. */
+  group(id, null, label, { dir: "col", gap: THEME.gaps.item, fill: THEME.base, stroke: stageStroke(i), ...opts }, children);
+/** Cross-cutting band (governance / security / ops) — white fill, neutral border, laid out as a row. */
 export const band = (id, label, children = [], opts = {}) =>
-  group(id, null, label, { dir: "row", gap: 36, fill: THEME.band, stroke: THEME.bandStroke, ...opts }, children);
+  group(id, null, label, { dir: "row", gap: 36, fill: THEME.base, stroke: THEME.bandStroke, ...opts }, children);
 /** Subnet frame (AWS group_subnet stencil). Colour comes from the label: "Public…" → green,
  *  "Private…" → blue (builder.group applies it). */
 export const subnet = (id, label, children = [], opts = {}) =>
@@ -141,7 +141,7 @@ function emit(d, n, parent) {
     return;
   }
   if (n.gname) d.group(n.id, n.gname, [n.x, n.y], [n.w, n.h], n.label, { parent, fill: n.fill, stroke: n.stroke });
-  else d.box(n.id, [n.x, n.y], [n.w, n.h], n.label, { parent, va: "top", bold: true, fill: n.fill ?? "#F5F5F5", stroke: n.stroke ?? "#999999" });
+  else d.box(n.id, [n.x, n.y], [n.w, n.h], n.label, { parent, va: "top", bold: true, fill: n.fill ?? "#F5F5F5", stroke: n.stroke ?? "#999999", ob: false });
   for (const c of n.children) emit(d, c, n.id);
 }
 

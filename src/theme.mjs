@@ -28,11 +28,6 @@ export const THEME = {
   regionStroke: "#147EBA",                     // Region border — AWS blue (kept distinct from teal subnets)
   vpcStroke: "#8C4FFF",                        // VPC border — AWS networking purple
   accountStroke: "#C2487A",                    // Account border — magenta (like the reference)
-  // Nested container FILLS — very pale so AWS Cloud ⊃ Region ⊃ VPC reads as soft layered depth (not flat white).
-  cloudFill: "light-dark(#fbfcfe,#0c1117)",
-  regionFill: "light-dark(#f1f7fc,#0d1620)",
-  vpcFill: "light-dark(#f8f4fd,#130f1c)",
-  accountFill: "light-dark(#fdf3f8,#1a0f15)",
   azStroke: "#2F9491",                         // Availability Zone / Local Zone — muted teal-green (dashed); distinct from the brighter private-subnet teal
   note: "light-dark(#fbe7d4,#3a2a16)",        // emphasis / callout note
   noteStroke: "#D79B00",
