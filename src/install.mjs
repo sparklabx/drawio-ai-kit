@@ -12,6 +12,7 @@ import {
   resolveSource,
   detectAgents,
   mergeJsonServers,
+  mergeTomlServers,
 } from "./installer.mjs";
 
 export async function orchestrate(io, opts = {}) {
@@ -74,6 +75,11 @@ export async function orchestrate(io, opts = {}) {
       } else if (info?.kind === "json-mcp" && info.configPath) {
         const text = await io.readFile(info.configPath);
         const result = mergeJsonServers(text, MCP_NAME, payload);
+        await io.writeFile(info.configPath, result.text);
+        actions.push({ write: info.configPath });
+      } else if (info?.kind === "toml-mcp" && info.configPath) {
+        const text = await io.readFile(info.configPath);
+        const result = mergeTomlServers(text, MCP_NAME, payload);
         await io.writeFile(info.configPath, result.text);
         actions.push({ write: info.configPath });
       }

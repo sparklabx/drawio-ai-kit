@@ -5,6 +5,7 @@ import os from "node:os";
 import {
   buildAgentRegistry,
   mergeJsonServers,
+  mergeTomlServers,
   MCP_NAME,
   CANONICAL_DIR,
   MCP_SERVER_MJS,
@@ -213,4 +214,76 @@ test("dry-run orchestrate wires json-mcp agents with mergeJsonServers, records w
   assert.ok(write.p.includes("claude_desktop_config.json"), "writes claude desktop config");
   const parsed = JSON.parse(write.content);
   assert.deepEqual(parsed.mcpServers["drawio-ai-kit"], { command: nodeBin, args: [mjsPath] });
+});
+
+// --- #6: mergeTomlServers ---
+
+test("mergeTomlServers appends table into empty text", () => {
+  const result = mergeTomlServers("", "drawio-ai-kit", { command: "/usr/bin/node", args: ["/path/mcp.mjs"] });
+  assert.equal(result.status, "created");
+  assert.ok(result.text.includes("[mcp_servers.drawio-ai-kit]"), "has table header");
+  assert.ok(result.text.includes('command = "/usr/bin/node"'), "has command");
+  assert.ok(result.text.includes('args = ["/path/mcp.mjs"]'), "has args");
+});
+
+test("mergeTomlServers replaces existing block idempotently", () => {
+  const payload = { command: "/usr/bin/node", args: ["/path/mcp.mjs"] };
+  const r1 = mergeTomlServers("", "drawio-ai-kit", payload);
+  const r2 = mergeTomlServers(r1.text, "drawio-ai-kit", payload);
+  assert.equal(r1.text, r2.text, "re-merge yields identical bytes");
+  assert.equal(r2.status, "updated");
+});
+
+test("mergeTomlServers preserves other tables and top-level keys", () => {
+  const input = 'key = "val"\n[mcp_servers.other]\ncommand = "x"\nargs = ["y"]\n';
+  const result = mergeTomlServers(input, "drawio-ai-kit", { command: "n", args: ["m"] });
+  assert.ok(result.text.includes('key = "val"'), "preserves top-level key");
+  assert.ok(result.text.includes("[mcp_servers.other]"), "preserves other table");
+  assert.ok(result.text.includes('command = "x"'), "preserves other table content");
+  assert.ok(result.text.includes("[mcp_servers.drawio-ai-kit]"), "has new table");
+});
+
+test("mergeTomlServers output is valid TOML (key presence + args array)", () => {
+  const result = mergeTomlServers("", "drawio-ai-kit", { command: "n", args: ["a", "b"] });
+  const lines = result.text.split("\n");
+  assert.ok(lines.some((l) => l.startsWith("command = ")), "has command key");
+  // args should parse as TOML array: ["a", "b"]
+  const argsMatch = result.text.match(/args = \[.*\]/);
+  assert.ok(argsMatch, "has args array");
+  assert.ok(argsMatch[0].includes('"a"') && argsMatch[0].includes('"b"'), "args contain values");
+});
+
+test("mergeTomlServers appends with blank-line separator when other tables exist", () => {
+  const input = '[mcp_servers.other]\ncommand = "x"\n';
+  const result = mergeTomlServers(input, "drawio-ai-kit", { command: "n", args: ["m"] });
+  assert.ok(result.text.includes("\n\n[mcp_servers.drawio-ai-kit]"), "blank line before new table");
+});
+
+// --- #6 continued: orchestrate toml-mcp wiring ---
+
+test("dry-run orchestrate wires toml-mcp agent (codex), records TOML write", async () => {
+  const writes = [];
+  const actions = [];
+  const nodeBin = process.execPath;
+  const mjsPath = path.join(CANONICAL_DIR, MCP_SERVER_MJS);
+
+  const io = {
+    exec: async (cmd, args, opts) => { actions.push({ cmd, args, cwd: opts?.cwd }); return { code: 0, stdout: "", stderr: "" }; },
+    readFile: async () => "",
+    writeFile: async (p, content) => writes.push({ p, content }),
+    exists: () => true,
+    prompt: async () => "codex",
+    log: () => {},
+    readPkg: () => ({ name: "drawio-ai-kit" }),
+  };
+
+  const result = await orchestrate(io, { dryRun: true, mode: "mcp", agents: ["codex"] });
+  assert.equal(result.ok, true);
+
+  assert.equal(writes.length, 1, "should record 1 toml config write");
+  const write = writes[0];
+  assert.ok(write.p.includes("config.toml"), "writes codex config.toml");
+  assert.ok(write.content.includes("[mcp_servers.drawio-ai-kit]"), "has TOML table header");
+  assert.ok(write.content.includes(`command = "${nodeBin}"`), "has command");
+  assert.ok(write.content.includes(mjsPath), "has mjs path in args");
 });
