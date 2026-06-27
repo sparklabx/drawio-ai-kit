@@ -11,6 +11,7 @@ import {
   claudeCodeAddCommand,
   resolveSource,
   detectAgents,
+  mergeJsonServers,
 } from "./installer.mjs";
 
 export async function orchestrate(io, opts = {}) {
@@ -62,11 +63,19 @@ export async function orchestrate(io, opts = {}) {
 
   // 7. Wire MCP (if mode !== 'cli')
   if (mode !== "cli") {
+    const agentMap = new Map(AGENT_REGISTRY.map((a) => [a.id, a]));
+    const payload = mcpPayload(nodeBin, CANONICAL_DIR);
     for (const agent of selected) {
+      const info = agentMap.get(agent);
       if (agent === "claude-code") {
         const claudeCmd = claudeCodeAddCommand(MCP_NAME, nodeBin, CANONICAL_DIR);
         await io.exec(claudeCmd.cmd, claudeCmd.args);
         actions.push({ cmd: claudeCmd.cmd, args: claudeCmd.args });
+      } else if (info?.kind === "json-mcp" && info.configPath) {
+        const text = await io.readFile(info.configPath);
+        const result = mergeJsonServers(text, MCP_NAME, payload);
+        await io.writeFile(info.configPath, result.text);
+        actions.push({ write: info.configPath });
       }
     }
   }
@@ -143,7 +152,7 @@ async function main() {
   // In dry-run mode, override probe so all registered agents appear present
   // (preview full wiring without requiring the actual binaries on PATH)
   if (dryRun && !agents) {
-    io.probe = { cmd: () => true, path: () => false };
+    io.probe = { cmd: () => true, path: () => true };
   }
 
   const result = await orchestrate(io, { dryRun, mode, agents });

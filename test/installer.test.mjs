@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import os from "node:os";
 import {
+  buildAgentRegistry,
+  mergeJsonServers,
   MCP_NAME,
   CANONICAL_DIR,
   MCP_SERVER_MJS,
@@ -36,12 +38,14 @@ test("resolveSource returns '.' in a clone, slug otherwise", () => {
 });
 
 test("detectAgents returns Claude Code when claude is present, empty otherwise", () => {
-  const present = detectAgents({ cmd: () => true, path: () => false });
+  const fakeHome = path.join(os.tmpdir(), "drawio-no-config-here");
+  const registry = buildAgentRegistry(fakeHome);
+  const present = detectAgents({ cmd: (n) => n === "claude", path: () => false }, registry);
   assert.equal(present.length, 1);
   assert.equal(present[0].id, "claude-code");
   assert.equal(present[0].kind, "claude-cli");
 
-  const absent = detectAgents({ cmd: () => false, path: () => false });
+  const absent = detectAgents({ cmd: () => false, path: () => false }, registry);
   assert.equal(absent.length, 0);
 });
 
@@ -132,4 +136,81 @@ test("dry-run with no optAgents selects all detected agents, never calls prompt"
   assert.ok(actions.length >= 3, "should have at least the 3 expected actions");
   // skills add should include claude-code
   assert.ok(actions[0].args[4].includes("claude-code"), "dry-run auto-selects claude-code");
+});
+
+// --- #5: mergeJsonServers ---
+
+test("mergeJsonServers adds name into {}, status 'created'", () => {
+  const result = mergeJsonServers("{}", "drawio-ai-kit", { command: "/usr/bin/node", args: ["/path/to/mcp.mjs"] });
+  assert.equal(result.status, "created");
+  const parsed = JSON.parse(result.text);
+  assert.deepEqual(parsed.mcpServers["drawio-ai-kit"], { command: "/usr/bin/node", args: ["/path/to/mcp.mjs"] });
+});
+
+test("mergeJsonServers preserves existing mcpServers.other and top-level keys", () => {
+  const input = JSON.stringify({ mcpServers: { other: { command: "x", args: ["y"] } }, topLevel: true });
+  const result = mergeJsonServers(input, "drawio-ai-kit", { command: "n", args: ["m"] });
+  const parsed = JSON.parse(result.text);
+  assert.deepEqual(parsed.mcpServers.other, { command: "x", args: ["y"] });
+  assert.equal(parsed.topLevel, true);
+  assert.ok(parsed.mcpServers["drawio-ai-kit"]);
+});
+
+test("mergeJsonServers re-merging identical payload yields same bytes, no duplication", () => {
+  const payload = { command: "/usr/bin/node", args: ["/path/to/mcp.mjs"] };
+  const r1 = mergeJsonServers("{}", "drawio-ai-kit", payload);
+  const r2 = mergeJsonServers(r1.text, "drawio-ai-kit", payload);
+  assert.equal(r1.text, r2.text);
+  assert.equal(r2.status, "updated");
+});
+
+test("mergeJsonServers updating existing name overwrites command/args cleanly", () => {
+  const r1 = mergeJsonServers("{}", "drawio-ai-kit", { command: "/old/node", args: ["/old/mcp.mjs"] });
+  const r2 = mergeJsonServers(r1.text, "drawio-ai-kit", { command: "/new/node", args: ["/new/mcp.mjs"] });
+  const parsed = JSON.parse(r2.text);
+  assert.equal(parsed.mcpServers["drawio-ai-kit"].command, "/new/node");
+  assert.deepEqual(parsed.mcpServers["drawio-ai-kit"].args, ["/new/mcp.mjs"]);
+});
+
+test("mergeJsonServers recovers malformed text, status 'recovered'", () => {
+  const result = mergeJsonServers("{not json", "drawio-ai-kit", { command: "n", args: ["m"] });
+  assert.equal(result.status, "recovered");
+  const parsed = JSON.parse(result.text);
+  assert.ok(parsed.mcpServers["drawio-ai-kit"]);
+});
+
+test("mergeJsonServers treats empty/whitespace as {}", () => {
+  const result = mergeJsonServers("   ", "drawio-ai-kit", { command: "n", args: ["m"] });
+  assert.equal(result.status, "created");
+  const parsed = JSON.parse(result.text);
+  assert.ok(parsed.mcpServers["drawio-ai-kit"]);
+});
+
+test("dry-run orchestrate wires json-mcp agents with mergeJsonServers, records writes", async () => {
+  const fakeHome = path.join(os.tmpdir(), `drawio-json-test-${process.pid}`);
+  const registry = buildAgentRegistry(fakeHome);
+  const writes = [];
+  const actions = [];
+  const nodeBin = process.execPath;
+  const mjsPath = path.join(CANONICAL_DIR, MCP_SERVER_MJS);
+
+  const io = {
+    exec: async (cmd, args, opts) => { actions.push({ cmd, args, cwd: opts?.cwd }); return { code: 0, stdout: "", stderr: "" }; },
+    readFile: async () => "",
+    writeFile: async (p, content) => writes.push({ p, content }),
+    exists: () => true,
+    prompt: async () => "claude-desktop",
+    log: () => {},
+    readPkg: () => ({ name: "drawio-ai-kit" }),
+  };
+
+  const result = await orchestrate(io, { dryRun: true, mode: "mcp", agents: ["claude-desktop"] });
+  assert.equal(result.ok, true);
+
+  // Should have: skills add, npm install, 1 json write
+  assert.equal(writes.length, 1, "should record 1 json config write");
+  const write = writes[0];
+  assert.ok(write.p.includes("claude_desktop_config.json"), "writes claude desktop config");
+  const parsed = JSON.parse(write.content);
+  assert.deepEqual(parsed.mcpServers["drawio-ai-kit"], { command: nodeBin, args: [mjsPath] });
 });
