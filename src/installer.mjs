@@ -4,6 +4,7 @@ import path from "node:path";
 
 export const MCP_NAME = "drawio-ai-kit";
 export const CANONICAL_DIR = path.join(os.homedir(), ".agents", "skills", "drawio-aws-architect");
+export const SKILL_NAME = path.basename(CANONICAL_DIR);
 export const MCP_SERVER_MJS = "src/mcp-server.mjs";
 
 export function mcpPayload(nodeBin, canonicalDir) {

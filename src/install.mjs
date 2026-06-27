@@ -1,10 +1,12 @@
 // install.mjs — impure orchestrator + entry point for the multi-agent installer
 import { execFile, execFileSync } from "node:child_process";
 import fs from "node:fs";
+import path from "node:path";
 import { createInterface } from "node:readline/promises";
 import {
   MCP_NAME,
   CANONICAL_DIR,
+  SKILL_NAME,
   MCP_SERVER_MJS,
   AGENT_REGISTRY,
   mcpPayload,
@@ -64,18 +66,32 @@ export async function orchestrate(io, opts = {}) {
     selected = Array.isArray(answer) ? answer : [answer];
   }
 
-  // 5. Place: refresh the canonical copy if present, else add (idempotent re-runs)
+  // fail-fast wrapper: bail loudly on non-zero exit instead of wiring MCP to a path
+  // that skills never created (Bug A — exec exit code was silently ignored).
+  const must = async (label, cmd, args, opts) => {
+    const r = await io.exec(cmd, args, opts);
+    if (r.code !== 0) {
+      io.log(`✗ ${label} failed (exit ${r.code})${r.stderr ? `: ${r.stderr.trim()}` : ""}`);
+      return false;
+    }
+    actions.push(opts?.cwd ? { cmd, args, cwd: opts.cwd } : { cmd, args });
+    return true;
+  };
+
+  // 5. Place: global `skills add` stages the skill at CANONICAL_DIR and symlinks it into
+  // every detected agent. Source MUST precede flags (yargs parsing) and `-a` MUST be omitted
+  // — `-a <agents>` forces per-agent --copy and skips CANONICAL_DIR staging, which leaves MCP
+  // pointed at a non-existent path.
   const nodeBin = process.execPath;
   const canonicalExists = io.exists(CANONICAL_DIR);
   const placeArgs = canonicalExists
-    ? ["skills", "update"]
-    : ["skills", "add", "-g", "-a", selected.join(","), source];
-  await io.exec("npx", placeArgs);
-  actions.push({ cmd: "npx", args: placeArgs });
+    ? ["skills", "update", SKILL_NAME, "-g", "-y"]
+    : ["skills", "add", source, "-g", "-y"];
+  if (!(await must("place (skills)", "npx", placeArgs))) return { ok: false, reason: "place-failed" };
 
-  // 6. npm install in canonical dir
-  await io.exec("npm", ["install", "--silent"], { cwd: CANONICAL_DIR });
-  actions.push({ cmd: "npm", args: ["install", "--silent"], cwd: CANONICAL_DIR });
+  // 6. npm install in canonical dir (skills copies sources but installs no node_modules)
+  if (!(await must("install (npm)", "npm", ["install", "--silent"], { cwd: CANONICAL_DIR })))
+    return { ok: false, reason: "install-failed" };
 
   // 7. Wire MCP (if resolvedMode !== 'cli')
   if (resolvedMode !== "cli") {
@@ -88,8 +104,7 @@ export async function orchestrate(io, opts = {}) {
         await io.exec("claude", ["mcp", "remove", MCP_NAME, "--scope", "user"]);
         actions.push({ cmd: "claude", args: ["mcp", "remove", MCP_NAME, "--scope", "user"] });
         const claudeCmd = claudeCodeAddCommand(MCP_NAME, nodeBin, CANONICAL_DIR);
-        await io.exec(claudeCmd.cmd, claudeCmd.args);
-        actions.push({ cmd: claudeCmd.cmd, args: claudeCmd.args });
+        if (!(await must("claude mcp add", claudeCmd.cmd, claudeCmd.args))) return { ok: false, reason: "wire-failed" };
       } else if (info?.kind === "json-mcp" && info.configPath) {
         const text = await io.readFile(info.configPath);
         const result = mergeJsonServers(text, MCP_NAME, payload);
@@ -132,8 +147,9 @@ export function buildIo({ dryRun = false, agents } = {}) {
         });
       }),
     readFile: (p) => fs.promises.readFile(p, "utf-8").catch(() => ""),
-    writeFile: (p, content) => {
+    writeFile: async (p, content) => {
       if (dryRun) return Promise.resolve();
+      await fs.promises.mkdir(path.dirname(p), { recursive: true });
       return fs.promises.writeFile(p, content, "utf-8");
     },
     exists: (p) => fs.existsSync(p),

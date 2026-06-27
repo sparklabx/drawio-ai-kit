@@ -9,6 +9,7 @@ import {
   mergeTomlServers,
   MCP_NAME,
   CANONICAL_DIR,
+  SKILL_NAME,
   MCP_SERVER_MJS,
   mcpPayload,
   claudeCodeAddCommand,
@@ -76,10 +77,12 @@ test("dry-run orchestrate records Claude Code MCP path (place+install+remove+add
   assert.equal(result.ok, true);
   // Claude Code MCP path: npx add → npm install → claude mcp remove → claude mcp add
 
-  // 1) npx skills add -g -a claude-code .
+  // 1) npx skills add <source> -g -y  (source precedes flags; -a is omitted — it forces
+  //    per-agent --copy and defeats CANONICAL_DIR staging, leaving MCP pointed nowhere)
   assert.equal(actions[0].cmd, "npx");
-  assert.deepEqual(actions[0].args.slice(0, 4), ["skills", "add", "-g", "-a"]);
-  assert.ok(actions[0].args[4].includes("claude-code"), "skills add targets claude-code");
+  assert.deepEqual(actions[0].args.slice(0, 2), ["skills", "add"]);
+  assert.ok(actions[0].args.includes("-g"), "global flag present");
+  assert.ok(!actions[0].args.includes("-a"), "-a must be omitted (defeats canonical staging)");
 
   // 2) npm install --silent in canonical dir
   assert.equal(actions[1].cmd, "npm");
@@ -139,7 +142,9 @@ test("dry-run with no optAgents selects all detected agents, never calls prompt"
   assert.equal(prompted.called, false, "dry-run must not call prompt");
   assert.ok(actions.length >= 3, "should have at least the 3 expected actions");
   // skills add should include claude-code
-  assert.ok(actions[0].args[4].includes("claude-code"), "dry-run auto-selects claude-code");
+  // place is global add (no -a); detected claude-code got MCP-wired; prompt never called
+  assert.ok(actions[0].args.includes("-g") && !actions[0].args.includes("-a"), "global add, no -a");
+  assert.ok(actions.some((a) => a.cmd === "claude"), "detected claude-code got MCP-wired");
 });
 
 // --- #5: mergeJsonServers ---
@@ -403,7 +408,7 @@ test("#9 place step runs 'npx skills update' when canonical dir already exists",
   };
   await orchestrate(io, { dryRun: true, mode: "mcp", agents: ["claude-code"] });
   const place = execs.find((e) => e.cmd === "npx");
-  assert.deepEqual(place.args, ["skills", "update"], "canonical present → skills update");
+  assert.deepEqual(place.args, ["skills", "update", SKILL_NAME, "-g", "-y"], "canonical present → skills update -g");
 });
 
 test("#9 place step runs 'npx skills add' on first install (canonical absent)", async () => {
@@ -418,7 +423,7 @@ test("#9 place step runs 'npx skills add' on first install (canonical absent)", 
   await orchestrate(io, { dryRun: true, mode: "mcp", agents: ["claude-code"] });
   const place = execs.find((e) => e.cmd === "npx");
   assert.deepEqual(place.args.slice(0, 2), ["skills", "add"]);
-  assert.ok(place.args.includes("claude-code"), "first install targets the agent");
+  assert.ok(place.args.includes("-g") && !place.args.includes("-a"), "global add, source-first, no -a");
 });
 
 test("#9 claude-code runs 'claude mcp remove' before 'add'", async () => {
@@ -524,4 +529,55 @@ test("N4: claude mcp remove failure is tolerated (add still runs, result ok)", a
   assert.equal(result.ok, true, "remove failure must not abort");
   const subs = execs.filter((e) => e.cmd === "claude").map((e) => e.args[1]);
   assert.ok(subs.includes("remove") && subs.includes("add"), "both remove and add ran");
+});
+
+// --- Bug A: orchestrate must fail fast on non-zero exit (was silently ignored → MCP wired to nowhere) ---
+
+test("Bug A: skills add failure (exit 1) aborts before npm install + wiring", async () => {
+  const execs = [];
+  const io = {
+    exec: async (cmd, args, opts) => { execs.push({ cmd, args, cwd: opts?.cwd }); return { code: 1, stdout: "", stderr: "boom" }; },
+    readFile: async () => "", writeFile: async () => {},
+    exists: (p) => p === "src/mcp-server.mjs",
+    prompt: async () => { throw new Error("no prompt"); },
+    log: () => {}, readPkg: () => ({ name: "drawio-ai-kit" }),
+  };
+  const result = await orchestrate(io, { dryRun: true, mode: "mcp", agents: ["claude-code"] });
+  assert.equal(result.ok, false);
+  assert.equal(result.reason, "place-failed");
+  assert.ok(execs.some((e) => e.cmd === "npx"), "place attempted");
+  assert.ok(!execs.some((e) => e.cmd === "npm"), "npm install must not run after place failure");
+  assert.ok(!execs.some((e) => e.cmd === "claude"), "MCP wiring must not run after place failure");
+});
+
+test("Bug A: npm install failure (exit 1) aborts before wiring", async () => {
+  const execs = [];
+  const io = {
+    exec: async (cmd, args, opts) => {
+      execs.push({ cmd, args, cwd: opts?.cwd });
+      const code = cmd === "npm" ? 1 : 0;
+      return { code, stdout: "", stderr: cmd === "npm" ? "npm err" : "" };
+    },
+    readFile: async () => "", writeFile: async () => {},
+    exists: (p) => p === "src/mcp-server.mjs",
+    prompt: async () => { throw new Error("no prompt"); },
+    log: () => {}, readPkg: () => ({ name: "drawio-ai-kit" }),
+  };
+  const result = await orchestrate(io, { dryRun: true, mode: "mcp", agents: ["claude-code"] });
+  assert.equal(result.ok, false);
+  assert.equal(result.reason, "install-failed");
+  assert.ok(execs.some((e) => e.cmd === "npx"), "place succeeded");
+  assert.ok(execs.some((e) => e.cmd === "npm"), "npm install attempted");
+  assert.ok(!execs.some((e) => e.cmd === "claude"), "wiring must not run after install failure");
+});
+
+// --- Bug B: writeFile must create parent dirs (skills does not pre-create ~/.cursor etc.) ---
+
+test("Bug B: buildIo writeFile creates nested parent dirs before writing", async () => {
+  const io = buildIo({ dryRun: false });
+  const nested = path.join(os.tmpdir(), `drawio-bugb-${process.pid}`, "deep", "nest", "mcp.json");
+  await io.writeFile(nested, '{"hello":1}');
+  assert.equal(fs.existsSync(nested), true, "nested file written");
+  assert.deepEqual(JSON.parse(fs.readFileSync(nested, "utf-8")), { hello: 1 });
+  fs.rmSync(path.dirname(path.dirname(path.dirname(nested))), { recursive: true, force: true });
 });
