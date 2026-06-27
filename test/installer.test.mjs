@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import path from "node:path";
 import os from "node:os";
+import fs from "node:fs";
 import {
   buildAgentRegistry,
   mergeJsonServers,
@@ -14,7 +15,7 @@ import {
   resolveSource,
   detectAgents,
 } from "../src/installer.mjs";
-import { orchestrate } from "../src/install.mjs";
+import { orchestrate, buildIo } from "../src/install.mjs";
 
 test("mcpPayload builds { command, args } pointing at src/mcp-server.mjs in canonical dir", () => {
   const nodeBin = "/usr/bin/node";
@@ -245,7 +246,7 @@ test("mergeTomlServers preserves other tables and top-level keys", () => {
   assert.ok(result.text.includes("[mcp_servers.drawio-ai-kit]"), "has new table");
 });
 
-test("mergeTomlServers output is valid TOML (key presence + args array)", () => {
+test("mergeTomlServers emits command key + args array", () => {
   const result = mergeTomlServers("", "drawio-ai-kit", { command: "n", args: ["a", "b"] });
   const lines = result.text.split("\n");
   assert.ok(lines.some((l) => l.startsWith("command = ")), "has command key");
@@ -306,7 +307,7 @@ test("dry-run CLI mode: zero MCP writes, placement + install still present", asy
     readPkg: () => ({ name: "drawio-ai-kit" }),
   };
 
-  const result = await orchestrate(io, { dryRun: true, mode: "cli", agents: ["claude-code"] });
+  const result = await orchestrate(io, { dryRun: true, mode: "cli", agents: ["claude-desktop"] });
   assert.equal(result.ok, true);
   assert.equal(writes.length, 0, "CLI mode should have zero MCP writes");
 
@@ -467,4 +468,60 @@ test("#9 re-running is idempotent: 2nd run writes byte-identical config, no dupl
   assert.equal(first, second, "re-run must not drift");
   const tables = (second.match(/\[mcp_servers\.drawio-ai-kit\]/g) || []).length;
   assert.equal(tables, 1, "exactly one drawio-ai-kit table after re-run");
+});
+
+// --- review fixes: B1 (recover backup), I2 (buildIo dry-run), N4 (remove-failure) ---
+
+test("B1: malformed JSON config is backed up (.bak) and logged before rewrite", async () => {
+  const writes = [];
+  const logs = [];
+  const malformed = "{ not valid json ,";
+  const io = {
+    exec: async () => ({ code: 0, stdout: "", stderr: "" }),
+    readFile: async () => malformed,
+    writeFile: async (p, c) => writes.push({ p, c }),
+    exists: (p) => p === "src/mcp-server.mjs",
+    prompt: async () => { throw new Error("no prompt"); },
+    log: (m) => logs.push(m), readPkg: () => ({ name: "drawio-ai-kit" }),
+  };
+  await orchestrate(io, { dryRun: true, mode: "mcp", agents: ["claude-desktop"] });
+  const bak = writes.find((w) => w.p.endsWith(".bak"));
+  assert.ok(bak, "writes a .bak backup");
+  assert.equal(bak.c, malformed, ".bak preserves the original malformed content");
+  assert.ok(logs.some((m) => /malformed JSON.*backed up/.test(m)), "logs the recovery");
+  const rewritten = writes.find((w) => !w.p.endsWith(".bak"));
+  assert.ok(JSON.parse(rewritten.c).mcpServers["drawio-ai-kit"], "rewritten config has our server");
+});
+
+test("I2: buildIo dry-run io is side-effect-free (exec short-circuits, writeFile no-ops, probe overridden)", async () => {
+  const io = buildIo({ dryRun: true });
+  // exec must NOT spawn a real binary — a nonexistent cmd resolves code:0 only if short-circuited
+  const r = await io.exec("drawio-nonexistent-cmd-xyz", ["--flag"]);
+  assert.equal(r.code, 0, "dry-run exec short-circuits without spawning");
+  // writeFile must not touch disk
+  const tmp = path.join(os.tmpdir(), `drawio-buildio-${process.pid}.json`);
+  await io.writeFile(tmp, "should-not-be-written");
+  assert.equal(fs.existsSync(tmp), false, "dry-run writeFile is a no-op");
+  // probe overridden to report all agents present (no `which` spawn)
+  assert.equal(io.probe.cmd("anything"), true);
+  assert.equal(io.probe.path("anything"), true);
+});
+
+test("N4: claude mcp remove failure is tolerated (add still runs, result ok)", async () => {
+  const execs = [];
+  const io = {
+    exec: async (cmd, args, opts) => {
+      const code = (cmd === "claude" && args[1] === "remove") ? 1 : 0;
+      execs.push({ cmd, args: args || [], code });
+      return { code, stdout: "", stderr: "" };
+    },
+    readFile: async () => "", writeFile: async () => {},
+    exists: (p) => p === "src/mcp-server.mjs",
+    prompt: async () => { throw new Error("no prompt"); },
+    log: () => {}, readPkg: () => ({ name: "drawio-ai-kit" }),
+  };
+  const result = await orchestrate(io, { dryRun: true, mode: "mcp", agents: ["claude-code"] });
+  assert.equal(result.ok, true, "remove failure must not abort");
+  const subs = execs.filter((e) => e.cmd === "claude").map((e) => e.args[1]);
+  assert.ok(subs.includes("remove") && subs.includes("add"), "both remove and add ran");
 });

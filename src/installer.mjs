@@ -3,7 +3,6 @@ import os from "node:os";
 import path from "node:path";
 
 export const MCP_NAME = "drawio-ai-kit";
-export const SKILL_NAME = "drawio-aws-architect";
 export const CANONICAL_DIR = path.join(os.homedir(), ".agents", "skills", "drawio-aws-architect");
 export const MCP_SERVER_MJS = "src/mcp-server.mjs";
 
@@ -75,8 +74,10 @@ export function mergeTomlServers(text, name, payload) {
 
   // Append
   const nonEmpty = lines.some((l) => l.trim() !== "");
-  const sep = nonEmpty && !text.endsWith("\n\n") ? "\n" : "";
-  return { text: `${text}${sep}\n${block}`, status: "created" };
+  if (!nonEmpty) return { text: block, status: "created" };
+  const padded = text.endsWith("\n") ? text : `${text}\n`;
+  const withBlank = padded.endsWith("\n\n") ? padded : `${padded}\n`;
+  return { text: `${withBlank}${block}`, status: "created" };
 }
 
 function serializeTomlBlock(header, payload) {

@@ -32,8 +32,8 @@ export async function orchestrate(io, opts = {}) {
   const isClone = hasMcpServer && pkg.name === "drawio-ai-kit";
   const source = resolveSource(isClone);
 
-  // 3. Detect agents
-  const present = detectAgents(io.probe || { cmd: () => false, path: () => false });
+  // 3. Detect agents (skipped when forced — keeps --dry-run --agents spawn-free)
+  const present = optAgents ? [] : detectAgents(io.probe || { cmd: () => false, path: () => false });
 
   // 3b. No agents guard — bail before any prompt
   if (present.length === 0 && !optAgents) {
@@ -93,6 +93,10 @@ export async function orchestrate(io, opts = {}) {
       } else if (info?.kind === "json-mcp" && info.configPath) {
         const text = await io.readFile(info.configPath);
         const result = mergeJsonServers(text, MCP_NAME, payload);
+        if (result.status === "recovered") {
+          await io.writeFile(`${info.configPath}.bak`, text);
+          io.log(`⚠ ${info.configPath} was malformed JSON — original backed up to ${info.configPath}.bak before rewriting.`);
+        }
         await io.writeFile(info.configPath, result.text);
         actions.push({ write: info.configPath });
       } else if (info?.kind === "toml-mcp" && info.configPath) {
@@ -114,20 +118,9 @@ export async function orchestrate(io, opts = {}) {
   return { ok: true, actions };
 }
 
-// --- Entry point ---
-async function main() {
-  const args = process.argv.slice(2);
-  let dryRun = false;
-  let mode;
-  let agents;
-
-  for (let i = 0; i < args.length; i++) {
-    if (args[i] === "--dry-run") dryRun = true;
-    else if (args[i] === "--mode") mode = args[++i];
-    else if (args[i] === "--agents") agents = args[++i].split(",");
-  }
-
-  const io = {
+// --- io builder (exported so the dry-run side-effect-free contract is testable) ---
+export function buildIo({ dryRun = false, agents } = {}) {
+  return {
     exec: (cmd, execArgs, opts) =>
       new Promise((resolve) => {
         if (dryRun) {
@@ -166,26 +159,38 @@ async function main() {
       return picked;
     },
     log: (msg) => console.log(msg),
-    probe: {
-      cmd: (name) => {
-        try {
-          execFileSync(process.platform === "win32" ? "where" : "which", [name], { stdio: "ignore" });
-          return true;
-        } catch {
-          return false;
-        }
-      },
-      path: (p) => fs.existsSync(p),
-    },
+    // In dry-run with no forced agents, pretend every agent is present so the
+    // preview shows full wiring without spawning `which`/`where`.
+    probe: (dryRun && !agents)
+      ? { cmd: () => true, path: () => true }
+      : {
+          cmd: (name) => {
+            try {
+              execFileSync(process.platform === "win32" ? "where" : "which", [name], { stdio: "ignore" });
+              return true;
+            } catch {
+              return false;
+            }
+          },
+          path: (p) => fs.existsSync(p),
+        },
   };
+}
 
+// --- Entry point ---
+async function main() {
+  const args = process.argv.slice(2);
+  let dryRun = false;
+  let mode;
+  let agents;
 
-  // In dry-run mode, override probe so all registered agents appear present
-  // (preview full wiring without requiring the actual binaries on PATH)
-  if (dryRun && !agents) {
-    io.probe = { cmd: () => true, path: () => true };
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === "--dry-run") dryRun = true;
+    else if (args[i] === "--mode") mode = args[++i];
+    else if (args[i] === "--agents") agents = args[++i].split(",");
   }
 
+  const io = buildIo({ dryRun, agents });
   const result = await orchestrate(io, { dryRun, mode, agents });
   if (!result.ok) {
     process.exit(1);
