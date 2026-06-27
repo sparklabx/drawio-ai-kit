@@ -169,8 +169,12 @@ async function main() {
   if (dryRun) {
     console.log("\nDry run — would execute:\n");
     for (const a of result.actions) {
-      const cwd = a.cwd ? ` (cwd: ${a.cwd})` : "";
-      console.log(`  ${a.cmd} ${a.args.join(" ")}${cwd}`);
+      if (a.write) {
+        console.log(`  write → ${a.write}`);
+      } else {
+        const cwd = a.cwd ? ` (cwd: ${a.cwd})` : "";
+        console.log(`  ${a.cmd} ${(a.args || []).join(" ")}${cwd}`);
+      }
     }
   }
 }

@@ -315,3 +315,34 @@ test("dry-run CLI mode: zero MCP writes, placement + install still present", asy
   // NO claude mcp add, NO json/toml writes
   assert.ok(!execs.some((e) => e.cmd === "claude"), "CLI mode should NOT run claude mcp add");
 });
+
+// --- Fix A: printer crash on write actions ---
+
+test("dry-run json-mcp action has {write} shape, no .cmd/.args that would crash printer", async () => {
+  const io = {
+    exec: async () => ({ code: 0, stdout: "", stderr: "" }),
+    readFile: async () => "",
+    writeFile: async () => {},
+    exists: () => true,
+    prompt: async () => "claude-desktop",
+    log: () => {},
+    readPkg: () => ({ name: "drawio-ai-kit" }),
+  };
+
+  const result = await orchestrate(io, { dryRun: true, mode: "mcp", agents: ["claude-desktop"] });
+  assert.equal(result.ok, true);
+
+  const writeAction = result.actions.find((a) => a.write);
+  assert.ok(writeAction, "should have at least one write action");
+  assert.equal(writeAction.cmd, undefined, "write action must not have .cmd");
+  assert.equal(writeAction.args, undefined, "write action must not have .args");
+  assert.ok(typeof writeAction.write === "string", "write action must have .write as string");
+
+  // Simulate the printer loop — must not crash
+  let printed = "";
+  for (const a of result.actions) {
+    if (a.write) printed += `write → ${a.write}\n`;
+    else printed += `${a.cmd} ${(a.args || []).join(" ")}\n`;
+  }
+  assert.ok(printed.includes("write →"), "printer produces write→ line");
+});
