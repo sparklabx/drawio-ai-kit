@@ -120,25 +120,60 @@ export class Diagram {
     return this;
   }
 
-  /** Build all edges. Routing is DELEGATED to draw.io's native orthogonal router
-   *  (orthogonalEdgeStyle + orthogonalLoop + jettySize=auto): we emit only source→target and let the
-   *  engine choose sides, distribute connection points and route around nodes — and re-route live when
-   *  the user edits the file. `jumpStyle=arc` draws a small hop wherever two lines cross.
-   *  opts: { dash, flow, stroke, label, rounded, style } (style = extra "k=v;" appended verbatim,
-   *  e.g. force a port with "exitX=1;exitY=0.5;entryX=0;entryY=0.5;" for a special case). */
+  /** Build all edges. The PATH is routed by draw.io natively (orthogonalEdgeStyle + orthogonalLoop +
+   *  jettySize=auto) so edges bend around nodes and RE-ROUTE LIVE when the file is edited. We add only
+   *  RELATIVE port hints (exitX/entryX as fractions — never absolute waypoints, so they survive node
+   *  moves): a clearly horizontal/vertical pair gets centred facing ports; several wires sharing one
+   *  side of a node get their fraction spread so arrowheads & labels don't stack; diagonal/complex pairs
+   *  are left fully native. `jumpStyle=arc` hops crossing lines.
+   *  opts: { dash, flow, stroke, label, rounded, dir:"LR"|"TB" (force orientation), style (verbatim, wins) }. */
   _buildEdges() {
     if (this._edgesBuilt) return;
     this._edgesBuilt = true;
-    for (const e of this.edgeSpecs) this._emitEdge(e);
+    const R = (id) => this.R[id];
+    const TOL = 8;
+    // 1. pick facing ports when the geometry is clearly horizontal or vertical (else leave to draw.io)
+    const port = this.edgeSpecs.map((e) => {
+      const a = R(e.src), b = R(e.tgt);
+      if (!a || !b || e.opts.style) return null;          // explicit style override → don't auto-hint
+      const yOv = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
+      const xOv = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
+      const horiz = e.opts.dir === "LR" || (e.opts.dir !== "TB" && yOv > TOL && xOv <= TOL);
+      const vert = e.opts.dir === "TB" || (e.opts.dir !== "LR" && xOv > TOL && yOv <= TOL);
+      if (horiz) { const fwd = b.x + b.w / 2 >= a.x + a.w / 2; return { sSide: fwd ? "R" : "L", tSide: fwd ? "L" : "R", sf: 0.5, tf: 0.5 }; }
+      if (vert) { const down = b.y + b.h / 2 >= a.y + a.h / 2; return { sSide: down ? "B" : "T", tSide: down ? "T" : "B", sf: 0.5, tf: 0.5 }; }
+      return null;                                          // diagonal/complex → fully native
+    });
+    // 2. de-collide: spread the fraction of wires sharing one (node, side); RELATIVE → edit-safe
+    const grp = {}, vSide = (x) => x === "L" || x === "R";
+    this.edgeSpecs.forEach((e, i) => {
+      const pp = port[i]; if (!pp) return;
+      (grp[`${e.src}|${pp.sSide}`] ||= []).push({ i, end: "s" });
+      (grp[`${e.tgt}|${pp.tSide}`] ||= []).push({ i, end: "t" });
+    });
+    for (const k in grp) {
+      const arr = grp[k]; if (arr.length < 2) continue;
+      const side = k.slice(k.lastIndexOf("|") + 1), v = vSide(side);
+      const farOf = ({ i, end }) => { const f = R(this.edgeSpecs[i][end === "s" ? "tgt" : "src"]); return v ? f.y + f.h / 2 : f.x + f.w / 2; };
+      arr.sort((A, B) => farOf(A) - farOf(B));
+      arr.forEach((it, j) => { const f = (j + 1) / (arr.length + 1); if (it.end === "s") port[it.i].sf = f; else port[it.i].tf = f; });
+    }
+    this.edgeSpecs.forEach((e, i) => this._emitEdge(e, port[i]));
   }
 
-  _emitEdge({ src, tgt, label = "", opts = {} }) {
+  _emitEdge({ src, tgt, label = "", opts = {} }, p) {
     const { dash = false, flow = false, rounded = false, stroke = THEME.edge.stroke, style = "" } = opts;
     let st = `edgeStyle=orthogonalEdgeStyle;html=1;rounded=${rounded ? 1 : 0};jettySize=auto;orthogonalLoop=1;jumpStyle=arc;jumpSize=8;fontSize=10;fontColor=${THEME.edge.fontColor};strokeColor=${stroke};strokeWidth=${THEME.edge.strokeWidth};`;
     if (dash) st += "dashed=1;";
     if (flow) st += "flowAnimation=1;";          // animated moving dashes in draw.io / SVG (not PNG)
     if (label) st += `labelBackgroundColor=${THEME.edge.labelBg};`;
-    if (style) st += style.endsWith(";") ? style : style + ";";
+    if (p) {
+      const r3 = (v) => +(+v).toFixed(3);
+      const pt = (side, f) => (side === "L" ? { x: 0, y: f } : side === "R" ? { x: 1, y: f } : side === "T" ? { x: f, y: 0 } : { x: f, y: 1 });
+      const ps = pt(p.sSide, r3(p.sf)), pe = pt(p.tSide, r3(p.tf));
+      st += `exitX=${ps.x};exitY=${ps.y};exitDx=0;exitDy=0;entryX=${pe.x};entryY=${pe.y};entryDx=0;entryDy=0;`;
+    }
+    if (style) st += style.endsWith(";") ? style : style + ";";   // explicit override appended last (wins)
     this.cells.push(`<mxCell id="ed${++this.eid}" value="${esc(label)}" style="${st}" edge="1" parent="1" source="${src}" target="${tgt}"><mxGeometry relative="1" as="geometry"/></mxCell>`);
   }
 
