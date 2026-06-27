@@ -144,6 +144,19 @@ export class Diagram {
       return false;
     };
     const pathHit = (pp, ex) => { for (let i = 0; i < pp.length - 1; i++) if (segHit(pp[i], pp[i + 1], ex)) return true; return false; };
+    // container frames — edges may CROSS them, but should not run PARALLEL right next to a border
+    const containers = []; for (const id in this.R) { const r = this.R[id]; if (r.ob === false) containers.push(r); }
+    // smallest container that strictly encloses a node (its account/zone box) — used to keep the elbow OUTSIDE it
+    const enclosing = (n) => { let best = null; for (const c of containers) { if (c.x <= n.x + 1 && c.y <= n.y + 1 && c.x + c.w >= n.x + n.w - 1 && c.y + c.h >= n.y + n.h - 1 && c.w * c.h > n.w * n.h + 1) { if (!best || c.w * c.h < best.w * best.h) best = c; } } return best; };
+    const BM = 16;
+    const along = (p, q) => {
+      if (Math.abs(p.x - q.x) < 1) { const y0 = Math.min(p.y, q.y), y1 = Math.max(p.y, q.y); if (y1 - y0 < 28) return false;
+        for (const c of containers) for (const bx of [c.x, c.x + c.w]) if (Math.abs(p.x - bx) < BM && Math.min(y1, c.y + c.h) - Math.max(y0, c.y) > 28) return true; }
+      else { const x0 = Math.min(p.x, q.x), x1 = Math.max(p.x, q.x); if (x1 - x0 < 28) return false;
+        for (const c of containers) for (const by of [c.y, c.y + c.h]) if (Math.abs(p.y - by) < BM && Math.min(x1, c.x + c.w) - Math.max(x0, c.x) > 28) return true; }
+      return false;
+    };
+    const pathAlong = (pp) => { for (let i = 0; i < pp.length - 1; i++) if (along(pp[i], pp[i + 1])) return true; return false; };
     const pt = (n, sd, f) => sd === "L" ? { x: n.x, y: Math.round(n.y + f * n.h) } : sd === "R" ? { x: n.x + n.w, y: Math.round(n.y + f * n.h) }
       : sd === "T" ? { x: Math.round(n.x + f * n.w), y: n.y } : { x: Math.round(n.x + f * n.w), y: n.y + n.h };
     const geom = (a, b, r, sf, tf) => {
@@ -173,11 +186,23 @@ export class Diagram {
     const decollide = (idxs, sideOf) => {
       const grp = {};
       for (const i of idxs) for (const end of ["s", "t"]) { const sd = sideOf(i, end); if (!sd) continue; const node = end === "s" ? specs[i].src : specs[i].tgt; (grp[`${node}|${sd}`] ||= []).push({ i, end }); }
+      const setF = (it, f) => { if (it.end === "s") frac[it.i].s = f; else frac[it.i].t = f; };
       for (const k in grp) {
         const arr = grp[k]; if (arr.length < 2) continue;
         const side = k.slice(k.lastIndexOf("|") + 1), v = side === "L" || side === "R";
-        arr.sort((A, B) => { const fa = R(specs[A.i][A.end === "s" ? "tgt" : "src"]), fb = R(specs[B.i][B.end === "s" ? "tgt" : "src"]); return v ? fa.y - fb.y : fa.x - fb.x; });
-        arr.forEach((it, j) => { const f = (j + 1) / (arr.length + 1); if (it.end === "s") frac[it.i].s = f; else frac[it.i].t = f; });
+        const node = R(k.slice(0, k.lastIndexOf("|"))), nc = v ? node.y + node.h / 2 : node.x + node.w / 2;
+        const info = arr.map((it) => { const far = R(specs[it.i][it.end === "s" ? "tgt" : "src"]); return { it, fc: v ? far.y + far.h / 2 : far.x + far.w / 2 }; });
+        const al = info.filter((x) => Math.abs(x.fc - nc) < 8);   // far node sits on this side's axis line → a straight shot
+        if (al.length === 1 && arr.length <= 3) {                 // keep that straight wire CENTRED; push the others off-centre
+          setF(al[0].it, 0.5);
+          const rest = info.filter((x) => x !== al[0]);
+          const lo = rest.filter((x) => x.fc <= nc).sort((A, B) => B.fc - A.fc), hi = rest.filter((x) => x.fc > nc).sort((A, B) => A.fc - B.fc);
+          lo.forEach((x, j) => setF(x.it, 0.3 - j * 0.14));
+          hi.forEach((x, j) => setF(x.it, 0.7 + j * 0.14));
+        } else {
+          info.sort((A, B) => A.fc - B.fc);
+          info.forEach((x, j) => setF(x.it, (j + 1) / (arr.length + 1)));
+        }
       }
     };
     const all = specs.map((_, i) => i).filter((i) => face[i]);
@@ -189,7 +214,15 @@ export class Diagram {
       const pp = (n, sd, f) => sd === "L" ? { x: n.x, y: Math.round(n.y + f * n.h), dx: -1, dy: 0 } : sd === "R" ? { x: n.x + n.w, y: Math.round(n.y + f * n.h), dx: 1, dy: 0 }
         : sd === "T" ? { x: Math.round(n.x + f * n.w), y: n.y, dx: 0, dy: -1 } : { x: Math.round(n.x + f * n.w), y: n.y + n.h, dx: 0, dy: 1 };
       const sp = pp(a, es, sf), ep = pp(b, en, tf), off = 16;
-      const s0 = { x: sp.x + sp.dx * off, y: sp.y + sp.dy * off }, g0 = { x: ep.x + ep.dx * off, y: ep.y + ep.dy * off };
+      // put the elbow OUTSIDE the icon's own container (straight entry across the border), not 16px in front of the icon
+      const pushOff = (port, n) => {
+        const c = enclosing(n), def = { x: port.x + port.dx * off, y: port.y + port.dy * off };
+        if (!c) return def;
+        const cand = port.dx < 0 ? { x: c.x - off, y: port.y } : port.dx > 0 ? { x: c.x + c.w + off, y: port.y }
+          : port.dy < 0 ? { x: port.x, y: c.y - off } : { x: port.x, y: c.y + c.h + off };
+        return segHit(port, cand, ex) ? def : cand;   // only if the straight run to the border clears other icons
+      };
+      const s0 = pushOff(sp, a), g0 = pushOff(ep, b);
       const xs = new Set([s0.x, g0.x, sp.x, ep.x]), ys = new Set([s0.y, g0.y, sp.y, ep.y]);
       for (const c of cards) { if (ex.has(c.id)) continue; xs.add(c.x - M); xs.add(c.x + c.w + M); ys.add(c.y - M); ys.add(c.y + c.h + M); }
       const X = [...xs].sort((p, q) => p - q), Y = [...ys].sort((p, q) => p - q);
@@ -208,14 +241,14 @@ export class Diagram {
           const ni = ci + di, nj = cj + dj; if (ni < 0 || nj < 0 || ni >= W || nj >= Y.length) continue;
           const nx = X[ni], ny = Y[nj]; if (!segOK(cx, cy, nx, ny)) continue;
           const nid = idx(ni, nj), nd = di !== 0 ? "h" : "v";
-          const cost = Math.abs(nx - cx) + Math.abs(ny - cy) + (cdir[cur] && cdir[cur] !== nd ? 30 : 0) + (used.has(usedKey(cx, cy, nx, ny)) ? 400 : 0);
+          const cost = Math.abs(nx - cx) + Math.abs(ny - cy) + (cdir[cur] && cdir[cur] !== nd ? 30 : 0) + (used.has(usedKey(cx, cy, nx, ny)) ? 400 : 0) + (along({ x: cx, y: cy }, { x: nx, y: ny }) ? 220 : 0);
           const ng = gsc[cur] + cost;
           if (gsc[nid] === undefined || ng < gsc[nid]) { gsc[nid] = ng; came[nid] = cur; cdir[nid] = nd; open.set(nid, ng + heur(nid)); }
         }
       }
       if (!found) return null;
       let path = [], c = goal; while (c !== undefined) { const i = c % W, j = (c - i) / W; path.push({ x: X[i], y: Y[j] }); c = came[c]; } path.reverse();
-      for (let k = 0; k < path.length - 1; k++) used.add(usedKey(path[k].x, path[k].y, path[k + 1].x, path[k + 1].y));
+      for (let k = 0; k < path.length - 1; k++) { used.add(usedKey(path[k].x, path[k].y, path[k + 1].x, path[k + 1].y)); usedSegs.push({ x1: path[k].x, y1: path[k].y, x2: path[k + 1].x, y2: path[k + 1].y }); }
       const simp = [path[0]];
       for (let k = 1; k < path.length - 1; k++) { const p = simp[simp.length - 1], q = path[k], r = path[k + 1]; if ((p.x === q.x && q.x === r.x) || (p.y === q.y && q.y === r.y)) continue; simp.push(q); }
       simp.push(path[path.length - 1]);
@@ -223,12 +256,22 @@ export class Diagram {
     };
 
     // B. route each edge AT ITS FINAL FRAC: straight → facing-Z in gap → L → A* through the gaps
-    const used = new Set();
-    const reg = (g) => { const pp = [g.sp, ...g.wp, g.ep]; for (let k = 0; k < pp.length - 1; k++) used.add(usedKey(Math.round(pp[k].x), Math.round(pp[k].y), Math.round(pp[k + 1].x), Math.round(pp[k + 1].y))); };
+    const used = new Set(), usedSegs = [];
+    const reg = (g) => { const pp = [g.sp, ...g.wp, g.ep]; for (let k = 0; k < pp.length - 1; k++) { used.add(usedKey(Math.round(pp[k].x), Math.round(pp[k].y), Math.round(pp[k + 1].x), Math.round(pp[k + 1].y))); usedSegs.push({ x1: pp[k].x, y1: pp[k].y, x2: pp[k + 1].x, y2: pp[k + 1].y }); } };
+    const ov1 = (a0, a1, b0, b1) => Math.min(a1, b1) - Math.max(a0, b0);
+    const overlapsUsed = (pp) => {
+      for (let i = 0; i < pp.length - 1; i++) { const a = pp[i], b = pp[i + 1];
+        for (const s of usedSegs) {
+          if (Math.abs(a.x - b.x) < 1 && Math.abs(s.x1 - s.x2) < 1 && Math.abs(a.x - s.x1) < 6) { if (ov1(Math.min(a.y, b.y), Math.max(a.y, b.y), Math.min(s.y1, s.y2), Math.max(s.y1, s.y2)) > 14) return true; }
+          else if (Math.abs(a.y - b.y) < 1 && Math.abs(s.y1 - s.y2) < 1 && Math.abs(a.y - s.y1) < 6) { if (ov1(Math.min(a.x, b.x), Math.max(a.x, b.x), Math.min(s.x1, s.x2), Math.max(s.x1, s.x2)) > 14) return true; }
+        }
+      }
+      return false;
+    };
     const routes = specs.map(() => null);
-    const heuristic = (e, i) => {
+    const heuristic = (e, i, strict) => {
       const a = R(e.src), b = R(e.tgt), ex = new Set([e.src, e.tgt]), f = face[i], sf = frac[i].s, tf = frac[i].t;
-      const tryR = (r) => clearW(a, b, r, sf, tf, ex) ? r : null;
+      const tryR = (r) => { if (!clearW(a, b, r, sf, tf, ex)) return null; const g = geom(a, b, r, sf, tf), pp = [g.sp, ...g.wp, g.ep]; if (pathAlong(pp)) return null; if (strict && overlapsUsed(pp)) return null; return r; };
       let r = null;
       if (f.horiz) {
         if (Math.abs(a.y + sf * a.h - (b.y + tf * b.h)) < 2) r = tryR({ es: f.es, en: f.en, kind: "straight" });
@@ -243,7 +286,7 @@ export class Diagram {
     };
     // pass 1: heuristic (register the channels they occupy)
     const need = [];
-    specs.forEach((e, i) => { if (e.opts.style) { routes[i] = { raw: true }; return; } const r = heuristic(e, i); if (r) { routes[i] = r; reg(geom(R(e.src), R(e.tgt), r, frac[i].s, frac[i].t)); } else need.push(i); });
+    specs.forEach((e, i) => { if (e.opts.style) { routes[i] = { raw: true }; return; } const r = heuristic(e, i, true) || heuristic(e, i, false); if (r) { routes[i] = r; reg(geom(R(e.src), R(e.tgt), r, frac[i].s, frac[i].t)); } else need.push(i); });
     // pass 2: A* for the rest, trying facing sides then top/bottom/side fallbacks, avoiding used channels
     for (const i of need) {
       const e = specs[i], a = R(e.src), b = R(e.tgt), ex = new Set([e.src, e.tgt]), f = face[i];
