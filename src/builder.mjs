@@ -2,8 +2,8 @@
 // + auto-routing by type + auto-size panel + validate + XML export. Goal: build
 // a diagram with just a few lines of declaration (easy to use, easy to extend).
 import { loadCatalog, styleForIcon, styleForGroup, validateDiagram } from "./core.mjs";
-import { routeLR, routeTB, routeLRFan, routeTBFan, routeLRFanIn, routeTBFanIn, centerInBoxX, distributeY, centerInGapX, panelSize } from "./layout.mjs";
-import { typePreset, edgeRounded } from "./types.mjs";
+import { centerInGapX, panelSize } from "./layout.mjs";
+import { typePreset } from "./types.mjs";
 import { THEME } from "./theme.mjs";
 
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -120,144 +120,26 @@ export class Diagram {
     return this;
   }
 
-  /** Build all edges. Detect FAN-OUT bundles (1 source → ≥2 same-direction targets) and
-   *  FAN-IN bundles (≥2 same-direction sources → 1 target); each bundle SHARES one lane so
-   *  collinear segments merge into a single trunk and arrowheads don't stack. Fan-out wins
-   *  when an edge qualifies as both. */
+  /** Build all edges. Routing is DELEGATED to draw.io's native orthogonal router
+   *  (orthogonalEdgeStyle + orthogonalLoop + jettySize=auto): we emit only source→target and let the
+   *  engine choose sides, distribute connection points and route around nodes — and re-route live when
+   *  the user edits the file. `jumpStyle=arc` draws a small hop wherever two lines cross.
+   *  opts: { dash, flow, stroke, label, rounded, style } (style = extra "k=v;" appended verbatim,
+   *  e.g. force a port with "exitX=1;exitY=0.5;entryX=0;entryY=0.5;" for a special case). */
   _buildEdges() {
     if (this._edgesBuilt) return;
     this._edgesBuilt = true;
-    // Direction is AUTO-DETECTED from the nodes' relative position (vertical offset dominates → TB,
-    // else LR), so a vertically-stacked pair routes straight down without the caller remembering.
-    // opts.dir is an explicit override.
-    const dirOf = (e) => {
-      if (e.opts.dir) return e.opts.dir;
-      const a = this.R[e.src], b = this.R[e.tgt];
-      const dx = Math.abs((a.x + a.w / 2) - (b.x + b.w / 2));
-      const dy = Math.abs((a.y + a.h / 2) - (b.y + b.h / 2));
-      return dy > dx ? "TB" : "LR";
-    };
-    const R = (i, side) => this.R[this.edgeSpecs[i][side]];
-    const clamp = (v) => Math.max(0.2, Math.min(0.8, v));
-    const route = this.edgeSpecs.map(() => null);
-
-    // FAN-OUT: group by (direction, source)
-    const outG = {};
-    this.edgeSpecs.forEach((e, i) => ((outG[`${dirOf(e)}|${e.src}`] ||= []).push(i)));
-    for (const k in outG) {
-      const idxs = outG[k];
-      if (idxs.length < 2) continue;
-      const axis = k.slice(0, 2), s = R(idxs[0], "src");
-      let lane;
-      if (axis === "LR") {
-        const left = idxs.every((i) => R(i, "tgt").x + R(i, "tgt").w <= s.x + s.w / 2);  // targets on the left?
-        lane = left ? Math.round((s.x + Math.max(...idxs.map((i) => R(i, "tgt").x + R(i, "tgt").w))) / 2)
-                    : Math.round((s.x + s.w + Math.min(...idxs.map((i) => R(i, "tgt").x))) / 2);
-      } else {
-        const up = idxs.every((i) => R(i, "tgt").y + R(i, "tgt").h <= s.y + s.h / 2);     // targets above?
-        lane = up ? Math.round((s.y + Math.max(...idxs.map((i) => R(i, "tgt").y + R(i, "tgt").h))) / 2)
-                  : Math.round((s.y + s.h + Math.min(...idxs.map((i) => R(i, "tgt").y))) / 2);
-      }
-      idxs.forEach((i) => (route[i] = { kind: "fanout", axis, lane }));
-    }
-
-    // FAN-IN: group by (direction, target) — only for edges not already in a fan-out bundle
-    const inG = {};
-    this.edgeSpecs.forEach((e, i) => ((inG[`${dirOf(e)}|${e.tgt}`] ||= []).push(i)));
-    for (const k in inG) {
-      const idxs = inG[k].filter((i) => !route[i]);
-      if (idxs.length < 2) continue;
-      const axis = k.slice(0, 2), t = R(idxs[0], "tgt");
-      // If the target SPANS all the sources (each source sits directly over/beside it), straight
-      // drops read cleaner than a converging comb — leave them as plain edges (routeTB/LR straight).
-      const spans = axis === "TB"
-        ? idxs.every((i) => { const s = R(i, "src"), cx = s.x + s.w / 2; return cx > t.x + 4 && cx < t.x + t.w - 4; })
-        : idxs.every((i) => { const s = R(i, "src"), cy = s.y + s.h / 2; return cy > t.y + 4 && cy < t.y + t.h - 4; });
-      if (spans) continue;
-      let lane;
-      if (axis === "LR") {
-        const left = idxs.every((i) => { const s = R(i, "src"); return s.x + s.w <= t.x + t.w / 2; });  // sources left of target?
-        lane = left ? Math.round((Math.max(...idxs.map((i) => R(i, "src").x + R(i, "src").w)) + t.x) / 2)
-                    : Math.round((t.x + t.w + Math.min(...idxs.map((i) => R(i, "src").x))) / 2);
-      } else {
-        const up = idxs.every((i) => { const s = R(i, "src"); return s.y + s.h <= t.y + t.h / 2; });
-        lane = up ? Math.round((Math.max(...idxs.map((i) => R(i, "src").y + R(i, "src").h)) + t.y) / 2)
-                  : Math.round((t.y + t.h + Math.min(...idxs.map((i) => R(i, "src").y))) / 2);
-      }
-      const ord = [...idxs].sort((a, b) => axis === "LR"
-        ? R(a, "src").y - R(b, "src").y : R(a, "src").x - R(b, "src").x);
-      ord.forEach((i, j) => (route[i] = { kind: "fanin", axis, lane, frac: clamp((j + 1) / (ord.length + 1)) }));
-    }
-
-    this.edgeSpecs.forEach((e, i) => this._emitEdge(e, route[i], dirOf(e)));
+    for (const e of this.edgeSpecs) this._emitEdge(e);
   }
 
-  _emitEdge({ src, tgt, label = "", opts = {} }, ro, dir) {
-    const { role = "flow", dash = false, flow = false, stroke = THEME.edge.stroke, laneX = null, laneY = null } = opts;
-    const a = this.R[src], b = this.R[tgt];
-    let r, fan = false;
-    if (ro && ro.kind === "fanout") {
-      fan = true;
-      r = ro.axis === "LR" ? routeLRFan(a, b, { laneX: laneX ?? ro.lane }) : routeTBFan(a, b, { laneY: laneY ?? ro.lane });
-    } else if (ro && ro.kind === "fanin") {
-      fan = true;
-      r = ro.axis === "LR" ? routeLRFanIn(a, b, { laneX: laneX ?? ro.lane, entryY: ro.frac })
-                           : routeTBFanIn(a, b, { laneY: laneY ?? ro.lane, entryX: ro.frac });
-    } else {
-      // if a sibling box sits in the straight path (same-column back-edge etc.), route AROUND the
-      // side instead of cutting through it (a clean C-bracket).
-      const aroundX = this._aroundLaneX(a, b), aroundY = aroundX == null ? this._aroundLaneY(a, b) : null;
-      if (aroundX != null) {
-        const sy = Math.round(a.y + a.h / 2), ty = Math.round(b.y + b.h / 2);
-        r = { pins: "exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;", wp: [{ x: aroundX, y: sy }, { x: aroundX, y: ty }] };
-      } else if (aroundY != null) {
-        const sx = Math.round(a.x + a.w / 2), tx = Math.round(b.x + b.w / 2);
-        r = { pins: "exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;", wp: [{ x: sx, y: aroundY }, { x: tx, y: aroundY }] };
-      } else if (dir === "TB") r = routeTB(a, b, { laneY: laneY != null ? laneY : (a.y + a.h + b.y) / 2 });
-      else r = routeLR(a, b, { laneX: laneX != null ? laneX : (a.x + a.w + b.x) / 2 });
-    }
-    let st = `edgeStyle=orthogonalEdgeStyle;html=1;jettySize=auto;orthogonalLoop=1;fontSize=10;fontColor=${THEME.edge.fontColor};strokeColor=${stroke};strokeWidth=${THEME.edge.strokeWidth};rounded=${edgeRounded(this.preset, fan ? "fanout" : role)};`;
+  _emitEdge({ src, tgt, label = "", opts = {} }) {
+    const { dash = false, flow = false, rounded = false, stroke = THEME.edge.stroke, style = "" } = opts;
+    let st = `edgeStyle=orthogonalEdgeStyle;html=1;rounded=${rounded ? 1 : 0};jettySize=auto;orthogonalLoop=1;jumpStyle=arc;jumpSize=8;fontSize=10;fontColor=${THEME.edge.fontColor};strokeColor=${stroke};strokeWidth=${THEME.edge.strokeWidth};`;
     if (dash) st += "dashed=1;";
-    if (flow) st += "flowAnimation=1;";   // animated "moving dashes" flow (shows in SVG / draw.io app, not PNG)
+    if (flow) st += "flowAnimation=1;";          // animated moving dashes in draw.io / SVG (not PNG)
     if (label) st += `labelBackgroundColor=${THEME.edge.labelBg};`;
-    st += r.pins;
-    const pts = r.wp.length ? `<Array as="points">${r.wp.map((p) => `<mxPoint x="${p.x}" y="${p.y}"/>`).join("")}</Array>` : "";
-    this.cells.push(`<mxCell id="ed${++this.eid}" value="${esc(label)}" style="${st}" edge="1" parent="1" source="${src}" target="${tgt}"><mxGeometry relative="1" as="geometry">${pts}</mxGeometry></mxCell>`);
-  }
-  /** If a sibling box sits in the straight vertical path between two same-column nodes, return an
-   *  x just past it to route AROUND (avoid cutting through). Else null. */
-  _aroundLaneX(a, b) {
-    const xr0 = Math.max(a.x, b.x), xr1 = Math.min(a.x + a.w, b.x + b.w);
-    if (xr1 - xr0 < 12) return null;                 // not vertically stacked / same column
-    const gTop = Math.min(a.y + a.h, b.y + b.h), gBot = Math.max(a.y, b.y);
-    if (gBot - gTop < 8) return null;                // adjacent — nothing between them
-    const holds = (p, q) => q.x >= p.x - 2 && q.y >= p.y - 2 && q.x + q.w <= p.x + p.w + 2 && q.y + q.h <= p.y + p.h + 2;
-    let right = Math.max(a.x + a.w, b.x + b.w), blocked = false;
-    for (const id in this.R) {
-      const n = this.R[id];
-      if (n === a || n === b || n.w <= 2 || n.h <= 2 || holds(n, a) || holds(n, b)) continue;
-      const ov = Math.min(n.x + n.w, xr1) - Math.max(n.x, xr0);
-      if (ov > 6 && n.y < gBot - 4 && n.y + n.h > gTop + 4) { blocked = true; right = Math.max(right, n.x + n.w); }
-    }
-    return blocked ? Math.round(right + 22) : null;
-  }
-
-  /** Horizontal analog of _aroundLaneX: a sibling box in the straight horizontal path between two
-   *  same-row nodes → return a y above it to route around. Else null. */
-  _aroundLaneY(a, b) {
-    const yr0 = Math.max(a.y, b.y), yr1 = Math.min(a.y + a.h, b.y + b.h);
-    if (yr1 - yr0 < 12) return null;                 // not in the same row
-    const gL = Math.min(a.x + a.w, b.x + b.w), gR = Math.max(a.x, b.x);
-    if (gR - gL < 8) return null;                    // adjacent — nothing between them
-    const holds = (p, q) => q.x >= p.x - 2 && q.y >= p.y - 2 && q.x + q.w <= p.x + p.w + 2 && q.y + q.h <= p.y + p.h + 2;
-    let top = Math.min(a.y, b.y), blocked = false;
-    for (const id in this.R) {
-      const n = this.R[id];
-      if (n === a || n === b || n.w <= 2 || n.h <= 2 || holds(n, a) || holds(n, b)) continue;
-      const ov = Math.min(n.y + n.h, yr1) - Math.max(n.y, yr0);
-      if (ov > 6 && n.x < gR - 4 && n.x + n.w > gL + 4) { blocked = true; top = Math.min(top, n.y); }
-    }
-    return blocked ? Math.round(top - 22) : null;
+    if (style) st += style.endsWith(";") ? style : style + ";";
+    this.cells.push(`<mxCell id="ed${++this.eid}" value="${esc(label)}" style="${st}" edge="1" parent="1" source="${src}" target="${tgt}"><mxGeometry relative="1" as="geometry"/></mxCell>`);
   }
 
   // reusable layout helpers
