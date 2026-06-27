@@ -20,7 +20,7 @@ Produce **correct and beautiful** AWS architecture diagrams in draw.io. This ski
 | `render_diagram` | Render the XML to PNG and return the image — your built-in **vision self-check**. Look at it and fix before delivering. |
 | `get_principles` | Design rules + AWS architecture preset + catalog categories. |
 
-If the MCP server isn't registered, call the same logic via `node src/cli.mjs <search|validate|audit|logo|principles>`.
+If the MCP server isn't registered, call the same logic via `node ~/.agents/skills/drawio-aws-architect/src/cli.mjs <search|validate|audit|logo|principles>`.
 
 ## Build with the layout engine — do NOT hand-place coordinates
 
@@ -40,7 +40,7 @@ import { group, frame, icon, box, renderTree } from "<ABS_KIT>/src/layout-engine
 // ... build ...
 writeFileSync("./my-architecture.drawio", d.mxfile("My architecture"));  // user's cwd, not the kit
 ```
-Resolve `<ABS_KIT>` from the MCP server path or `~/.claude/skills/drawio-aws-architect`. Scratch files can go in the system temp dir. Either way: output belongs in the user's space, never in the kit.
+Resolve `<ABS_KIT>` from the MCP server path or `~/.agents/skills/drawio-aws-architect`. Scratch files can go in the system temp dir. Either way: output belongs in the user's space, never in the kit.
 
 ## Workflow
 
