@@ -74,7 +74,7 @@ const report = d.validate({ strict: true }); // { ok, errors, warnings, audit, s
 | `examples/build_*.mjs` | 14 declarative templates (vpc, serverless, pipeline, landingzone, …). Run → `out/<name>_kit.drawio`. |
 | `scripts/*.py` | Catalog regenerators (Python 3.11, stdlib only). |
 | `vendor/*.py` | Runtime helpers (third-party/MIT): autolayout, encode URL, repair PNG, aiicons. |
-| `test/` | Single `core.test.mjs`. |
+| `test/` | `core.test.mjs` (engine) + `installer.test.mjs` (installer). |
 
 ## Important Files
 
@@ -92,7 +92,7 @@ const report = d.validate({ strict: true }); // { ok, errors, warnings, audit, s
 
 ```bash
 npm install              # one dep
-npm test                 # node --test (runs test/core.test.mjs)
+npm test                 # node --test (runs test/*.test.mjs)
 npm run mcp              # start MCP server over stdio (node src/mcp-server.mjs)
 npm run cli              # node src/cli.mjs
 npm run gen:catalog      # python3.11 scripts/ingest_index.py → catalog/aws.json
@@ -144,7 +144,7 @@ python3 scripts/build_pack.py <pack>        # packs/<pack>/manifest.json → cat
 
 ## Testing & QA
 
-- Framework: **`node:test`** (built-in). Single file `test/core.test.mjs`, ~23 cases.
+- Framework: **`node:test`** (built-in). `core.test.mjs` (engine) + `installer.test.mjs` (installer).
 - Covered: `core.mjs` (`loadCatalog`, `searchIcon`, `getIcon`, `styleForIcon`, `validateDiagram` + all 5 audits), `layout.mjs` (`routeLR`, `routeTB`, `centerInGapX`), `layout-engine.mjs` + `builder.mjs` (`Diagram`, `renderTree`, `group`, `icon`). No fixtures.
 - Run: `npm test`. CI runs the same on push/PR to `main`.
 - No coverage gate; no Python script tests (data builders, validated by the Node catalog tests that consume their output).
