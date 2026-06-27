@@ -54,6 +54,11 @@ export class Diagram {
     if (!stroke && gname === "group_vpc") stroke = THEME.vpcStroke;
     if (!stroke && gname === "group_account") stroke = THEME.accountStroke;
     if (!stroke && gname === "group_availability_zone") stroke = THEME.azStroke;
+    // pale nested-container fills (soft layered depth instead of flat white)
+    if (!fill && (gname === "group_aws_cloud" || gname === "group_aws_cloud_alt")) fill = THEME.cloudFill;
+    if (!fill && gname === "group_region") fill = THEME.regionFill;
+    if (!fill && gname === "group_vpc") fill = THEME.vpcFill;
+    if (!fill && gname === "group_account") fill = THEME.accountFill;
     if (fill) style += `fillColor=${fill};`;
     if (stroke) style += `strokeColor=${stroke};`;
     return this._put(id, parent, x, y, w, h, style, label);
