@@ -287,3 +287,31 @@ test("dry-run orchestrate wires toml-mcp agent (codex), records TOML write", asy
   assert.ok(write.content.includes(`command = "${nodeBin}"`), "has command");
   assert.ok(write.content.includes(mjsPath), "has mjs path in args");
 });
+
+// --- #8: CLI mode toggle ---
+
+test("dry-run CLI mode: zero MCP writes, placement + install still present", async () => {
+  const writes = [];
+  const execs = [];
+
+  const io = {
+    exec: async (cmd, args, opts) => { execs.push({ cmd, args, cwd: opts?.cwd }); return { code: 0, stdout: "", stderr: "" }; },
+    readFile: async () => "",
+    writeFile: async (p, content) => writes.push({ p, content }),
+    exists: () => true,
+    prompt: async () => "claude-code",
+    log: () => {},
+    readPkg: () => ({ name: "drawio-ai-kit" }),
+  };
+
+  const result = await orchestrate(io, { dryRun: true, mode: "cli", agents: ["claude-code"] });
+  assert.equal(result.ok, true);
+  assert.equal(writes.length, 0, "CLI mode should have zero MCP writes");
+
+  // Placement + install still present
+  assert.ok(execs.some((e) => e.args?.includes("skills") && e.args?.includes("add")), "has skills add");
+  assert.ok(execs.some((e) => e.cmd === "npm"), "has npm install");
+
+  // NO claude mcp add, NO json/toml writes
+  assert.ok(!execs.some((e) => e.cmd === "claude"), "CLI mode should NOT run claude mcp add");
+});
