@@ -1,11 +1,12 @@
 // install.mjs — impure orchestrator + entry point for the multi-agent installer
-import { execFile } from "node:child_process";
+import { execFile, execFileSync } from "node:child_process";
 import fs from "node:fs";
 import { createInterface } from "node:readline/promises";
 import {
   MCP_NAME,
   CANONICAL_DIR,
   MCP_SERVER_MJS,
+  AGENT_REGISTRY,
   mcpPayload,
   claudeCodeAddCommand,
   resolveSource,
@@ -32,10 +33,19 @@ export async function orchestrate(io, opts = {}) {
   // 3. Detect agents
   const present = detectAgents(io.probe || { cmd: () => false, path: () => false });
 
+  // 3b. No agents guard
+  if (present.length === 0 && !optAgents) {
+    io.log("No supported agents detected.");
+    return { ok: false, reason: "no-agents" };
+  }
+
   // 4. Multi-select targets
   let selected;
   if (optAgents) {
     selected = optAgents;
+  } else if (dryRun) {
+    // dry-run is non-interactive: select all detected agents
+    selected = present.map((a) => a.id);
   } else {
     const answer = await io.prompt("Select agents", present);
     selected = Array.isArray(answer) ? answer : [answer];
@@ -102,10 +112,6 @@ async function main() {
       }
     },
     prompt: async (question, choices) => {
-      if (choices.length === 0) {
-        console.error("No agents detected.");
-        process.exit(1);
-      }
       if (choices.length === 1) return choices[0].id;
       const rl = createInterface({ input: process.stdin, output: process.stdout });
       const labels = choices.map((c, i) => `${i + 1}. ${c.label}`).join("\n");
@@ -123,8 +129,8 @@ async function main() {
     probe: {
       cmd: (name) => {
         try {
-          const result = execFile("which", [name], { timeout: 5000 });
-          return result.status === 0;
+          execFileSync(process.platform === "win32" ? "where" : "which", [name], { stdio: "ignore" });
+          return true;
         } catch {
           return false;
         }
@@ -132,6 +138,13 @@ async function main() {
       path: (p) => fs.existsSync(p),
     },
   };
+
+
+  // In dry-run mode, override probe so all registered agents appear present
+  // (preview full wiring without requiring the actual binaries on PATH)
+  if (dryRun && !agents) {
+    io.probe = { cmd: () => true, path: () => false };
+  }
 
   const result = await orchestrate(io, { dryRun, mode, agents });
   if (!result.ok) {

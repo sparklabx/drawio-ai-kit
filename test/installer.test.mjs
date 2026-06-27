@@ -89,3 +89,47 @@ test("dry-run orchestrate records 3 expected Claude Code MCP actions, no writes,
   // No writes, no real fs touches
   assert.equal(writes.length, 0, "dry-run must not write config files");
 });
+
+test("orchestrate returns {ok:false,reason:'no-agents'} when no agents detected and none forced", async () => {
+  const logs = [];
+  const io = {
+    exec: async () => ({ code: 0, stdout: "", stderr: "" }),
+    readFile: async () => "",
+    writeFile: async () => {},
+    exists: () => true,
+    prompt: async () => { throw new Error("prompt should not be called"); },
+    log: (msg) => logs.push(msg),
+    readPkg: () => ({ name: "drawio-ai-kit" }),
+    probe: { cmd: () => false, path: () => false },
+  };
+
+  const result = await orchestrate(io, {});
+  assert.equal(result.ok, false);
+  assert.equal(result.reason, "no-agents");
+  assert.ok(logs.some((m) => m.includes("No supported agents detected")));
+});
+
+test("dry-run with no optAgents selects all detected agents, never calls prompt", async () => {
+  const actions = [];
+  const prompted = { called: false };
+  const io = {
+    exec: async (cmd, args, opts) => {
+      actions.push({ cmd, args, cwd: opts?.cwd });
+      return { code: 0, stdout: "", stderr: "" };
+    },
+    readFile: async () => "",
+    writeFile: async () => {},
+    exists: () => true,
+    prompt: async () => { prompted.called = true; throw new Error("prompt must not be called in dry-run"); },
+    log: () => {},
+    readPkg: () => ({ name: "drawio-ai-kit" }),
+    probe: { cmd: (name) => name === "claude", path: () => false },
+  };
+
+  const result = await orchestrate(io, { dryRun: true, mode: "mcp" });
+  assert.equal(result.ok, true);
+  assert.equal(prompted.called, false, "dry-run must not call prompt");
+  assert.ok(actions.length >= 3, "should have at least the 3 expected actions");
+  // skills add should include claude-code
+  assert.ok(actions[0].args[4].includes("claude-code"), "dry-run auto-selects claude-code");
+});
