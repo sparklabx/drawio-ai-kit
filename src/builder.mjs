@@ -125,61 +125,168 @@ export class Diagram {
     return this;
   }
 
-  /** Build all edges. The PATH is routed by draw.io natively (orthogonalEdgeStyle + orthogonalLoop +
-   *  jettySize=auto) so edges bend around nodes and RE-ROUTE LIVE when the file is edited. We add only
-   *  RELATIVE port hints (exitX/entryX as fractions — never absolute waypoints, so they survive node
-   *  moves): a clearly horizontal/vertical pair gets centred facing ports; several wires sharing one
-   *  side of a node get their fraction spread so arrowheads & labels don't stack; diagonal/complex pairs
-   *  are left fully native. `jumpStyle=arc` hops crossing lines.
-   *  opts: { dash, flow, stroke, label, rounded, dir:"LR"|"TB" (force orientation), style (verbatim, wins) }. */
+  /** Build all edges — a deterministic ORTHOGONAL router (we compute BOTH ports and waypoints; draw.io
+   *  just draws them). Steps: (1) axis = shortest run; (2) bundle fan-out/fan-in onto one shared trunk
+   *  lane (clean comb); (3) face each port at the other node and DE-COLLIDE per (node, side): one wire =
+   *  centred, several = spread by far-node order so nothing stacks; (4) run the perpendicular leg through
+   *  the GAP between groups, stepping AROUND any node that blocks the straight path; (5) jumpStyle=arc hops
+   *  crossings. Waypoints are absolute (for a delivered diagram); after dragging a node in draw.io,
+   *  right-click the edge → Clear Waypoints to re-flow. opts.style (verbatim) bypasses the router.
+   *  opts: { dash, flow, stroke, label, rounded, dir:"LR"|"TB", laneX, laneY, style }. */
   _buildEdges() {
     if (this._edgesBuilt) return;
     this._edgesBuilt = true;
-    const R = (id) => this.R[id];
-    const TOL = 8;
-    // 1. pick facing ports when the geometry is clearly horizontal or vertical (else leave to draw.io)
-    const port = this.edgeSpecs.map((e) => {
+    const specs = this.edgeSpecs, R = (id) => this.R[id], TOL = 8;
+
+    const dirOf = (e) => {
+      if (e.opts.dir) return e.opts.dir;
       const a = R(e.src), b = R(e.tgt);
-      if (!a || !b || e.opts.style) return null;          // explicit style override → don't auto-hint
-      const yOv = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
       const xOv = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
-      const horiz = e.opts.dir === "LR" || (e.opts.dir !== "TB" && yOv > TOL && xOv <= TOL);
-      const vert = e.opts.dir === "TB" || (e.opts.dir !== "LR" && xOv > TOL && yOv <= TOL);
-      if (horiz) { const fwd = b.x + b.w / 2 >= a.x + a.w / 2; return { sSide: fwd ? "R" : "L", tSide: fwd ? "L" : "R", sf: 0.5, tf: 0.5 }; }
-      if (vert) { const down = b.y + b.h / 2 >= a.y + a.h / 2; return { sSide: down ? "B" : "T", tSide: down ? "T" : "B", sf: 0.5, tf: 0.5 }; }
-      return null;                                          // diagonal/complex → fully native
-    });
-    // 2. de-collide: spread the fraction of wires sharing one (node, side); RELATIVE → edit-safe
-    const grp = {}, vSide = (x) => x === "L" || x === "R";
-    this.edgeSpecs.forEach((e, i) => {
-      const pp = port[i]; if (!pp) return;
-      (grp[`${e.src}|${pp.sSide}`] ||= []).push({ i, end: "s" });
-      (grp[`${e.tgt}|${pp.tSide}`] ||= []).push({ i, end: "t" });
-    });
-    for (const k in grp) {
-      const arr = grp[k]; if (arr.length < 2) continue;
-      const side = k.slice(k.lastIndexOf("|") + 1), v = vSide(side);
-      const farOf = ({ i, end }) => { const f = R(this.edgeSpecs[i][end === "s" ? "tgt" : "src"]); return v ? f.y + f.h / 2 : f.x + f.w / 2; };
-      arr.sort((A, B) => farOf(A) - farOf(B));
-      arr.forEach((it, j) => { const f = (j + 1) / (arr.length + 1); if (it.end === "s") port[it.i].sf = f; else port[it.i].tf = f; });
+      const yOv = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
+      if (yOv > TOL && xOv <= TOL) return "LR";
+      if (xOv > TOL && yOv <= TOL) return "TB";
+      const dx = Math.abs((a.x + a.w / 2) - (b.x + b.w / 2)), dy = Math.abs((a.y + a.h / 2) - (b.y + b.h / 2));
+      return dy > dx ? "TB" : "LR";
+    };
+
+    // fan-out / fan-in bundles → one shared lane (the comb trunk)
+    const route = specs.map(() => null);
+    const laneFor = (axis, anchor, others) => {
+      if (axis === "LR") {
+        const left = others.every((o) => o.x + o.w <= anchor.x + anchor.w / 2);
+        return left ? Math.round((Math.max(...others.map((o) => o.x + o.w)) + anchor.x) / 2)
+                    : Math.round((anchor.x + anchor.w + Math.min(...others.map((o) => o.x))) / 2);
+      }
+      const up = others.every((o) => o.y + o.h <= anchor.y + anchor.h / 2);
+      return up ? Math.round((Math.max(...others.map((o) => o.y + o.h)) + anchor.y) / 2)
+                : Math.round((anchor.y + anchor.h + Math.min(...others.map((o) => o.y))) / 2);
+    };
+    const outG = {};
+    specs.forEach((e, i) => ((outG[`${dirOf(e)}|${e.src}`] ||= []).push(i)));
+    for (const k in outG) {
+      const ix = outG[k]; if (ix.length < 2) continue;
+      const axis = k.slice(0, 2), s = R(specs[ix[0]].src);
+      const lane = laneFor(axis, s, ix.map((i) => R(specs[i].tgt)));
+      ix.forEach((i) => (route[i] = { kind: "fanout", axis, lane, bundle: k }));
     }
-    this.edgeSpecs.forEach((e, i) => this._emitEdge(e, port[i]));
+    const inG = {};
+    specs.forEach((e, i) => ((inG[`${dirOf(e)}|${e.tgt}`] ||= []).push(i)));
+    for (const k in inG) {
+      const ix = inG[k].filter((i) => !route[i]); if (ix.length < 2) continue;
+      const axis = k.slice(0, 2), t = R(specs[ix[0]].tgt);
+      const lane = laneFor(axis, t, ix.map((i) => R(specs[i].src)));
+      ix.forEach((i) => (route[i] = { kind: "fanin", axis, lane }));
+    }
+
+    // per-edge sides (facing the far node) + obstacle-around for plain edges
+    const desc = specs.map((e, i) => {
+      const a = R(e.src), b = R(e.tgt), ro = route[i], axis = ro ? ro.axis : dirOf(e);
+      const raw = !!e.opts.style;
+      let exitSide, entrySide, lane = ro ? ro.lane : null, around = false, ax = axis;
+      if (axis === "LR") { const fwd = b.x + b.w / 2 >= a.x + a.w / 2; exitSide = fwd ? "R" : "L"; entrySide = fwd ? "L" : "R"; }
+      else { const dn = b.y + b.h / 2 >= a.y + a.h / 2; exitSide = dn ? "B" : "T"; entrySide = dn ? "T" : "B"; }
+      if (!ro && !raw) {
+        const lx = this._aroundLaneX(a, b), ly = lx == null ? this._aroundLaneY(a, b) : null;
+        if (lx != null) { exitSide = entrySide = "R"; lane = lx; around = true; ax = "LR"; }
+        else if (ly != null) { exitSide = entrySide = "T"; lane = ly; around = true; ax = "TB"; }
+      }
+      if (e.opts.laneX != null) lane = e.opts.laneX;
+      if (e.opts.laneY != null) lane = e.opts.laneY;
+      return { axis: ax, exitSide, entrySide, lane, around, raw, bundle: ro && ro.kind === "fanout" ? ro.bundle : null };
+    });
+
+    // de-collide ports per (node, side); fan-out source members share ONE trunk slot
+    const vSide = (x) => x === "L" || x === "R";
+    const grp = {};
+    specs.forEach((e, i) => {
+      if (desc[i].raw) return;
+      (grp[`${e.src}|${desc[i].exitSide}`] ||= []).push({ i, end: "s" });
+      (grp[`${e.tgt}|${desc[i].entrySide}`] ||= []).push({ i, end: "t" });
+    });
+    const frac = specs.map(() => ({ s: 0.5, t: 0.5, sSole: false, tSole: false }));
+    for (const k in grp) {
+      const arr = grp[k], side = k.slice(k.lastIndexOf("|") + 1), v = vSide(side);
+      const slots = new Map();
+      for (const it of arr) {
+        const key = it.end === "s" && desc[it.i].bundle ? `b:${desc[it.i].bundle}` : `e:${it.i}`;
+        const f = R(specs[it.i][it.end === "s" ? "tgt" : "src"]), c = v ? f.y + f.h / 2 : f.x + f.w / 2;
+        if (!slots.has(key)) slots.set(key, { items: [], sum: 0, n: 0 });
+        const sl = slots.get(key); sl.items.push(it); sl.sum += c; sl.n++;
+      }
+      const list = [...slots.values()].map((sl) => ({ ...sl, cross: sl.sum / sl.n })).sort((A, B) => A.cross - B.cross);
+      const n = list.length;
+      list.forEach((sl, j) => {
+        const f = n === 1 ? 0.5 : (j + 1) / (n + 1);
+        for (const it of sl.items) { if (it.end === "s") { frac[it.i].s = f; frac[it.i].sSole = n === 1; } else { frac[it.i].t = f; frac[it.i].tSole = n === 1; } }
+      });
+    }
+
+    specs.forEach((e, i) => this._emitEdge(e, desc[i], frac[i]));
   }
 
-  _emitEdge({ src, tgt, label = "", opts = {} }, p) {
+  _emitEdge({ src, tgt, label = "", opts = {} }, d, fr) {
     const { dash = false, flow = false, rounded = false, stroke = THEME.edge.stroke, style = "" } = opts;
     let st = `edgeStyle=orthogonalEdgeStyle;html=1;rounded=${rounded ? 1 : 0};jettySize=auto;orthogonalLoop=1;jumpStyle=arc;jumpSize=8;fontSize=10;fontColor=${THEME.edge.fontColor};strokeColor=${stroke};strokeWidth=${THEME.edge.strokeWidth};`;
     if (dash) st += "dashed=1;";
     if (flow) st += "flowAnimation=1;";          // animated moving dashes in draw.io / SVG (not PNG)
     if (label) st += `labelBackgroundColor=${THEME.edge.labelBg};`;
-    if (p) {
-      const r3 = (v) => +(+v).toFixed(3);
-      const pt = (side, f) => (side === "L" ? { x: 0, y: f } : side === "R" ? { x: 1, y: f } : side === "T" ? { x: f, y: 0 } : { x: f, y: 1 });
-      const ps = pt(p.sSide, r3(p.sf)), pe = pt(p.tSide, r3(p.tf));
-      st += `exitX=${ps.x};exitY=${ps.y};exitDx=0;exitDy=0;entryX=${pe.x};entryY=${pe.y};entryDx=0;entryDy=0;`;
+    let wpXml = "";
+    if (d && !d.raw) {
+      const a = this.R[src], b = this.R[tgt], r3 = (v) => +(+v).toFixed(3);
+      const port = (side, f) => (side === "L" ? { ex: 0, ey: f } : side === "R" ? { ex: 1, ey: f } : side === "T" ? { ex: f, ey: 0 } : { ex: f, ey: 1 });
+      const sp = port(d.exitSide, fr.s), tp = port(d.entrySide, fr.t);
+      const sx = a.x + sp.ex * a.w, sy = a.y + sp.ey * a.h, tx = b.x + tp.ex * b.w, ty = b.y + tp.ey * b.h;
+      const exitH = d.exitSide === "L" || d.exitSide === "R", entryH = d.entrySide === "L" || d.entrySide === "R";
+      const straight = !d.bundle && !d.around && fr.sSole && fr.tSole && exitH === entryH && (exitH ? Math.abs(sy - ty) < 6 : Math.abs(sx - tx) < 6);
+      let pts = [];
+      if (!straight) {
+        const laneX = d.lane != null ? Math.round(d.lane) : Math.round((a.x + a.w <= b.x ? a.x + a.w + b.x : b.x + b.w + a.x) / 2);
+        const laneY = d.lane != null ? Math.round(d.lane) : Math.round((a.y + a.h <= b.y ? a.y + a.h + b.y : b.y + b.h + a.y) / 2);
+        if (exitH && entryH) pts = [{ x: laneX, y: Math.round(sy) }, { x: laneX, y: Math.round(ty) }];
+        else if (!exitH && !entryH) pts = [{ x: Math.round(sx), y: laneY }, { x: Math.round(tx), y: laneY }];
+        else if (exitH) pts = [{ x: Math.round(tx), y: Math.round(sy) }];   // horizontal out → vertical in
+        else pts = [{ x: Math.round(sx), y: Math.round(ty) }];              // vertical out → horizontal in
+      }
+      st += `exitX=${sp.ex};exitY=${r3(sp.ey)};exitDx=0;exitDy=0;entryX=${tp.ex};entryY=${r3(tp.ey)};entryDx=0;entryDy=0;`;
+      wpXml = pts.length ? `<Array as="points">${pts.map((p) => `<mxPoint x="${p.x}" y="${p.y}"/>`).join("")}</Array>` : "";
     }
     if (style) st += style.endsWith(";") ? style : style + ";";   // explicit override appended last (wins)
-    this.cells.push(`<mxCell id="ed${++this.eid}" value="${esc(label)}" style="${st}" edge="1" parent="1" source="${src}" target="${tgt}"><mxGeometry relative="1" as="geometry"/></mxCell>`);
+    this.cells.push(`<mxCell id="ed${++this.eid}" value="${esc(label)}" style="${st}" edge="1" parent="1" source="${src}" target="${tgt}"><mxGeometry relative="1" as="geometry">${wpXml}</mxGeometry></mxCell>`);
+  }
+
+  /** If a sibling node sits in the straight vertical path between two same-column nodes, return an x just
+   *  past it so the edge routes AROUND (a clean C-bracket) instead of cutting through. Else null. */
+  _aroundLaneX(a, b) {
+    const xr0 = Math.max(a.x, b.x), xr1 = Math.min(a.x + a.w, b.x + b.w);
+    if (xr1 - xr0 < 12) return null;
+    const gTop = Math.min(a.y + a.h, b.y + b.h), gBot = Math.max(a.y, b.y);
+    if (gBot - gTop < 8) return null;
+    const holds = (p, q) => q.x >= p.x - 2 && q.y >= p.y - 2 && q.x + q.w <= p.x + p.w + 2 && q.y + q.h <= p.y + p.h + 2;
+    let right = Math.max(a.x + a.w, b.x + b.w), blocked = false;
+    for (const id in this.R) {
+      const n = this.R[id];
+      if (n === a || n === b || n.w <= 2 || n.h <= 2 || holds(n, a) || holds(n, b)) continue;
+      const ov = Math.min(n.x + n.w, xr1) - Math.max(n.x, xr0);
+      if (ov > 6 && n.y < gBot - 4 && n.y + n.h > gTop + 4) { blocked = true; right = Math.max(right, n.x + n.w); }
+    }
+    return blocked ? Math.round(right + 22) : null;
+  }
+
+  /** Horizontal analog of _aroundLaneX: a sibling node in the straight horizontal path → return a y above it. */
+  _aroundLaneY(a, b) {
+    const yr0 = Math.max(a.y, b.y), yr1 = Math.min(a.y + a.h, b.y + b.h);
+    if (yr1 - yr0 < 12) return null;
+    const gL = Math.min(a.x + a.w, b.x + b.w), gR = Math.max(a.x, b.x);
+    if (gR - gL < 8) return null;
+    const holds = (p, q) => q.x >= p.x - 2 && q.y >= p.y - 2 && q.x + q.w <= p.x + p.w + 2 && q.y + q.h <= p.y + p.h + 2;
+    let top = Math.min(a.y, b.y), blocked = false;
+    for (const id in this.R) {
+      const n = this.R[id];
+      if (n === a || n === b || n.w <= 2 || n.h <= 2 || holds(n, a) || holds(n, b)) continue;
+      const ov = Math.min(n.y + n.h, yr1) - Math.max(n.y, yr0);
+      if (ov > 6 && n.x < gR - 4 && n.x + n.w > gL + 4) { blocked = true; top = Math.min(top, n.y); }
+    }
+    return blocked ? Math.round(top - 22) : null;
   }
 
   // reusable layout helpers
