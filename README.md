@@ -14,15 +14,18 @@ Exposed to the AI as an **MCP server** and runnable directly as a **CLI**.
 
 ## Showcase
 
-Generated end-to-end by the kit — no hand-placed coordinates, real stencils, validated, vision-checked.
+One diagram per platform — all generated end-to-end by the kit: no hand-placed coordinates, real stencils, validated, vision-checked. Full set in [`examples/`](examples/).
 
-**Multi-AZ workload layer** — AZ private-subnet columns · pods on EC2 worker nodes · per-app cross-AZ `clusterBox` · GitOps band:
-
-![Multi-AZ workload layer](docs/preview-multiaz.png)
-
-**Multi-account Landing Zone (hub-and-spoke)** — Network account + Transit Gateway · Ingress/Inspection/Egress VPCs · workload spokes · hybrid · governance:
-
-![Landing Zone — To-Be](docs/preview-landingzone.png)
+<table>
+  <tr>
+    <td width="50%" valign="top"><b>AWS</b> — multi-account landing zone (Organizations · Control Tower · OUs)<br><img src="docs/preview-aws.png" alt="AWS multi-account landing zone"></td>
+    <td width="50%" valign="top"><b>Azure</b> — CAF hub-spoke landing zone (Management Groups → Subscriptions → VNets)<br><img src="docs/preview-azure.png" alt="Azure hub-spoke landing zone"></td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top"><b>GCP</b> — Shared VPC landing zone (Folder → host + service projects)<br><img src="docs/preview-gcp.png" alt="GCP Shared VPC landing zone"></td>
+    <td width="50%" valign="top"><b>Databricks</b> — Data Intelligence Platform (medallion · Unity Catalog · open storage)<br><img src="docs/preview-databricks.png" alt="Databricks Data Intelligence Platform"></td>
+  </tr>
+</table>
 
 ## Quick start
 
