@@ -16,16 +16,29 @@ Exposed to the AI as an **MCP server** and runnable directly as a **CLI**.
 
 One diagram per platform — all generated end-to-end by the kit: no hand-placed coordinates, real stencils, validated, vision-checked. Full set in [`examples/`](examples/).
 
-<table>
-  <tr>
-    <td width="50%" valign="top"><b>AWS</b> — Multi-AZ workload layer (EKS pods · cross-AZ clusterBox · Kafka · GitOps)<br><img src="docs/preview-multiaz.png" alt="AWS Multi-AZ workload layer"></td>
-    <td width="50%" valign="top"><b>Databricks</b> — Data Intelligence Platform (medallion · Unity Catalog · open storage)<br><img src="docs/preview-databricks.png" alt="Databricks Data Intelligence Platform"></td>
-  </tr>
-  <tr>
-    <td width="50%" valign="top"><b>Azure</b> — CAF hub-spoke landing zone (Management Groups → Subscriptions → VNets)<br><img src="docs/preview-azure.png" alt="Azure hub-spoke landing zone"></td>
-    <td width="50%" valign="top"><b>GCP</b> — Shared VPC landing zone (Folder → host + service projects)<br><img src="docs/preview-gcp.png" alt="GCP Shared VPC landing zone"></td>
-  </tr>
-</table>
+<p align="center">
+  <b>AWS — Multi-AZ workload layer</b><br>
+  <sub>EKS pods · cross-AZ clusterBox · Kafka · GitOps</sub><br>
+  <img src="docs/preview-multiaz.png" height="460" alt="AWS Multi-AZ workload layer">
+</p>
+
+<p align="center">
+  <b>Databricks — Data Intelligence Platform</b><br>
+  <sub>medallion · Unity Catalog · open storage · BI consumers</sub><br>
+  <img src="docs/preview-databricks.png" height="460" alt="Databricks Data Intelligence Platform">
+</p>
+
+<p align="center">
+  <b>Azure — CAF hub-spoke landing zone</b><br>
+  <sub>Management Groups → Subscriptions → VNets</sub><br>
+  <img src="docs/preview-azure.png" height="460" alt="Azure hub-spoke landing zone">
+</p>
+
+<p align="center">
+  <b>GCP — Shared VPC landing zone</b><br>
+  <sub>Folder → host + service projects</sub><br>
+  <img src="docs/preview-gcp.png" height="460" alt="GCP Shared VPC landing zone">
+</p>
 
 ## Quick start
 
