@@ -18,12 +18,12 @@ One diagram per platform — all generated end-to-end by the kit: no hand-placed
 
 <table>
   <tr>
-    <td width="50%" valign="top"><b>AWS</b> — multi-account landing zone (Organizations · Control Tower · OUs)<br><img src="docs/preview-aws.png" alt="AWS multi-account landing zone"></td>
-    <td width="50%" valign="top"><b>Azure</b> — CAF hub-spoke landing zone (Management Groups → Subscriptions → VNets)<br><img src="docs/preview-azure.png" alt="Azure hub-spoke landing zone"></td>
+    <td width="50%" valign="top"><b>AWS</b> — Multi-AZ workload layer (EKS pods · cross-AZ clusterBox · Kafka · GitOps)<br><img src="docs/preview-multiaz.png" alt="AWS Multi-AZ workload layer"></td>
+    <td width="50%" valign="top"><b>Databricks</b> — Data Intelligence Platform (medallion · Unity Catalog · open storage)<br><img src="docs/preview-databricks.png" alt="Databricks Data Intelligence Platform"></td>
   </tr>
   <tr>
+    <td width="50%" valign="top"><b>Azure</b> — CAF hub-spoke landing zone (Management Groups → Subscriptions → VNets)<br><img src="docs/preview-azure.png" alt="Azure hub-spoke landing zone"></td>
     <td width="50%" valign="top"><b>GCP</b> — Shared VPC landing zone (Folder → host + service projects)<br><img src="docs/preview-gcp.png" alt="GCP Shared VPC landing zone"></td>
-    <td width="50%" valign="top"><b>Databricks</b> — Data Intelligence Platform (medallion · Unity Catalog · open storage)<br><img src="docs/preview-databricks.png" alt="Databricks Data Intelligence Platform"></td>
   </tr>
 </table>
 
