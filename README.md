@@ -16,29 +16,7 @@ Exposed to the AI as an **MCP server** and runnable directly as a **CLI**.
 
 One diagram per platform — all generated end-to-end by the kit: no hand-placed coordinates, real stencils, validated, vision-checked. Full set in [`examples/`](examples/).
 
-<p align="center">
-  <b>AWS — Multi-AZ workload layer</b><br>
-  <sub>EKS pods · cross-AZ clusterBox · Kafka · GitOps</sub><br>
-  <img src="docs/preview-multiaz.png" height="460" alt="AWS Multi-AZ workload layer">
-</p>
-
-<p align="center">
-  <b>Databricks — Data Intelligence Platform</b><br>
-  <sub>medallion · Unity Catalog · open storage · BI consumers</sub><br>
-  <img src="docs/preview-databricks.png" height="460" alt="Databricks Data Intelligence Platform">
-</p>
-
-<p align="center">
-  <b>Azure — CAF hub-spoke landing zone</b><br>
-  <sub>Management Groups → Subscriptions → VNets</sub><br>
-  <img src="docs/preview-azure.png" height="460" alt="Azure hub-spoke landing zone">
-</p>
-
-<p align="center">
-  <b>GCP — Shared VPC landing zone</b><br>
-  <sub>Folder → host + service projects</sub><br>
-  <img src="docs/preview-gcp.png" height="460" alt="GCP Shared VPC landing zone">
-</p>
+<p align="center"><img src="docs/gallery.png" width="900" alt="Gallery — AWS Multi-AZ · Databricks Data Intelligence Platform · Azure hub-spoke landing zone · GCP Shared VPC landing zone"></p>
 
 ## Quick start
 
