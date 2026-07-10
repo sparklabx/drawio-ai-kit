@@ -93,3 +93,21 @@ test("workflowText mentions drawio-ai root for importing the engine", () => {
   const txt = workflowText();
   assert.ok(/drawio-ai root/.test(txt), "must mention drawio-ai root");
 });
+
+// Drift-proof: every name the workflow's import snippet tells an agent to import must actually
+// be exported by that module. This is the bug class where the snippet said
+// `import { group } from "core.mjs"` while group lives in layout-engine.mjs — agents following
+// the "source of truth" workflow then crash on line 1.
+test("workflowText import snippet names only real exports", async () => {
+  const txt = workflowText();
+  const imports = [...txt.matchAll(/import\s*\{([^}]+)\}\s*from\s*"[^"]*\/src\/([a-z-]+\.mjs)"/g)];
+  assert.ok(imports.length >= 2, "workflow must show engine import lines");
+  for (const [, names, file] of imports) {
+    const mod = await import(join(packageRoot(), "src", file));
+    for (const raw of names.split(",")) {
+      const name = raw.trim().split(/\s+as\s+/)[0].trim();
+      if (!name) continue;
+      assert.ok(name in mod, `workflow snippet imports "${name}" from ${file}, which does not export it`);
+    }
+  }
+});

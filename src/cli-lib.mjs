@@ -120,14 +120,19 @@ export function workflowText() {
   return `# Shared Workflow: drawio-ai diagram generation
 
 ## 1. Import the engine
-\`\`\`js
-import { loadCatalog, searchIcon, getIcon, group, icon, renderTree } from "$(drawio-ai root)/src/core.mjs";
-import { Diagram } from "$(drawio-ai root)/src/builder.mjs";
-import { parent, icon as layoutIcon, renderTree as layoutRender } from "$(drawio-ai root)/src/layout-engine.mjs";
+Resolve the Kit's install dir once (shell), then import by that absolute path:
+\`\`\`bash
+ROOT="$(drawio-ai root)"   # absolute path to the installed Kit
 \`\`\`
+\`\`\`js
+import { Diagram } from "<ROOT>/src/builder.mjs";
+import { group, frame, grid, icon, box, renderTree } from "<ROOT>/src/layout-engine.mjs";
+import { loadCatalog, searchIcon } from "<ROOT>/src/core.mjs";   // optional: in-process icon lookup
+\`\`\`
+(Replace \`<ROOT>\` with the path \`drawio-ai root\` printed — shell substitution does not run inside JS strings.)
 
 ## 2. Build the diagram
-Construct the diagram using the declarative layout engine (parent/group/icon nodes). Each node gets absolute coordinates — never hardcode layout; use the layout engine.
+Declare the nested structure with \`group\`/\`frame\`/\`grid\` + \`icon\`/\`box\`, then \`renderTree(d, tree)\` computes every x/y/w/h — never hand-write coordinates. Add edges with \`d.link(source, target, label)\`.
 
 ## 3. Validate
 Run \`drawio-ai validate <file>\` on the generated XML. Fix any errors before proceeding.

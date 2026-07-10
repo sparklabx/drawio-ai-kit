@@ -101,7 +101,13 @@ switch (cmd) {
     const base = join(__dirname, "..", "rules");
     const read = (f) => readFileSync(join(base, f), "utf8");
     const cats = () => "\n\n## Icon groups available in the catalog\n" + JSON.stringify(listCategories(catalog), null, 2);
+    const MODES = ["aws", "azure", "gcp", "databricks", "bpmn"];
     const mode = flags.mode || "aws";
+    if (!MODES.includes(mode)) {
+      // hard error — silently serving AWS rules for a typo'd mode hands an agent the wrong cloud's rules
+      console.error(`Unknown --mode "${mode}". Valid modes: ${MODES.join(", ")}.`);
+      process.exit(1);
+    }
     if (mode === "bpmn") {
       process.stdout.write(read("bpmn.md") + "\n\n---\n\n## Shared layout principles (apply to BPMN too)\n" + read("principles.md") + "\n\n## Shape groups in the catalog\n" + JSON.stringify(listCategories(catalog), null, 2));
     } else {
