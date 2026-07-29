@@ -36,8 +36,8 @@ export const THEME = {
 
   fontColor: "light-dark(#1B2733,#CFE0F0)",   // theme-aware text
   edge: {
-    stroke: "light-dark(#2D6A9F,#5B9BD5)",    // calm blue — the signature edge color
-    strokeWidth: 2,
+    stroke: "light-dark(#1A1A1A,#E0E0E0)",    // black (light) / near-white (dark) — thin neutral edges
+    strokeWidth: 1,
     fontColor: "light-dark(#1B2733,#CFE0F0)",
     labelBg: "light-dark(#FFFFFF,#0B0F14)",
   },

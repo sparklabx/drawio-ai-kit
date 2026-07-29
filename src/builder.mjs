@@ -546,7 +546,7 @@ export class Diagram {
   }
 
   _emitEdge({ src, tgt, label = "", opts = {} }, r, fr, geom) {
-    const { dash = false, flow = false, rounded = false, stroke = THEME.edge.stroke, style = "" } = opts;
+    const { dash = false, flow = false, rounded = false, stroke = THEME.edge.stroke, style = "", step = null } = opts;
     let st = `edgeStyle=orthogonalEdgeStyle;html=1;rounded=${rounded ? 1 : 0};jettySize=auto;orthogonalLoop=1;fontSize=10;fontColor=${THEME.edge.fontColor};strokeColor=${stroke};strokeWidth=${THEME.edge.strokeWidth};`;
     if (dash) st += "dashed=1;";
     if (flow) st += "flowAnimation=1;";          // animated moving dashes in draw.io / SVG (not PNG)
@@ -568,7 +568,15 @@ export class Diagram {
       wpXml = (!freeze || !g.wp.length) ? "" : `<Array as="points">${g.wp.map((q) => `<mxPoint x="${Math.round(q.x)}" y="${Math.round(q.y)}"/>`).join("")}</Array>`;
     }
     if (style) st += style.endsWith(";") ? style : style + ";";
-    this.cells.push(`<mxCell id="ed${++this.eid}" value="${esc(label)}" style="${st}" edge="1" parent="1" source="${src}" target="${tgt}"><mxGeometry relative="1" as="geometry">${wpXml}</mxGeometry></mxCell>`);
+    const eid = `ed${++this.eid}`;
+    this.cells.push(`<mxCell id="${eid}" value="${esc(label)}" style="${st}" edge="1" parent="1" source="${src}" target="${tgt}"><mxGeometry relative="1" as="geometry">${wpXml}</mxGeometry></mxCell>`);
+    // Numbered step badge: a filled circle riding near the edge's source end (the AWS
+    // reference-diagram convention for a request walkthrough). Parented to the edge, non-connectable,
+    // so it moves with the line and the router/validator treat it as a label, not a node.
+    if (step != null) {
+      const bs = `text;html=1;shape=ellipse;perimeter=ellipsePerimeter;fillColor=${THEME.edge.stroke};strokeColor=none;fontColor=#FFFFFF;fontStyle=1;fontSize=11;verticalAlign=middle;align=center;`;
+      this.cells.push(`<mxCell id="${eid}_n" value="${esc(String(step))}" style="${bs}" vertex="1" connectable="0" parent="${eid}"><mxGeometry x="-0.7" relative="1" width="22" height="22" as="geometry"><mxPoint x="-11" y="-11" as="offset"/></mxGeometry></mxCell>`);
+    }
   }
 
   // reusable layout helpers
