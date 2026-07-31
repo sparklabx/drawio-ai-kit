@@ -39,11 +39,11 @@ const tree = phantom("root", "", { dir: "row", gap: 70, align: "center", header:
 renderTree(d, tree, [40, 90]);
 d.title("VPC Multi-AZ 3-tier — type: network (AZ = columns; VPC wraps them; subnets are tiers)");
 
-d.link("users", "igw", "HTTPS");
-d.link("igw", "alb");
-d.link("alb", "ec2_a", "", { role: "fanout" });
+d.link("users", "igw", "HTTPS", { step: 1 });
+d.link("igw", "alb", "forward", { step: 2 });
+d.link("alb", "ec2_a", "route", { step: 3, role: "fanout" });
 d.link("alb", "ec2_b", "", { role: "fanout" });
-d.link("ec2_a", "rds_a");
+d.link("ec2_a", "rds_a", "query", { step: 4 });
 d.link("ec2_b", "rds_b");
 d.link("rds_a", "rds_b", "Multi-AZ replication", { dash: true }); // AZs side by side → horizontal dashed link
 

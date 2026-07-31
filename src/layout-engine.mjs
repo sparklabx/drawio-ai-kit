@@ -149,6 +149,12 @@ function measureContainer(n) {
     n.w = p * 2 + sum((c) => c.w) + eg * Math.max(0, ch.length - 1);
     n.h = head + p * 2 + max((c) => c.h);
   } else { // col
+    // Equal-width siblings: stretch each group frame in a column up to the widest sibling, so
+    // stacked frames (e.g. subnet tiers) share left/right edges. Only `group` — it re-places its
+    // children to fill the new width; grid/pool have self-computed internal geometry that a forced
+    // outer width would leave a gap inside, and leaf icons/boxes keep their natural size.
+    const maxW = max((c) => c.w);
+    for (const c of ch) if (c.kind === "group") c.w = Math.max(c.w, maxW);
     n.w = p * 2 + max((c) => c.w);
     n.h = head + p * 2 + sum((c) => c.h) + eg * Math.max(0, ch.length - 1);
   }
@@ -181,21 +187,22 @@ function pGroup(n) {
   const innerX = n.x + n.pad, innerTop = n.y + n.header + n.pad;
   const innerW = n.w - n.pad * 2, innerH = n.h - n.header - n.pad * 2;
   const eg = Math.max(n.gap, n.routeGap ?? 0);
-  if (n.dir === "row") {
-    // centre the whole row within innerW so content stays centred when the frame is widened
-    // by a long label or a wider sibling row; collapses to left-align when it fills the width.
-    const totalW = n.children.reduce((s, c) => s + c.w, 0) + eg * Math.max(0, n.children.length - 1);
-    let cx = innerX + Math.max(0, (innerW - totalW) / 2);
-    for (const c of n.children) {
-      const cy = n.align === "top" ? innerTop : innerTop + (innerH - c.h) / 2;
-      place(c, cx, cy); cx += c.w + eg;
-    }
-  } else {
-    let cy = innerTop;
-    for (const c of n.children) {
-      const cx = n.align === "left" ? innerX : innerX + (innerW - c.w) / 2;
-      place(c, cx, cy); cy += c.h + eg;
-    }
+  // Distribute-to-fill: when a frame is stretched past its content (by equal-height/equal-width or a
+  // long label), spread the SLACK evenly between children (space-between) instead of clustering them
+  // with dead space. This makes 2 small blocks span the same extent as a big sibling (nested balance)
+  // and removes the empty margins. Not stretched → slack≈0 → behaves like the old fixed-gap layout.
+  // Extra spacing from slack is CAPPED at one base gap (max gap = 2×eg), then the moderately-filled
+  // cluster is CENTRED. Fills the dead space enough to look intentional without blowing a stretched
+  // frame into a sparse void — compact beats fully-spread once slack is large.
+  const ch = n.children, k = ch.length, sizes = ch.map((c) => n.dir === "row" ? c.w : c.h);
+  const sumSz = sizes.reduce((s, v) => s + v, 0);
+  const inner = n.dir === "row" ? innerW : innerH;
+  const gap = k > 1 ? eg + Math.min(eg, Math.max(0, (inner - sumSz - eg * (k - 1)) / (k - 1))) : eg;
+  const span = sumSz + gap * Math.max(0, k - 1);
+  let cur = (n.dir === "row" ? innerX : innerTop) + Math.max(0, (inner - span) / 2);   // centre the filled cluster
+  for (const c of ch) {
+    if (n.dir === "row") { place(c, cur, n.align === "top" ? innerTop : innerTop + (innerH - c.h) / 2); cur += c.w + gap; }
+    else { place(c, n.align === "left" ? innerX : innerX + (innerW - c.w) / 2, cur); cur += c.h + gap; }
   }
 }
 /** Emit a pool: container frame + faint lane bands + lane/phase labels + flow-object children on top.
