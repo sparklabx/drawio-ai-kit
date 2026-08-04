@@ -7,9 +7,18 @@ Goal: draw.io XML with **correct stencil names**, **clean layout**, and a **read
 - **Match a template first.** If the request fits an archetype with a template (the "Templates" table in `diagram-types.md` has exact `examples/<domain>/*.mjs` paths), open that file, reproduce its structure, and run the **Reproduction loop** there. Don't free-hand a pattern a template already encodes.
 - **Look up every icon via `search_icon`** — do NOT recall or invent stencil names. Batch all lookups for the diagram in ONE call: `drawio-ai search "s3, lambda, nat gateway"`. Build with `icon("<name>")` using the returned `name`.
 
-## 1. Sizing & alignment
+## 1. Density & compactness — pack, don't scatter (DEFAULT)
 
-The layout engine computes all x/y, spacing, row/column alignment, and sibling-height equalization automatically; icon sizes and `aspect=fixed` come from the catalog. Your call: **do not stretch a giant full-width banner** — size elements to their content, and don't mix many icon sizes in one diagram.
+The engine computes all x/y, spacing, alignment, and sibling-size equalization; icon sizes/`aspect=fixed` come from the catalog. But it can only lay out the structure you declare — the #1 quality failure is a **sparse** sheet where every service floats alone in its own big frame. Diagrams must read **dense by default**. Structure for that:
+
+- **Group related services into ONE labelled box, packed as a grid.** A functional area (Ingestion, Storage, Compute, Governance, Serving, AI/ML…) is a single `grid(id, null, "<Area>", { cols: 3, gap: 14, pad: 12 }, [icon, icon, …])` — NOT one `frame`/`group` per icon. **3–8 icons per area box is normal.**
+- **Never give a wide/tall frame a single centered icon** — it renders as a big empty box. Either pack more services in, or drop the frame and place the icon directly.
+- **Hug content:** inside a packed box use tight gaps (`gap: 12–16`) and let it size to its grid; do not hand-set oversized widths, and don't stretch a giant full-width banner.
+- **Few dense boxes beat many sparse ones.** Aim for a compact grid of labelled area-boxes, each full of icons — not a scattered field of lone icons.
+- Need per-component detail? Put a short caption `box` (or `note`) under the icon; keep the glyph normal-sized and the box tight — never inflate spacing to fill a page.
+- One consistent icon size per diagram (`new Diagram({ iconSize })` bumps them all if a page-embedded figure needs bigger glyphs).
+
+Sparsity is an **authoring** problem (one-icon-per-frame), not an engine limit — pack into grids and the engine hugs + balances the rest.
 
 ## 2. Flow direction
 

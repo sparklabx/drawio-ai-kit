@@ -31,7 +31,7 @@ export const box = (id, label = "", opts = {}) => {
 export const group = (id, gname, label = "", opts = {}, children = []) => ({
   kind: "group", id, gname: gname || null, label, children,
   dir: opts.dir ?? "row", gap: opts.gap ?? 30, pad: opts.pad ?? 24,
-  header: label ? (opts.header ?? 36) : (opts.header ?? 14),
+  header: label ? (opts.header ?? 36) : (opts.header ?? 0),   // no label → no dead title strip (issue #58)
   align: opts.align ?? "center", fill: opts.fill, stroke: opts.stroke,
   // cornerIcon: a catalog icon name drawn at the container's top-left (Azure/GCP frames — mimics the
   // corner icon baked into AWS group stencils; the label shifts right to sit next to it).
@@ -48,8 +48,10 @@ export const frame = (id, label, opts = {}, children = []) => group(id, null, la
  *  recursion). Use it to shape geometry without adding a visible frame (e.g. an alignment band). */
 export const phantom = (id, label = "", opts = {}, children = []) => ({
   kind: "phantom", id, gname: null, label, children,
-  dir: opts.dir ?? "row", gap: opts.gap ?? 30, pad: opts.pad ?? 24,
-  header: label ? (opts.header ?? 36) : (opts.header ?? 14),
+  // A phantom emits NO cell — with no label it must reserve NO pad/header, else the invisible wrapper
+  // silently pads the content (compounds across nested row/col wrappers — issue #58). Big waste win.
+  dir: opts.dir ?? "row", gap: opts.gap ?? 30, pad: opts.pad ?? (label ? 24 : 0),
+  header: label ? (opts.header ?? 36) : (opts.header ?? 0),
   align: opts.align ?? "center", fill: opts.fill, stroke: opts.stroke,
   cornerIcon: opts.cornerIcon ?? null, routeGap: opts.routeGap ?? 0,
 });
@@ -58,7 +60,7 @@ export const phantom = (id, label = "", opts = {}, children = []) => ({
 export const grid = (id, gname, label = "", opts = {}, children = []) => ({
   kind: "grid", id, gname: gname || null, label, children,
   cols: Math.max(1, opts.cols ?? 2), gap: opts.gap ?? 30, pad: opts.pad ?? 24,
-  header: label ? (opts.header ?? 36) : (opts.header ?? 14),
+  header: label ? (opts.header ?? 36) : (opts.header ?? 0),   // no label → no dead title strip (issue #58)
   fill: opts.fill, stroke: opts.stroke,
 });
 /** BPMN swimlane POOL: a sparse (lane, phase) grid. `lanes` = role labels (rows), `phases` = optional
@@ -107,8 +109,9 @@ export const onpremFrame = (id, label, children = [], opts = {}) =>
 // registry entry — no shared switch to edit. icon/box have place:null: place() still sets n.x/n.y
 // for every kind (the round happens unconditionally at the top).
 function mIcon(n) {
-  n.w = Math.max(96, Math.min(200, (n.label?.length ?? 0) * 7 + 24));
-  n.h = ICON + 34; // icon + label below
+  const s = n.size ?? ICON;
+  n.w = Math.max(96, s + 20, Math.min(200, (n.label?.length ?? 0) * 7 + 24)); // cell never narrower than the glyph
+  n.h = s + 34; // icon + label below
 }
 function mBox(n) { /* w,h provided */ }
 function mPool(n) {
@@ -246,7 +249,8 @@ function emitPool(d, n, parent) {
 
 // ---- emit: output to the Diagram builder ----
 function eIcon(d, n, parent) {
-  d.icon(n.id, n.name, [Math.round(n.x + (n.w - ICON) / 2), n.y], { parent, label: n.label });
+  const s = n.size ?? ICON;
+  d.icon(n.id, n.name, [Math.round(n.x + (n.w - s) / 2), n.y], { parent, label: n.label, size: s });
 }
 function eBox(d, n, parent) {
   if (n.style) { const r = d._put(n.id, parent, n.x, n.y, n.w, n.h, n.style, n.label); r.ob = true; return; }   // BPMN/curated shape: raw style, leaf obstacle
@@ -297,7 +301,13 @@ function place(n, x, y) {
 function emit(d, n, parent) { LAYOUT[n.kind].emit(d, n, parent); }
 
 /** Compute the layout for the tree + emit into Diagram d; auto-set the page to the actual size. */
+// Global icon size from the Diagram flows to every icon that didn't set its own — per-icon {size} wins.
+function applyIconSize(n, s) {
+  if (n.kind === "icon") n.size = n.size ?? s;
+  (n.children ?? []).forEach((c) => applyIconSize(c, s));
+}
 export function renderTree(d, root, [x = 40, y = 70] = []) {
+  if (d.iconSize && d.iconSize !== ICON) applyIconSize(root, d.iconSize);
   measure(root);
   place(root, x, y);
   emit(d, root, "1");
