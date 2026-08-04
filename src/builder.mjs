@@ -23,12 +23,13 @@ const insideKit = (dir, filename) => {
 export class Diagram {
   /** type: pipeline|hierarchy|network|hubspoke|hybrid|mesh|sequence
    *  contract: "scaffold" (default — drag-resilient, no waypoints) | "bake" (frozen waypoints). */
-  constructor(type = "pipeline", { title = "", page = [2000, 1200], contract = "scaffold" } = {}) {
+  constructor(type = "pipeline", { title = "", page = [2000, 1200], contract = "scaffold", iconSize = 48 } = {}) {
     if (contract !== "scaffold" && contract !== "bake")
       throw new Error(`Invalid contract "${contract}" — use "scaffold" or "bake".`);
     this.c = loadCatalog();
     this.type = type;
     this.contract = contract;
+    this.iconSize = iconSize;   // global icon glyph size; per-icon {size} overrides (issue #58)
     this.preset = typePreset(type);
     this.page = page;
     this.cells = [];
@@ -45,11 +46,11 @@ export class Diagram {
     this.cells.push(`<mxCell id="${id}" value="${esc(label)}" style="${style}" vertex="1" parent="${parent}"><mxGeometry x="${x - ox}" y="${y - oy}" width="${w}" height="${h}" as="geometry"/></mxCell>`);
     return this.R[id];
   }
-  /** AWS icon by catalog name (verbatim style). [x,y] = top-left corner (48×48 icon). */
-  icon(id, name, [x, y], { parent = "1", label = "" } = {}) {
+  /** AWS icon by catalog name (verbatim style). [x,y] = top-left corner; size defaults to 48. */
+  icon(id, name, [x, y], { parent = "1", label = "", size = 48 } = {}) {
     const s = styleForIcon(this.c, name);
     if (!s) throw new Error(`Icon not found in catalog: "${name}" — use search_icon to look up the correct name.`);
-    const r = this._put(id, parent, x, y, 48, 48, s.style, label); r.ob = true; return r;   // ob = leaf obstacle (router avoids)
+    const r = this._put(id, parent, x, y, size, size, s.style, label); r.ob = true; return r;   // ob = leaf obstacle (router avoids)
   }
   /** Small catalog icon at a container's top-left corner (for Azure/GCP frames — mimics the corner
    *  icon baked into AWS group stencils). Decorative but still an obstacle (ob:true) — an edge
@@ -574,8 +575,8 @@ export class Diagram {
     // reference-diagram convention for a request walkthrough). Parented to the edge, non-connectable,
     // so it moves with the line and the router/validator treat it as a label, not a node.
     if (step != null) {
-      const bs = `text;html=1;shape=ellipse;perimeter=ellipsePerimeter;fillColor=${THEME.edge.stroke};strokeColor=none;fontColor=#FFFFFF;fontStyle=1;fontSize=11;verticalAlign=middle;align=center;`;
-      this.cells.push(`<mxCell id="${eid}_n" value="${esc(String(step))}" style="${bs}" vertex="1" connectable="0" parent="${eid}"><mxGeometry x="-0.7" relative="1" width="22" height="22" as="geometry"><mxPoint x="-11" y="-11" as="offset"/></mxGeometry></mxCell>`);
+      const bs = `text;html=1;shape=ellipse;perimeter=ellipsePerimeter;fillColor=${THEME.edge.stroke};strokeColor=none;fontColor=#FFFFFF;fontStyle=1;fontSize=9;verticalAlign=middle;align=center;`;
+      this.cells.push(`<mxCell id="${eid}_n" value="${esc(String(step))}" style="${bs}" vertex="1" connectable="0" parent="${eid}"><mxGeometry x="-0.7" relative="1" width="16" height="16" as="geometry"><mxPoint x="-8" y="-8" as="offset"/></mxGeometry></mxCell>`);
     }
   }
 
