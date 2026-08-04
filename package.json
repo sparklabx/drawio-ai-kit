@@ -1,6 +1,6 @@
 {
   "name": "drawio-ai-kit",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A kit that helps an AI draw beautiful, correct draw.io diagrams: ground-truth AWS/Azure/GCP stencil catalogs, layout principles, and a validator. Exposed via the zero-dependency drawio-ai CLI.",
   "type": "module",
   "bin": {
