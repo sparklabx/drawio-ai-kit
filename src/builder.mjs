@@ -548,16 +548,33 @@ export class Diagram {
 
   _emitEdge({ src, tgt, label = "", opts = {} }, r, fr, geom) {
     const { dash = false, flow = false, rounded = false, stroke = THEME.edge.stroke, style = "", step = null } = opts;
+    // step:N → a plain "N. " number prefix on the edge label (the reference-diagram convention for a
+    // numbered walkthrough) — a small text tag, NOT a big filled circle on the line.
+    const lbl = step != null ? (label ? `${step}. ${label}` : `${step}.`) : label;
     let st = `edgeStyle=orthogonalEdgeStyle;html=1;rounded=${rounded ? 1 : 0};jettySize=auto;orthogonalLoop=1;fontSize=10;fontColor=${THEME.edge.fontColor};strokeColor=${stroke};strokeWidth=${THEME.edge.strokeWidth};`;
     if (dash) st += "dashed=1;";
     if (flow) st += "flowAnimation=1;";          // animated moving dashes in draw.io / SVG (not PNG)
-    if (label) st += `labelBackgroundColor=${THEME.edge.labelBg};`;
+    if (lbl) st += `labelBackgroundColor=${THEME.edge.labelBg};`;
     let wpXml = "";
     if (r && !r.raw) {
       const a = this.R[src], b = this.R[tgt], r3 = (v) => +(+v).toFixed(3);
       const g = geom(a, b, r, fr.s, fr.t);
       const port = (s, f) => s === "L" ? { x: 0, y: f } : s === "R" ? { x: 1, y: f } : s === "T" ? { x: f, y: 0 } : { x: f, y: 1 };
-      const ps = port(r.es, fr.s), pe = port(r.en, fr.t);
+      // Snap each port to the side its ADJACENT waypoint actually arrives from, so the terminal
+      // segment meets the icon edge head-on instead of piercing through it to a far-side port
+      // (the "arrow through the node" bug: cost search can pick a bottom entry while approaching
+      // from above). Only for bent edges — a straight edge connects aligned ports and can't pierce.
+      const clamp01 = (v) => Math.max(0.04, Math.min(0.96, v));
+      const snap = (n, adj, fb) => {
+        const inX = adj.x > n.x + 1 && adj.x < n.x + n.w - 1, inY = adj.y > n.y + 1 && adj.y < n.y + n.h - 1;
+        if (inX === inY) return fb;                                  // corner / ambiguous → trust the router
+        const cx = n.x + n.w / 2, cy = n.y + n.h / 2;
+        return inX ? { x: clamp01((adj.x - n.x) / n.w), y: adj.y <= cy ? 0 : 1 }
+                   : { x: adj.x <= cx ? 0 : 1, y: clamp01((adj.y - n.y) / n.h) };
+      };
+      const psR = port(r.es, fr.s), peR = port(r.en, fr.t);
+      const ps = g.wp.length ? snap(a, g.wp[0], psR) : psR;
+      const pe = g.wp.length ? snap(b, g.wp[g.wp.length - 1], peR) : peR;
       st += `exitX=${ps.x};exitY=${r3(ps.y)};exitDx=0;exitDy=0;entryX=${pe.x};entryY=${r3(pe.y)};entryDx=0;entryDy=0;`;
       // Contract fork: Scaffold omits waypoints (draw.io re-routes from pins on every edit);
       // Bake freezes the router's waypoints as absolute <mxPoint>s. Pins are emitted in BOTH.
@@ -565,19 +582,11 @@ export class Diagram {
       // midpoint, and only an explicit corridor waypoint keeps it centered on a straight segment;
       // (b) routes flagged r.freeze — a straight pin→pin re-route would clip a node the router
       // deliberately bent around. (The declarative API has no other way to satisfy the audits.)
-      const freeze = this.contract === "bake" || label || r.freeze;
+      const freeze = this.contract === "bake" || lbl || r.freeze;
       wpXml = (!freeze || !g.wp.length) ? "" : `<Array as="points">${g.wp.map((q) => `<mxPoint x="${Math.round(q.x)}" y="${Math.round(q.y)}"/>`).join("")}</Array>`;
     }
     if (style) st += style.endsWith(";") ? style : style + ";";
-    const eid = `ed${++this.eid}`;
-    this.cells.push(`<mxCell id="${eid}" value="${esc(label)}" style="${st}" edge="1" parent="1" source="${src}" target="${tgt}"><mxGeometry relative="1" as="geometry">${wpXml}</mxGeometry></mxCell>`);
-    // Numbered step badge: a filled circle riding near the edge's source end (the AWS
-    // reference-diagram convention for a request walkthrough). Parented to the edge, non-connectable,
-    // so it moves with the line and the router/validator treat it as a label, not a node.
-    if (step != null) {
-      const bs = `text;html=1;shape=ellipse;perimeter=ellipsePerimeter;fillColor=${THEME.edge.stroke};strokeColor=none;fontColor=#FFFFFF;fontStyle=1;fontSize=9;verticalAlign=middle;align=center;`;
-      this.cells.push(`<mxCell id="${eid}_n" value="${esc(String(step))}" style="${bs}" vertex="1" connectable="0" parent="${eid}"><mxGeometry x="-0.7" relative="1" width="16" height="16" as="geometry"><mxPoint x="-8" y="-8" as="offset"/></mxGeometry></mxCell>`);
-    }
+    this.cells.push(`<mxCell id="ed${++this.eid}" value="${esc(lbl)}" style="${st}" edge="1" parent="1" source="${src}" target="${tgt}"><mxGeometry relative="1" as="geometry">${wpXml}</mxGeometry></mxCell>`);
   }
 
   // reusable layout helpers
