@@ -75,14 +75,15 @@ const root = phantom("root", "Databricks MLOps — Dev · Staging · Production 
   [git, workspaces, uc, lake]);
 renderTree(d, root, [40, 70]);
 
-d.link("r_dev", "r_main", "Pull request to main", { flow: true });
-d.link("r_main", "r_rel", "Merge to release", { flow: true });
+// numbered dev → prod promotion tour; CI / logging / governance stay dashed & unnumbered
+d.link("r_dev", "r_main", "Pull request to main", { step: 1 });
+d.link("r_main", "r_rel", "Merge to release", { step: 2 });
 d.link("r_main", "unit", "CI trigger", { dash: true });
 d.link("git", "dev", "", { flow: true });
-d.link("cd", "prod", "Continuous Deployment", { flow: true });
+d.link("cd", "prod", "Continuous Deployment", { step: 3 });
 d.link("dev", "devcat", "Logging", { dash: true });
 d.link("stg", "stgcat", "Logging", { dash: true });
-d.link("m_dep", "prodcat", "Register · promote model", { flow: true });
+d.link("m_dep", "prodcat", "Register · promote model", { step: 4 });
 d.link("prodcat", "lake", "", { dash: true });
 
 const res = d.validate();

@@ -59,16 +59,17 @@ const root = phantom("root", "", { dir: "col", gap: 20, header: 0, align: "cente
 ]);
 renderTree(d, root, [40, 60]);
 
+// sources fan into ingestion; the medallion → serve spine carries the numbered flow
 d.link("kafka", "lfc", "", { role: "fanout" });
 d.link("oltp", "lfc", "", { role: "fanout" });
 d.link("files", "stream", "", { flow: true });
-d.link("lfc", "bronze", "", { flow: true });
 d.link("stream", "bronze", "", { flow: true });
-d.link("bronze", "silver", "", { flow: true });
-d.link("silver", "gold", "", { flow: true });
-d.link("gold", "dbsql", "", { role: "fanout" });
-d.link("gold", "mosaic", "", { role: "fanout" });
-d.link("dbsql", "bi", "", { flow: true });
+d.link("lfc", "bronze", "ingest", { step: 1 });
+d.link("bronze", "silver", "clean", { step: 2 });
+d.link("silver", "gold", "curate", { step: 3 });
+d.link("gold", "dbsql", "serve", { step: 4 });
+d.link("gold", "mosaic", "", { role: "fanout" });   // AI branch off the gold layer
+d.link("dbsql", "bi", "visualize", { step: 5 });
 d.link("unity", "med", "governs", { dash: true });
 
 const res = d.validate();
