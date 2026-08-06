@@ -8,22 +8,22 @@ import { group, frame, icon, stage, band, endpoint, phantom, renderTree } from "
 const d = new Diagram("pipeline");
 
 // each stage takes the i-th theme tint automatically; spine = first item (same row → straight)
-const ingest = stage("ing", 0, "1 · Ingest", [
+const ingest = stage("ing", 0, "Ingest", [
   icon("kds", "kinesis_data_streams", "Kinesis Data Streams"),
   icon("msk", "managed_streaming_for_kafka", "Amazon MSK"),
   icon("ds", "datasync", "AWS DataSync"),
 ]);
-const process = stage("pr", 1, "2 · Process", [
+const process = stage("pr", 1, "Process", [
   icon("emr", "emr", "Amazon EMR / Spark"),
   icon("glue", "glue", "AWS Glue (ETL)"),
   icon("lambda", "lambda", "Lambda"),
 ]);
-const store = stage("st", 2, "3 · Store", [
+const store = stage("st", 2, "Store", [
   icon("s3", "s3", "S3 (data lake)"),
   icon("redshift", "redshift", "Redshift"),
   icon("ddb", "dynamodb", "DynamoDB"),
 ]);
-const serve = stage("sv", 3, "4 · Serve", [
+const serve = stage("sv", 3, "Serve", [
   icon("athena", "athena", "Athena"),
   icon("os", "elasticsearch_service", "OpenSearch"),
   icon("qs", "quicksight", "QuickSight"),
@@ -54,10 +54,10 @@ d.title("Layered data analytics pipeline — type: pipeline");
 d.link("src", "kds", "stream", { role: "fanout" });
 d.link("src", "msk", "events", { role: "fanout" });
 d.link("src", "ds", "batch", { role: "fanout" });
-d.link("kds", "emr", "ingest", { flow: true });   // animated main flow (spine)
-d.link("emr", "s3", "process", { flow: true });
-d.link("s3", "athena", "query", { flow: true });
-d.link("athena", "cons", "results");
+d.link("kds", "emr", "ingest", { step: 1 });   // numbered main flow (spine)
+d.link("emr", "s3", "process", { step: 2 });
+d.link("s3", "athena", "query", { step: 3 });
+d.link("athena", "cons", "results", { step: 4 });
 d.link("s3", "os", "", { role: "fanout" });
 d.link("os", "cons", "search");
 d.link("qs", "cons", "dashboards");

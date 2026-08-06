@@ -84,11 +84,12 @@ const platform = frame("dip", "", { dir: "col", gap: 16, stroke: CORAL, align: "
 const root = phantom("root", "Databricks Data Intelligence Platform", { dir: "row", gap: 40, align: "top" }, [sources, ingest, platform, outputs]);
 renderTree(d, root, [40, 70]);
 
-d.link("src", "ing", "", { flow: true });
-d.link("ing", "landing", "", { flow: true });
-d.link("landing", "bronze", "", { flow: true });
-d.link("bronze", "silver", "", { flow: true });
-d.link("silver", "gold", "", { flow: true });
+// numbered spine: sources → ingestion → medallion refinement; gold then fans to serving
+d.link("src", "ing", "ingest", { step: 1 });
+d.link("ing", "landing", "land", { step: 2 });
+d.link("landing", "bronze", "", { step: 3 });
+d.link("bronze", "silver", "", { step: 4 });
+d.link("silver", "gold", "", { step: 5 });
 d.link("gold", "query", "", { role: "fanout" });
 d.link("gold", "dash", "", { role: "fanout" });
 d.link("serve", "out", "serve", { flow: true });
