@@ -7,6 +7,7 @@ import {
   packageRoot,
   findDrawioCli,
   buildRenderArgs,
+  pageIndexFor,
   workflowText,
   scaffoldSource,
 } from "../src/cli-lib.mjs";
@@ -75,6 +76,25 @@ test("findDrawioCli: returns null when nothing found", () => {
   const env = {};
   const deps = { existsSync: () => false, locateOnPath: () => "" };
   assert.equal(findDrawioCli(env, deps), null);
+});
+
+// --- pageIndexFor ---
+test("pageIndexFor: draw.io >= 27.0.2 numbers pages from 1", () => {
+  assert.equal(pageIndexFor("31.1.5", 0), 1);
+  assert.equal(pageIndexFor("27.0.2", 0), 1);
+  assert.equal(pageIndexFor("28.0.0", 2), 3);
+});
+
+test("pageIndexFor: older draw.io stays 0-based", () => {
+  assert.equal(pageIndexFor("27.0.1", 0), 0);
+  assert.equal(pageIndexFor("26.9.9", 0), 0);
+  assert.equal(pageIndexFor("21.6.5", 2), 2);
+});
+
+test("pageIndexFor: unknown version assumes modern 1-based", () => {
+  assert.equal(pageIndexFor(null, 0), 1);
+  assert.equal(pageIndexFor("", 0), 1);
+  assert.equal(pageIndexFor("not-a-version", 0), 1);
 });
 
 // --- buildRenderArgs ---

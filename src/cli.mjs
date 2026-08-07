@@ -21,7 +21,7 @@ import {
   auditAesthetics,
   listCategories,
 } from "./core.mjs";
-import { packageRoot, findDrawioCli, buildRenderArgs, workflowText, scaffoldSource } from "./cli-lib.mjs";
+import { packageRoot, findDrawioCli, buildRenderArgs, pageIndexFor, workflowText, scaffoldSource } from "./cli-lib.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -212,7 +212,13 @@ switch (cmd) {
       console.error("draw.io CLI not found. Set DRAWIO_CLI env var, install the draw.io desktop app, or use xvfb-run on headless Linux.");
       process.exit(1);
     }
-    const argv = buildRenderArgs({ file, out: outPath, scale, page });
+    let version = null;
+    try {
+      version = execFileSync(cli, ["--version"], { encoding: "utf8", timeout: 15000, stdio: ["ignore", "pipe", "ignore"] }).trim();
+    } catch {
+      version = null;   // unreadable → pageIndexFor() assumes a modern 1-based build
+    }
+    const argv = buildRenderArgs({ file, out: outPath, scale, page: pageIndexFor(version, page) });
     try {
       execFileSync(cli, argv, { encoding: "utf8", timeout: 60000, stdio: ["ignore", "pipe", "pipe"] });
     } catch (e) {

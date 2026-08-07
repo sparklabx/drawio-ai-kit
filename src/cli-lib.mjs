@@ -100,7 +100,22 @@ export function selectRouter(contract, dotAvailable) {
 }
 
 /**
+ * PURE: maps a 0-based page number onto the `-p` value the installed draw.io expects.
+ * draw.io numbers pages from 1 since 27.0.2 (0-based before), so `-p 0` fails on any
+ * current build with "Invalid page index: pages are numbered from 1". Pass the string
+ * from `drawio --version`; null/unparseable is treated as a modern (1-based) build.
+ */
+export function pageIndexFor(version, page = 0) {
+  const m = /(\d+)\.(\d+)\.(\d+)/.exec(String(version ?? ""));
+  if (!m) return page + 1;
+  const [maj, min, pat] = m.slice(1).map(Number);
+  const oneBased = maj > 27 || (maj === 27 && (min > 0 || (min === 0 && pat >= 2)));
+  return oneBased ? page + 1 : page;
+}
+
+/**
  * Builds the draw.io desktop CLI argv array for PNG rendering.
+ * `page` is the raw `-p` value — run it through pageIndexFor() first.
  */
 // ponytail: scale 1 — the vision API downscales anything wider than ~1568px anyway,
 // so scale 2 only buys ~600 extra image tokens per self-check read. Deliverable PNGs pass --scale 2.
