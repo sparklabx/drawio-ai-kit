@@ -42,6 +42,7 @@ Use real group shapes (`search_icon --kind group`) and nest them parent-child in
 - Service labels kept short: service name + (role).
 - **Limit to 3–4 font sizes** and keep label text **≤ 14px**; never jump to oversized (18+) titles inside the canvas — put a title in its own area.
 - Long notes/constraints go in a separate **note box**, never crammed into the icon label.
+- That is a *fallback for a note you already need* — not an invitation to add prose. People read a diagram by looking, not by reading paragraphs. If the arrows already say it, delete the note; if it is background detail, it belongs in the doc beside the diagram, not on the canvas.
 
 ## 6. Edges — meaning is *intentional*
 
@@ -50,6 +51,24 @@ The builder applies the edge style, corner rounding by role, connection-point pi
 - **Solid** = primary data/control flow; **dashed** = sync/dependency/policy enforcement/lineage. Color edges by source layer to trace them.
 - Double-headed arrows for bidirectional links (Direct Connect, metadata sync).
 - In **dense / error-handling diagrams add deliberate waypoints** to avoid line crossings and overlaps — don't rely purely on auto-route there.
+
+### Point at the thing, not the box
+
+Linking to a container is right when the frame holds **N replicas of one component** — one arrow to the border says "all of them". It is wrong when the frame holds **several different components**: an arrow landing on the border of a "Data plane" box holding three unrelated stores doesn't say which store it means. Point at the icon.
+
+### Keep fan-in to about three edges
+
+Arrowheads entering one node get spread along that face, so four or more stack into an unreadable smudge — and `role: "fanout"` does not help, it bundles the *source* side. Drop the least informative edge and put the claim in the frame's label instead, or split the target. Mixing solid and dashed among the survivors makes them separable at a glance.
+
+### Making a line actually straight
+
+An orthogonal edge is straight only when the two nodes share an axis, so you straighten it by **moving nodes**, not by re-routing. Three things bite, in this order:
+
+1. **Alignment.** Line the shared node's centre up with its main consumer's column. `band` and `grid` space children evenly and centre themselves, so they cannot put one child under a specific consumer — use a frame with invisible spacer boxes (`fill: "none", stroke: "none"`). You need a **leading** spacer too; trailing ones only push earlier children further left. Position is linear in the spacer widths, so measure once and solve — it converges in a single pass.
+2. **Shared faces.** Two edges entering the same face get spread apart. If the two corridors end up closer than the router's 16px separation it nudges one a few pixels off-axis, and the line ends up looking *almost* straight. Send one of them to a different face with `dir: "LR"` / `dir: "TB"`.
+3. **Frozen waypoints.** A **labelled** edge freezes its waypoints even under the scaffold contract, so that small nudge becomes permanent. Matching `exitX`/`entryX` is not proof of a straight line — check the emitted `<Array as="points">`. No points at all is the only guarantee.
+
+`dir` also decides which face an edge leaves and enters. When two edges are crammed into one corridor and there is open space nearby, `dir: "LR"` on one of them moves it to a side entry and frees the corridor — usually fewer bends as well.
 
 ## 7. Managed vs self-managed
 
@@ -63,3 +82,18 @@ Left: **sources/clients**. Center: the **cloud frame** holding the pipeline. Rig
 ## 9. Self-check
 
 Run `validate_diagram`; clear ALL `errors`, `warnings`, and `audit.advice` before delivering.
+
+### Measure the geometry — don't eyeball it
+
+"Looks tangled" is not a diagnosis, and staring at a render to guess which line is too long wastes cycles and is often wrong. Build once with `contract: "bake"` to freeze the waypoints, then read the geometry straight out of the XML and count two things per edge:
+
+- **bends** — every change of direction. 0 is straight, 1 is a clean L, 2+ is a jog.
+- **length vs the Manhattan minimum** (`|dx| + |dy|` between the two centres).
+
+Now the numbers tell you which problem you have. If the total excess over Manhattan is small but the individual *minimums* are large, the router is already doing its job and the **layout** is wrong — move the nodes closer. That is the same message as the `Long connector(s)` and `edge crossings` advice: reposition, don't re-route.
+
+Keep the numbers honest. Measure from the **ports**, not the node centres — the rendered line starts at `exitX`/`exitY`, so a centre-to-centre count will report an edge as straight when it visibly is not.
+
+### The metric is a guide, not the goal
+
+Sometimes the right change makes a number worse. Moving an edge out of a crowded corridor into open space can add a bend and still be clearly better to read. Prefer the diagram a person can follow, and say plainly when you traded a metric for it.

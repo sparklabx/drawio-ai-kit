@@ -41,6 +41,14 @@ Category colors: Compute/Containers `#ED7100` · Storage `#7AA116` · Database `
 
 - **Connect to the bounding box, not each replica.** When a multi-AZ stack is wrapped in a dashed `clusterBox` (the per-app / node-group / cluster frame that spans the AZs), point edges at the BOX's id — **one tidy arrow to the border** — instead of drawing a separate arrow to the same component's icon in every AZ. The frame already says "this is N replicas across the AZs", so a single edge to it reads cleanly; N arrows to N child icons just clutter. Create the `clusterBox`es **before** `d.link(...)` so the box ids exist as edge targets. (A genuine fan-out to *distinct* services still combs as usual — this rule is only about the per-AZ replicas of one stack.)
 
+## One icon can stand for many resources — say how many
+
+Collapsing five Lambdas behind one icon is fine. Letting the reader assume it is *one* Lambda is not — that is a wrong diagram, not a simplified one. Put the count in the label: `Documents API · 5 fns`, `Tags API · 4 fns`.
+
+Get the counts from the IaC, not from the route names. `grep -n 'new sst.aws.Function\|^resource "aws_lambda' ...` takes a second and is the difference between "19 functions" and a guess. A CRUD API is usually one function per verb, a queue consumer is usually its own function, and event adapters are usually separate again.
+
+Use the **deployed** resource name, not a friendly invention. If the stack names it `pipeline`, label it `Pipeline` — not `Pipeline worker`. Invented names are the kind of thing a reader will later search the console for and not find.
+
 ## Placement — keep edges short (avoid the "long detour" smell)
 
 The layout engine places by declared nesting; it does **not** move nodes to shorten edges. Put a node **next to what it talks to most**: shared resources (ECR, S3, CloudWatch, KMS) go in a **band immediately next to their consumers**, not a far-away bottom row. When validate flags **"Long connector(s)"** or **"edge crossings"**, both mean *reposition nodes*, not *reroute edges*.

@@ -130,3 +130,10 @@ catalog are authoritative; **never recolor AWS icons**.
 - [ ] Every icon came from `drawio-ai search` (category colors intact).
 - [ ] `drawio-ai render` vision self-check passed.
 - [ ] Output written under the user's project, not the Kit.
+- [ ] Counts are real: an icon standing for N resources says so, and the names match the deployed ones.
+- [ ] Every arrow ends on an icon, not on the border of a frame holding several different things.
+- [ ] No note box that the arrows already explain.
+
+If the layout still reads badly after that, stop eyeballing and measure — build with
+`contract: "bake"` and count bends and length-vs-Manhattan per edge from the XML
+(`principles.md` §9). The numbers say whether to move a node or leave it alone.
