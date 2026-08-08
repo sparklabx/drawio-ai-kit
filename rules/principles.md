@@ -69,7 +69,7 @@ Left: **sources/clients**. Center: the **cloud frame** holding the pipeline. Rig
 ## 9. Self-check
 
 - Run `validate_diagram`; clear ALL `errors`, `warnings`, and `audit.advice` before delivering.
-- **Render it and look at it — first, and every round.** `render` the PNG and `Read` it back. Your eyes catch what the rules can't name: crowding, a tangle, an area that reads wrong.
-- Vision has blind spots — a few-pixel overlap, a line that is only *almost* straight, which of two long edges is the worse one. When something looks off and you can't name it, measure as a **second** pass: build with `contract: "bake"` and read per-edge **bends** and **length vs the Manhattan minimum** (`|dx| + |dy|`) out of the XML. Measure from the **ports** (`exitX`/`exitY`), not node centres.
+- **Render it and look at it every round.** `render` the PNG and `Read` it back. Make sure it should aligned with your taste, intuitive visualize, no cluster or line, no orphan service node.
+- Measure using math and check manhattan rule to fix overlap line appear from your view above. Pass: build with `contract: "bake"` and read per-edge **bends** and **length vs the Manhattan minimum** (`|dx| + |dy|`) out of the XML. Measure from the **ports** (`exitX`/`exitY`). 
 - Read the numbers as a hint about *layout*: small total excess over Manhattan but large individual minimums means the router is fine and the nodes are in the wrong place — the same message as `Long connector(s)` / `edge crossings`.
 - The numbers are a guide, not the goal. A change that adds a bend but moves a line into open space is usually the better diagram; take it and say so.
