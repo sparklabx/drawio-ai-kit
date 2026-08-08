@@ -1,135 +1,64 @@
 ---
 name: drawio-aws
-version: 1.0.1
-description: Use when the user asks for an AWS architecture diagram — VPC/networking, event-driven, landing zone, multi-AZ, serverless pipeline, or any diagram built with AWS service icons. Builds with the declarative layout engine using ground-truth mxgraph.aws4 stencils, validates (stencils/colors/nesting/geometry), runs a render-based vision self-check. Default output is .drawio; PNG/SVG only on request.
+description: Use when the user asks for an AWS architecture diagram — VPC/networking, event-driven, landing zone, multi-AZ, serverless pipeline, or any diagram built with AWS service icons.
 license: MIT
 ---
 
 # Draw.io AWS
 
-Produce correct AWS architecture diagrams in draw.io. This skill is a thin
-frontend; the deterministic engine, validator, and rules live in the
-`drawio-ai-kit` package, reached via the `drawio-ai` CLI.
+Produce correct AWS architecture diagrams in draw.io. This skill is a thin frontend; the deterministic engine, validator, and rules live in the `drawio-ai-kit` package, reached via the `drawio-ai` CLI.
 
-## 0. Preflight — the CLI must be installed
+## Setup
 
 ```bash
 command -v drawio-ai >/dev/null 2>&1 || echo "Install the Kit first:  npm i -g github:sparklabx/drawio-ai-kit"
 ```
 
-If `drawio-ai` is **not** on PATH, stop and tell the user to run
-`npm i -g github:sparklabx/drawio-ai-kit`. **Never run `npm i -g` yourself** — nothing mutates the
-user's global environment without their say-so.
+If `drawio-ai` is not on PATH, stop and tell the user to run `npm i -g github:sparklabx/drawio-ai-kit`. Do not run `npm i -g` yourself.
 
-Before building, ask the user: **What is the source of truth for this diagram: the codebase, external research, or your description?** Do not infer it; skip the question only when the user has already stated it explicitly.
+Before building, ask the source of truth for this diagram: the codebase, external research, or your description? Do not infer it; skip the question only when the user has already stated it explicitly.
 
-## 1. Delegate the build (preferred when your harness supports it)
+## Workflow
 
-If your harness can spawn autonomous subagents that run shell commands AND read
-images (e.g. Claude Code's Task tool, a general-purpose agent), run the whole
-build loop in a subagent — the rules, icon searches, and every render/fix
-iteration then cost this conversation nothing. If it can't (or the subagent
-can't read images), skip to **Inline path** below — same loop, same rules.
+Spawn autonomous subagents that run shell commands and read images, run the whole build loop in a subagent. If it can't (or the subagent can't read images), skip to **Inline path** below.
 
-**Before spawning**, resolve what the subagent cannot ask about: diagram scope,
-output directory (absolute path under the user's project), filename. Run the
-preflight above yourself. For a multi-diagram request, spawn one subagent per
-diagram in parallel with distinct filenames.
+Resolve all the questions about diagram scope, output directory (absolute path under the user's project), and filename. Run the preflight above yourself before spawning subagens.
 
+For a multi-diagram request, spawn one subagent per diagram in parallel with distinct filenames.
 
-**Model routing** — if your harness lets you choose the subagent's model, route by
-task weight: a **fast/cheap tier** (Claude Haiku-class — must support vision) when
-the request matches a template from the rules' Templates table (reproduction is
-mechanical; the validator's advice strings teach every fix), your **default strong
-model** for free-hand or novel architectures. If a cheap subagent returns VALIDATE
-not ok or ITERATIONS > 3, respawn ONCE on the strong model before taking over
-inline. Multi-diagram requests: route each diagram independently.
-
-Subagent prompt (fill every `<...>`):
-
-```text
-Build an AWS architecture .drawio diagram with the drawio-ai CLI.
-Request: <user's request + clarifications, verbatim>
-Output: <ABS_PROJECT_DIR>/<NAME>.drawio — never write inside the Kit, never into cwd.
-Follow exactly:
-1. Set ROOT="$(drawio-ai root)". Read $ROOT/docs/api-cheatsheet.md — the full layout-engine
-   API in one file; never read library source.
-2. Run `drawio-ai workflow` and `drawio-ai principles --mode aws` — the source of
-   truth. (Fallback if a command is blocked: read $ROOT/rules/*.md directly.)
-3. Look up every icon with ONE batched `drawio-ai search "a, b, c"`; never recolor icons.
-4. Scaffold, don't write: `drawio-ai scaffold --list`, pick the closest template, then
-   `drawio-ai scaffold <name>.mjs -o <dir>/build.mjs` — the script arrives runnable
-   (absolute imports, self-validating, self-rendering with an issues list). Edit only the
-   deltas. If no template is close AND you'd change more than half of it, Write a new
-   script instead (keep the scaffold's self-check tail). Layout engine only
-   (group/frame/grid/icon/box + renderTree), NO hand-written coordinates.
-5. Each `node build.mjs` run prints validate JSON AND the render's machine-readable
-   `issues` list. Fix from THAT checklist — all issues in one Edit round — then re-run.
-   Loop until issues is empty.
-6. Only when issues is empty: Read the PNG once as final visual confirmation (list any
-   remaining visual problems, fix ALL in one round). Target <= 2 PNG reads total. Then
-   render once WITHOUT --check for the final deliverable PNG.
-Do NOT invoke any drawio skill — this prompt already contains the full procedure.
-Do not ask questions — make the standard choice and record it under ASSUMPTIONS.
-Return EXACTLY this block, nothing else:
-DRAWIO: <absolute path to .drawio>
-PNG: <absolute path to .png>
-VALIDATE: <verbatim final validate JSON>
-ICONS: <comma-separated icon names used>
-ITERATIONS: <number of render/fix cycles>
-SUMMARY: <one sentence describing the diagram>
-ASSUMPTIONS: <choices made without asking, or "none">
-```
-
-Relay `DRAWIO`, `PNG` and `SUMMARY` to the user verbatim; do NOT re-read the
-.drawio or PNG in this conversation — the subagent already ran the vision
-self-check. If `VALIDATE` is not ok, take over via the Inline path (the build
-.mjs and .drawio are on disk at the returned paths).
-
-## Inline path (no subagent support)
-
-### 1. Shared Workflow
+Using this for command for trigger bulding diagram pipeline:
 
 ```bash
 drawio-ai workflow
 ```
 
-Prints the build → validate → render → write-to-project-path loop every diagram
-follows. Read it; it is the source of truth for the process.
+This will Prints the build → validate → render → write-to-project-path loop every diagram follows. Read it as the source of truth for the process.
 
-### 2. Domain rules
+To get the AWS rules, shared principles, and catalog:
 
 ```bash
 drawio-ai principles --mode aws
 ```
 
-Returns the AWS rules + shared principles + catalog categories.
+Using this combine with **Self-check** criteria below to making assessment. Make sure the diagram is aligned with all the principles, rules. Loop and fix until all satisfied.
 
-### 3. Build with the engine, then validate + render
+Always read the PNG for a visual self-check. Always give feedback to the subagent to improve the diagram if its not aligned with your taste or **Self-check** criteria below.
 
-Resolve the Kit's install dir, then `import` the engine by absolute path (the
-Shared Workflow shows the exact pattern):
+Resolve the Kit's install dir, then `import` the engine by absolute path (the Shared Workflow shows the exact pattern):
 
 ```bash
 ROOT="$(drawio-ai root)"     # absolute path to the installed Kit
 ```
 
-Build with the declarative layout engine (NO hand-written coordinates), then:
-`drawio-ai validate <file>` → `drawio-ai render <file> -o <file>.png` (`Read`
-the PNG for the vision self-check) → write the `.drawio` to an **absolute path
-under the user's project** (never the Kit, never `cwd`).
+Build with the declarative layout engine (NO hand-written coordinates), then: `drawio-ai validate <file>` → `drawio-ai render <file> -o <file>.png` (`Read` the PNG for the vision self-check).
 
 ## Domain notes
 
-Container nesting order: `AWS Cloud → Region → VPC → AZ → Subnet → SG`.
-Managed/global services (CloudFront, Route 53, S3, DynamoDB, SQS/SNS)
-sit **outside** the VPC — they are not subnet-resident. Category colors from the
-catalog are authoritative; **never recolor AWS icons**.
+Diagram must contain container nesting group. Container nesting order: `AWS Cloud → Region → VPC → AZ → Subnet → SG`. If service inside the VPC, it must be placed within the appropriate subnet. Service does not nest inside VPC should not be placed inside the VPC. The order heirachy above does not strictly applied, but it is a good practice to follow. Some services might have multi-AZ but does not placed inside the VPC. Category colors from the catalog are authoritative; never recolor AWS icons.
 
-## 9. Self-check
+## Self-check
 
 - Run `validate_diagram`; clear ALL `errors`, `warnings`, and `audit.advice` before delivering.
-- **Render it and look at it every round.** `render` the PNG and `Read` it back. Make sure it should aligned with your taste, intuitive visualize, no cluster or line, no orphan service node.
-- Measure using math and check manhattan rule to fix overlap, line appear from your view above. Pass: build with `contract: "bake"` and read per-edge **bends** and **length vs the Manhattan minimum** (`|dx| + |dy|`) out of the XML. Measure from the **ports** (`exitX`/`exitY`).
-- Read the numbers as a hint about *layout*: small total excess over Manhattan but large individual minimums means the router is fine and the nodes are in the wrong place — the same message as `Long connector(s)` / `edge crossings`.
-- The numbers are a guide, not the goal. A change that adds a bend but moves a line into open space is usually the better diagram; take it and say so.
+- Render and look at it every round. `render` the PNG and `Read` it back. Make sure it should aligned with your taste, intuitive visualize, no cluster or line, no orphan service node.
+- Measure using math and check manhattan rule to fix overlap, line appear from your view above. Pass: build with `contract: "bake"` and read per-edge bends and length vs the Manhattan minimum (`|dx| + |dy|`) out of the XML. Measure from the ports (`exitX`/`exitY`).
+- Read the numbers as a hint about layout: small total excess over Manhattan but large individual minimums means the router is fine and the nodes are in the wrong place, the same message as `Long connector(s)` / `edge crossings`.
