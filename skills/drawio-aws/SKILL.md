@@ -21,6 +21,8 @@ If `drawio-ai` is **not** on PATH, stop and tell the user to run
 `npm i -g github:sparklabx/drawio-ai-kit`. **Never run `npm i -g` yourself** — nothing mutates the
 user's global environment without their say-so.
 
+Before building, ask the user: **What is the source of truth for this diagram: the codebase, external research, or your description?** Do not infer it; skip the question only when the user has already stated it explicitly.
+
 ## 1. Delegate the build (preferred when your harness supports it)
 
 If your harness can spawn autonomous subagents that run shell commands AND read
@@ -124,12 +126,10 @@ Managed/global services (CloudFront, Route 53, S3, DynamoDB, SQS/SNS)
 sit **outside** the VPC — they are not subnet-resident. Category colors from the
 catalog are authoritative; **never recolor AWS icons**.
 
-## Self-check (before delivering)
-- [ ] Built with the layout engine — no hand-written coordinates.
-- [ ] `drawio-ai validate` → ok, no warnings, no advice.
-- [ ] Every icon came from `drawio-ai search` (category colors intact).
-- [ ] `drawio-ai render` vision self-check passed — you looked at the PNG yourself.
-- [ ] Output written under the user's project, not the Kit.
-- [ ] Every arrow ends on an icon, not on the border of a frame holding several different things.
-- [ ] No note box that the arrows already explain.
-- [ ] Something still reads wrong but you can't name it? Measure as a second pass — build with `contract: "bake"` and check per-edge bends and length-vs-Manhattan (`principles.md` §9).
+## 9. Self-check
+
+- Run `validate_diagram`; clear ALL `errors`, `warnings`, and `audit.advice` before delivering.
+- **Render it and look at it every round.** `render` the PNG and `Read` it back. Make sure it should aligned with your taste, intuitive visualize, no cluster or line, no orphan service node.
+- Measure using math and check manhattan rule to fix overlap, line appear from your view above. Pass: build with `contract: "bake"` and read per-edge **bends** and **length vs the Manhattan minimum** (`|dx| + |dy|`) out of the XML. Measure from the **ports** (`exitX`/`exitY`).
+- Read the numbers as a hint about *layout*: small total excess over Manhattan but large individual minimums means the router is fine and the nodes are in the wrong place — the same message as `Long connector(s)` / `edge crossings`.
+- The numbers are a guide, not the goal. A change that adds a bend but moves a line into open space is usually the better diagram; take it and say so.
