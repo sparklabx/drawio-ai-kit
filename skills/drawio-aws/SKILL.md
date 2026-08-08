@@ -128,12 +128,8 @@ catalog are authoritative; **never recolor AWS icons**.
 - [ ] Built with the layout engine — no hand-written coordinates.
 - [ ] `drawio-ai validate` → ok, no warnings, no advice.
 - [ ] Every icon came from `drawio-ai search` (category colors intact).
-- [ ] `drawio-ai render` vision self-check passed.
+- [ ] `drawio-ai render` vision self-check passed — you looked at the PNG yourself.
 - [ ] Output written under the user's project, not the Kit.
-- [ ] Counts are real: an icon standing for N resources says so, and the names match the deployed ones.
 - [ ] Every arrow ends on an icon, not on the border of a frame holding several different things.
 - [ ] No note box that the arrows already explain.
-
-If the layout still reads badly after that, stop eyeballing and measure — build with
-`contract: "bake"` and count bends and length-vs-Manhattan per edge from the XML
-(`principles.md` §9). The numbers say whether to move a node or leave it alone.
+- [ ] Something still reads wrong but you can't name it? Measure as a second pass — build with `contract: "bake"` and check per-edge bends and length-vs-Manhattan (`principles.md` §9).
