@@ -8,16 +8,26 @@ Use the official AWS group shapes (`search_icon "<name>" --kind group`) and **ne
 
 ```text
 AWS Cloud (group_aws_cloud_alt)
-└─ Region (group_region, dashed)
-   └─ VPC (group_vpc)
-      └─ Availability Zone (group_availability_zone, dashed)
-         └─ Subnet (group_subnet — color auto-set by label: "Public"→blue, "Private"→green; NEVER pass fill manually)
-            └─ Security Group (group_security_group, dashed)
-               └─ service icons
+└─ AWS Account (group_account)
+   └─ Region (group_region, dashed)
+      └─ VPC (group_vpc)
+         └─ Availability Zone (group_availability_zone, dashed)
+            └─ Subnet (group_subnet — color auto-set by label: "Public"→blue, "Private"→green; NEVER pass fill manually)
+               └─ Security Group (group_security_group, dashed)
+                  └─ service icons
 ```
 
-- Don't put a Subnet directly under AWS Cloud, or a Security Group outside a Subnet — the validator flags broken nesting.
-- Managed/global services (S3, IAM, KMS, CloudWatch, Route 53, Organizations) live **outside the VPC** — place them in the AWS Cloud band, not inside a subnet.
+- Every AWS service icon belongs inside the black `AWS Cloud (group_aws_cloud_alt) → AWS Account → Region` hierarchy. The validator emits a warning when any layer is missing or ordered incorrectly, including multi-account and multi-Region diagrams.
+- Network-scoped groups extend that chain exactly: `Region → VPC → Availability Zone → Subnet → Security Group`. Don't put a Subnet directly under a VPC or a Security Group outside a Subnet.
+- Managed/global services (S3, IAM, KMS, CloudWatch, Route 53, Organizations) live **outside the VPC** but remain inside the Region, Account, and Cloud containers for a consistent diagram hierarchy.
+- Omit infrastructure that does not exist. The absence of a VPC container already communicates “no VPC”; do not add prose saying so.
+
+## Resource fidelity
+
+- Inventory deployed resources from the source of truth before drawing. Every separately defined Lambda function appears as its own visible Lambda icon, even when several functions share a CRUD domain.
+- Group distinct functions with a normal labelled `grid`; do not replace them with one Lambda icon or a `serviceFrame`. A service frame represents one parent service and its non-service internal children.
+- Use short human-readable role names such as `Create tag` or `Pipeline`. Do not show generated deployment names, account IDs, Regions, interpolation syntax, variables, or placeholders in service labels.
+- Connect each operational storage, database, queue, compute, and network icon to at least one producer, consumer, dependency, or data flow. Decorative badges and cross-cutting IAM, logging, audit, or provisioning services may remain unwired.
 
 ## Icon color = identity — never recolor
 

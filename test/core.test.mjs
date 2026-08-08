@@ -139,30 +139,30 @@ test("AWS: catches an icon recolored to the wrong category", () => {
   assert.ok(res.audit.advice.some((x) => /recolored/.test(x)), "must warn that S3 was recolored");
 });
 
-test("AWS: catches groups nested in the wrong order (flat subnet despite a VPC)", () => {
+test("AWS: warns when a subnet is flat despite a VPC", () => {
   const xml = `<root>
     <mxCell id="vpc" parent="1" vertex="1" style="shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_vpc;"/>
     <mxCell id="sn" parent="1" vertex="1" style="shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_subnet;"/>
   </root>`;
   const res = validateDiagram(catalog, xml);
-  assert.ok(res.audit.advice.some((x) => /nested inside a higher-level group/.test(x)));
+  assert.ok(res.warnings.some((x) => /group_subnet.*requires parent chain/.test(x)));
 });
 
-test("AWS: the outermost group (top-level Region) is not warned about nesting", () => {
+test("AWS: warns when a Region is missing its Cloud and Account parents", () => {
   const xml = `<root>
     <mxCell id="rg" parent="1" vertex="1" style="shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_region;"/>
   </root>`;
   const res = validateDiagram(catalog, xml);
-  assert.ok(!res.audit.advice.some((x) => /nested inside a higher-level group/.test(x)));
+  assert.ok(res.warnings.some((x) => /group_region.*AWS Cloud → AWS Account/.test(x)));
 });
 
-test("AWS: correctly nested groups (subnet inside VPC) are not warned about nesting", () => {
+test("AWS: subnet directly inside VPC still warns because Availability Zone is required", () => {
   const xml = `<root>
     <mxCell id="vpc" parent="1" style="shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_vpc;"/>
     <mxCell id="sn" parent="vpc" style="shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_subnet;"/>
   </root>`;
   const res = validateDiagram(catalog, xml);
-  assert.ok(!res.audit.advice.some((x) => /group_subnet[\s\S]*nested inside/.test(x)));
+  assert.ok(res.warnings.some((x) => /group_subnet.*Availability Zone/.test(x)));
 });
 
 test("audit catches a label sitting on a broken (L/Z) line missing a waypoint", () => {

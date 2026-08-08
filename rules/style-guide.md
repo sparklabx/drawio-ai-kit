@@ -19,6 +19,7 @@ creators. **Use the themed creators — don't hand-pick colors.**
 | `endpoint(id, label)` | source / consumer card (diagram entry/exit) |
 | `ossBox(id, label)` | a plain OSS/component box |
 | `onpremFrame(id, title, children)` | on-premise / external site frame |
+| `serviceFrame(id, icon, name, opts, children)` | one service owning internal children; flush icon and category border; optional `opts.borderStyle` defaults to solid |
 | `frame` / `group` (AWS stencil) | Region/VPC/AZ/Subnet/account containers |
 
 Edges: `d.link(a, b, label)` applies the theme edge style. Add `{ flow: true }` for animated
@@ -28,3 +29,5 @@ main-flow edges, `{ dash: true }` for sync/DR/policy.
 1. Reach for a **themed creator** first; pass an explicit `fill` only for a deliberate one-off.
 2. Let **icons** be the color; keep **frames pale**.
 3. Animate only the **main flow** (a few spine edges), not every edge.
+4. Keep service-frame names short and human-readable; never use deployment variables or placeholders.
+5. Prefer visible icons, containers, and short edges over explanatory text boxes.

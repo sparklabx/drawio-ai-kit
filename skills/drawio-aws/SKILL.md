@@ -54,11 +54,17 @@ Build with the declarative layout engine (NO hand-written coordinates), then: `d
 
 ## Domain notes
 
-Diagram must contain container nesting group. Container nesting order: `AWS Cloud → Region → VPC → AZ → Subnet → SG`. If service inside the VPC, it must be placed within the appropriate subnet. Service does not nest inside VPC should not be placed inside the VPC. The order heirachy above does not strictly applied, but it is a good practice to follow. Some services might have multi-AZ but does not placed inside the VPC. Category colors from the catalog are authoritative; never recolor AWS icons.
+Every AWS service must be nested inside the black `AWS Cloud (group_aws_cloud_alt) → AWS Account → Region` hierarchy. Add `VPC → Availability Zone → Subnet → Security Group` only for infrastructure that exists; each deeper network group requires all of those parents in order. Services outside a VPC remain inside Region, Account, and Cloud. Do not write explanatory absence text such as “no VPC.” Category colors from the catalog are authoritative; never recolor AWS icons.
+
+Inventory resource instances from the source of truth. Draw every separately defined Lambda as a separate visible Lambda icon. A normal group may organize related functions, but a single icon must not stand for several deployed functions.
+
+Use `serviceFrame(id, icon, name, opts, children)` only for one parent service that owns internal stages, pods, workflow states, or controls. The generated frame has a flush top-left icon, normal-weight title, and a 2px theme-aware border based on the icon category. `opts.borderStyle` is optional and defaults to `solid`; choose `dashed`, `dotted`, or `dash-dot` only when the user requests it or the visual distinction is useful. The `name` is a short human-readable service name, never a generated deployment name, account ID, Region, variable, or placeholder. Keep independent AWS services as default icons in a normal group, avoid deep service-frame nesting, and prefer a short edge label when it already explains the relationship.
+
+Use icons and containment to carry meaning. Keep labels short, avoid prose boxes, and connect every operational service icon to a producer, consumer, dependency, or data flow. Decorative corner badges and clearly cross-cutting IAM, CloudWatch, CloudTrail, Config, audit, and provisioning controls may remain unwired.
 
 ## Self-check
 
-- Run `validate_diagram`; clear ALL `errors`, `warnings`, and `audit.advice` before delivering.
-- Render and look at it every round. `render` the PNG and `Read` it back. Make sure it should aligned with your taste, intuitive visualize, no cluster or line, no orphan service node.
+- Run `validate_diagram`; clear ALL `errors`, `warnings`, and `audit.advice` before delivering. Treat a missing Cloud, Account, Region, VPC, AZ, Subnet, or Security Group parent as a structural defect.
+- Render and look at it every round. `render` the PNG and `Read` it back. Check that every deployed service is visible, service frames represent real ownership, labels are concise, and there are no tangled lines, prose-heavy boxes, or unintended orphan services.
 - Measure using math and check manhattan rule to fix overlap, line appear from your view above. Pass: build with `contract: "bake"` and read per-edge bends and length vs the Manhattan minimum (`|dx| + |dy|`) out of the XML. Measure from the ports (`exitX`/`exitY`).
 - Read the numbers as a hint about layout: small total excess over Manhattan but large individual minimums means the router is fine and the nodes are in the wrong place, the same message as `Long connector(s)` / `edge crossings`.

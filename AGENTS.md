@@ -15,5 +15,5 @@
 - **Catalog injection**: `loadCatalog()` returns the merged catalog; every `core.mjs` function takes `catalog` as first arg; `builder.mjs` stores it as `this.c`.
 - **Declarative layout > coordinates**: Build node trees with `layout-engine.mjs` factories (`group`/`frame`/`grid` + `icon`/`box`) → `renderTree(d, root)` → `Diagram`. Hardcoding x/y coordinates violates the design pattern.
 - **Color = Identity**: Never recolor AWS icons away from their category color (`colorFor`: entry.color → `categoryColors[category]` → `#232F3E`).
-- **Nesting Hierarchy**: Group nesting order is enforced by `GROUP_LEVEL`: Cloud/Account/Region=0 → VPC=2 → AZ=3 → Subnet=4 → SG=5.
+- **Nesting Hierarchy**: `validateAwsHierarchy` enforces black AWS Cloud → Account → Region for every service and VPC → AZ → Subnet → SG for deeper network groups.
 - **Edge Rounding Policy**: Tree/fanout roles → sharp (`rounded=0`); flow → type's `edgeCorner`.

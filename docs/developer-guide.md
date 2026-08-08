@@ -81,9 +81,9 @@ const report = d.validate({ strict: true }); // { ok, errors, warnings, audit, s
 
 ## Important Files
 
-- **`src/core.mjs`** — zero-dep engine. `loadCatalog(path?)` → catalog; `searchIcon(catalog, q, {category,limit,kind})`; `getIcon`, `styleForIcon`, `styleForGroup`; `validateDiagram(catalog, xml, {strict})` → `{ok,errors,warnings,audit,stats}` running 5 audit sub-checks (`auditAesthetics`, `auditAwsConventions`, `auditEdgeLabels`, `auditGeometry`, `auditEdges`); `listCategories(catalog)`. Imports only `node:fs`/`node:path`.
+- **`src/core.mjs`** — zero-dep engine. `loadCatalog(path?)` → catalog; `searchIcon(catalog, q, {category,limit,kind})`; `getIcon`, `styleForIcon`, `styleForGroup`; `validateDiagram(catalog, xml, {strict})` → `{ok,errors,warnings,audit,stats}` with visual, AWS hierarchy, service-frame, edge, geometry, BPMN, and architecture checks; `listCategories(catalog)`. Imports only `node:fs`/`node:path`.
 - **`src/builder.mjs`** — `class Diagram(type='pipeline', {title, page})`. Methods: `icon`, `box`, `group`, `frame`, `clusterBox`, `panel`, `text`, `title`; `link(src,tgt,label,opts)` (chainable); `toXML()`, `validate()`, `mxfile(name)`. Stores catalog as `this.c`, rects in `this.R`, edge specs in `this.edgeSpecs`.
-- **`src/layout-engine.mjs`** — declarative node factories `icon`, `box`, `group`, `grid`, `frame`, plus themed `stage`, `band`, `subnet`, `endpoint`, `ossBox`, `onpremFrame`; `renderTree(d, root, [x,y])`. Pure factory functions returning object literals.
+- **`src/layout-engine.mjs`** — declarative node factories `icon`, `box`, `group`, `grid`, `frame`, `serviceFrame`, plus themed `stage`, `band`, `subnet`, `endpoint`, `ossBox`, `onpremFrame`; `renderTree(d, root, [x,y])`. Pure factory functions returning object literals.
 - **`src/layout.mjs`** — pure-math edge router: `routeLR`/`routeTB`/`routeLRFan`/`routeTBFan`/`routeLRFanIn`/`routeTBFanIn`/`route`; helpers `centerInGapX/Y`, `centerInBoxX`, `distributeY`, `inset`, `panelSize`. No imports.
 - **`src/types.mjs`** — `DIAGRAM_TYPES` (pipeline/hierarchy/network/hubspoke/hybrid/mesh/sequence); `typePreset(name)`, `edgeRounded(type,role)` (0 sharp for tree/fanout, else type's `edgeCorner`), `listTypes()`.
 - **`src/theme.mjs`** — `THEME` tokens (light-dark pairs, stages, subnetPublic/Private, gaps, fonts); `stageFill(i)`, `stageStroke(i)`. One edit restyles every diagram.
@@ -130,7 +130,7 @@ python3 scripts/build_pack.py <pack>        # packs/<pack>/manifest.json → cat
 - **Pure helpers at the function seam.** `cli-lib.mjs` functions take injectable deps (`findDrawioCli(env, deps)`) so they are tested without spawning subprocesses.
 - **Builder/fluent:** `Diagram.link()` and `Diagram.title()` return `this`. Node factories return plain object literals (not class instances).
 - **Largely synchronous.** Only async: `await import('./types.mjs')` in `cli.mjs` `types` subcommand. No async in core/builder/layout-engine/layout/cli-lib.
-- **Color = identity.** Never recolor icons away from their category color (`colorFor`: entry.color → `categoryColors[category]` → `#232F3E`). Group nesting order enforced by `GROUP_LEVEL`: Cloud/Account/Region=0 → VPC=2 → AZ=3 → Subnet=4 → SG=5.
+- **Color = identity.** Never recolor icons away from their category color (`colorFor`: entry.color → `categoryColors[category]` → `#232F3E`). `validateAwsHierarchy` enforces black AWS Cloud → Account → Region for every service and VPC → AZ → Subnet → SG for deeper network groups.
 - **Edge rounding policy:** `edgeRounded(type, role)` — tree/fanout roles → sharp (`rounded=0`); flow → type's `edgeCorner`.
 - **Naming:** functions `camelCase`, classes `PascalCase`, module constants `SCREAMING_SNAKE_CASE`. No JSDoc `@typedef`; types implicit. JSDoc prose only on higher-level fns (`validateDiagram`, `renderTree`).
 
@@ -145,6 +145,6 @@ python3 scripts/build_pack.py <pack>        # packs/<pack>/manifest.json → cat
 ## Testing & QA
 
 - Framework: **`node:test`** (built-in). `core.test.mjs` (engine), `edges.test.mjs` (edge audits), `save-guard.test.mjs` (save refuses to write inside the kit), `cli.test.mjs` (`cli-lib.mjs` pure functions).
-- Covered: `core.mjs` (`loadCatalog`, `searchIcon`, `getIcon`, `styleForIcon`, `validateDiagram` + all 5 audits), `layout.mjs` (`routeLR`, `routeTB`, `centerInGapX`), `layout-engine.mjs` + `builder.mjs` (`Diagram`, `renderTree`, `group`, `icon`), `cli-lib.mjs` (`packageRoot`, `findDrawioCli` all branches, `buildRenderArgs`, `workflowText`). No fixtures, no subprocess spawns.
+- Covered: `core.mjs` (`loadCatalog`, `searchIcon`, `getIcon`, `styleForIcon`, `validateDiagram` and audits), `layout.mjs` (`routeLR`, `routeTB`, `centerInGapX`), `layout-engine.mjs` + `builder.mjs` (`Diagram`, `renderTree`, `group`, `icon`, `serviceFrame`), `cli-lib.mjs` (`packageRoot`, `findDrawioCli` all branches, `buildRenderArgs`, `workflowText`). No fixtures, no subprocess spawns.
 - Run: `npm test`. CI runs the same on push/PR to `main`.
 - No coverage gate; no Python script tests (data builders, validated by the Node catalog tests that consume their output).

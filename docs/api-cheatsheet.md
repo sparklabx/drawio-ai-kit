@@ -6,7 +6,7 @@ Use this single-file reference to build diagrams. Avoid opening individual libra
 ```javascript
 // ROOT = $(drawio-ai root) — absolute path; relative imports only work inside the kit repo
 import { Diagram } from "<ROOT>/src/builder.mjs";
-import { frame, icon, box, phantom, renderTree, stage, band, subnet, endpoint, ossBox } from "<ROOT>/src/layout-engine.mjs";
+import { frame, icon, box, phantom, renderTree, stage, band, subnet, endpoint, ossBox, serviceFrame } from "<ROOT>/src/layout-engine.mjs";
 ```
 
 ## 2. Layout Elements (`src/layout-engine.mjs`)
@@ -26,6 +26,9 @@ Build node trees declaratively. **No hardcoded coordinates.**
 - `group(id, gname, label, opts, children)`: Native cloud group container (e.g., VPC, Region, Subnet).
   - `gname`: `"group_region"` | `"group_vpc"` | `"group_subnet"` | `"group_account"` | `"group_availability_zone"`.
   - `opts: { dir: "col"|"row", gap, fill, stroke, priv: true|false }`
+- `serviceFrame(id, icon, name, opts?, children)` or `serviceFrame(id, icon, name, children)`: One AWS service owning internal children. The icon is flush with the top-left border; the title is normal-weight.
+  - `name`: Short human-readable service name with no deployment variables or placeholders.
+  - `opts: { borderStyle: "solid"|"dashed"|"dotted"|"dash-dot" }`; optional and defaults to `solid`.
 - `stage(id, i, label, children, opts)`: Pipeline stage column. `i` is 0-based index (applies pale per-stage border color).
 - `band(id, label, children, opts)`: Cross-cutting row band (governance/security/ops).
 - `subnet(id, label, children, opts)`: AWS/Cloud subnet container. Border green if label contains `"Public"`, teal if `"Private"`.
@@ -46,5 +49,5 @@ Build node trees declaratively. **No hardcoded coordinates.**
 
 ## 4. Design Rules & Themes (`src/theme.mjs`)
 - **Theme Colors:** Coral = `"#FF3621"`, Navy = `"#1B3139"`, VPC = `"#8C4FFF"`, Store = `"#B0752A"`.
-- **Nesting Hierarchy:** Group levels are Cloud/Account/Region (0) → VPC (2) → AZ (3) → Subnet (4) → SG (5).
+- **Nesting Hierarchy:** Every AWS service uses black AWS Cloud → Account → Region. Network groups continue Region → VPC → AZ → Subnet → SG.
 - **Recoloring Policy:** Never change catalog icon colors. Let the icons carry the color, keep frame backgrounds pale white (`light-dark(#ffffff, #0f1620)`).

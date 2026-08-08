@@ -150,7 +150,7 @@ ROOT="$(drawio-ai root)"   # absolute path to the installed Kit
 \`\`\`
 \`\`\`js
 import { Diagram } from "<ROOT>/src/builder.mjs";
-import { group, frame, grid, icon, box, renderTree } from "<ROOT>/src/layout-engine.mjs";
+import { group, frame, grid, icon, box, serviceFrame, renderTree } from "<ROOT>/src/layout-engine.mjs";
 import { loadCatalog, searchIcon } from "<ROOT>/src/core.mjs";   // optional: in-process icon lookup
 \`\`\`
 (Replace \`<ROOT>\` with the path \`drawio-ai root\` printed — shell substitution does not run inside JS strings.)
@@ -166,7 +166,7 @@ terramate list --run-order                             # real stack order (terra
 Anything not in the inventory does not go in the diagram.
 
 ## 2. Build the diagram
-Declare the nested structure with \`group\`/\`frame\`/\`grid\` + \`icon\`/\`box\`, then \`renderTree(d, tree)\` computes every x/y/w/h — never hand-write coordinates. Add edges with \`d.link(source, target, label)\`.
+Declare the nested structure with \`group\`/\`frame\`/\`grid\` + \`icon\`/\`box\`. Use \`serviceFrame(id, icon, name, opts, children)\` only when one AWS service owns every child; \`opts.borderStyle\` is optional and defaults to \`solid\`. Then \`renderTree(d, tree)\` computes every x/y/w/h — never hand-write coordinates. Add edges with \`d.link(source, target, label)\`.
 
 Edge API cheat-sheet (so you never have to read builder.mjs):
 \`\`\`js

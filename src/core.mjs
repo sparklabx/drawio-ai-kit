@@ -250,6 +250,9 @@ export function validateDiagram(catalog, xml, { strict = false } = {}) {
 
   const audit = auditAesthetics(xml);
   audit.advice.push(...auditAwsConventions(catalog, xml));
+  warnings.push(...validateAwsHierarchy(xml));
+  audit.advice.push(...auditServiceFrames(catalog, xml));
+  audit.advice.push(...auditVisualSemantics(xml));
   audit.advice.push(...auditEdgeLabels(xml));
   audit.advice.push(...auditGeometry(xml));
   audit.advice.push(...auditEdges(xml));
@@ -356,23 +359,9 @@ export function auditAesthetics(xml) {
   };
 }
 
-// AWS group nesting hierarchy: lower number = outermost.
-// "Top" containers (Cloud/Account/Region/DC) are all = 0 — they can nest under several conventions
-// (Account>Region in Landing Zone style, or Region>Account in mesh style), so we don't enforce an
-// order among them. We only enforce the network chain: VPC → AZ → Subnet → Security Group.
-const GROUP_LEVEL = {
-  group_aws_cloud: 0, group_aws_cloud_alt: 0, group_account: 0,
-  group_corporate_data_center: 0, group_on_premise: 0, group_region: 0,
-  group_vpc: 2, group_vpc2: 2,
-  group_availability_zone: 3,
-  group_subnet: 4,
-  group_security_group: 5,
-};
-
 /**
  * Check conventions specific to AWS architecture:
  *  - icons recolored away from their standard category color (loss of recognizability).
- *  - groups nested in the wrong order (AWS Cloud→Region→VPC→AZ→Subnet→SG).
  * Returns advisories.
  */
 export function auditAwsConventions(catalog, xml) {
@@ -383,8 +372,6 @@ export function auditAwsConventions(catalog, xml) {
     edge: attr(tag, "edge"),
     style: attr(tag, "style") || "",
   }));
-  const byId = new Map(cells.filter((c) => c.id).map((c) => [c.id, c]));
-
   // 1) Icon recolored relative to its own standard color.
   for (const c of cells) {
     const m = c.style.match(/resIcon=mxgraph\.aws4\.([a-zA-Z0-9_]+)/);
@@ -399,31 +386,7 @@ export function auditAwsConventions(catalog, xml) {
       advice.push(`Icon "${m[1]}" has been recolored (fillColor=${fm[1].trim()} ≠ standard color ${entry.color}) — keep the category color for easy recognition.`);
   }
 
-  // 2) Groups nested in the correct order.
-  const groupTok = (style) => (style.match(/grIcon=mxgraph\.aws4\.([a-zA-Z0-9_]+)/) || [])[1];
-  const ancestorLevels = (c) => {
-    const out = [];
-    let p = byId.get(c.parent);
-    let guard = 0;
-    while (p && guard++ < 50) {
-      const g = groupTok(p.style);
-      if (g != null && GROUP_LEVEL[g] != null) out.push(GROUP_LEVEL[g]);
-      p = byId.get(p.parent);
-    }
-    return out;
-  };
-  const allLevels = cells.map((c) => GROUP_LEVEL[groupTok(c.style)]).filter((l) => l != null);
-  for (const c of cells) {
-    const g = groupTok(c.style);
-    if (g == null) continue;
-    const lvl = GROUP_LEVEL[g];
-    if (lvl == null || lvl === 0) continue; // top-level or unranked group
-    // only warn if there IS a higher-level container in the diagram but this group is not inside it
-    if (allLevels.some((l) => l < lvl) && !ancestorLevels(c).some((l) => l < lvl))
-      advice.push(`Group "${g}" should be nested inside a higher-level group (AWS Cloud→Region→VPC→AZ→Subnet→SG) — currently placed flat / in the wrong order.`);
-  }
-
-  // 3) Rounded frames — AWS architecture diagrams use SQUARE corners for boxes/frames.
+  // 2) Rounded frames — AWS architecture diagrams use SQUARE corners for boxes/frames.
   //    (Skip edges: rounded on an edge smooths its corners, unrelated. Skip AWS stencils & text.)
   const roundedFrames = cells
     .filter((c) => c.edge !== "1" && /(?:^|;)rounded=1/.test(c.style) && !/mxgraph\.aws4\./.test(c.style) && !/(?:^|;)text;/.test(c.style))
@@ -431,6 +394,187 @@ export function auditAwsConventions(catalog, xml) {
   if (roundedFrames.length)
     advice.push(`Rounded frame(s) found (${roundedFrames.length}: ${roundedFrames.slice(0, 6).join(", ")}${roundedFrames.length > 6 ? "…" : ""}) — AWS diagrams use SQUARE corners; set rounded=0 on these boxes/frames.`);
 
+  return advice;
+}
+
+const AWS_CLOUD_GROUP = "group_aws_cloud_alt";
+const AWS_GROUP_CHAIN = {
+  group_account: ["cloud"],
+  group_region: ["group_account", "cloud"],
+  group_vpc: ["group_region", "group_account", "cloud"],
+  group_vpc2: ["group_region", "group_account", "cloud"],
+  group_availability_zone: ["group_vpc", "group_region", "group_account", "cloud"],
+  group_subnet: ["group_availability_zone", "group_vpc", "group_region", "group_account", "cloud"],
+  group_security_group: ["group_subnet", "group_availability_zone", "group_vpc", "group_region", "group_account", "cloud"],
+};
+
+/** Enforce the structural AWS parent chain used by diagrams with official AWS services. */
+export function validateAwsHierarchy(xml) {
+  if (!/mxgraph\.aws4\./.test(xml)) return [];
+  const warnings = [];
+  const cells = parseCells(xml);
+  const byId = new Map(cells.filter((c) => c.id).map((c) => [c.id, c]));
+  const groupName = (c) => (c?.style.match(/grIcon=mxgraph\.aws4\.([a-zA-Z0-9_]+)/) || [])[1] || null;
+  const serviceName = (c) => {
+    const resource = (c.style.match(/resIcon=mxgraph\.aws4\.([a-zA-Z0-9_]+)/) || [])[1];
+    if (resource) return resource;
+    const shape = (c.style.match(/shape=mxgraph\.aws4\.([a-zA-Z0-9_]+)/) || [])[1];
+    if (!shape || ["group", "groupCenter", "productIcon", "resourceIcon", "resourceIcon2"].includes(shape)) return null;
+    return shape;
+  };
+  const ancestors = (c) => {
+    const out = [];
+    let parent = byId.get(c.parent);
+    let guard = 0;
+    while (parent && guard++ < 50) {
+      const group = groupName(parent);
+      if (group) out.push(group === AWS_CLOUD_GROUP ? "cloud" : group === "group_vpc2" ? "group_vpc" : group);
+      parent = byId.get(parent.parent);
+    }
+    return out;
+  };
+  const follows = (actual, required) => {
+    let cursor = 0;
+    for (const token of actual) if (token === required[cursor]) cursor++;
+    return cursor === required.length;
+  };
+  const label = (required) => [...required].reverse().map((name) => name === "cloud" ? "AWS Cloud" : ({
+    group_account: "AWS Account",
+    group_region: "AWS Region",
+    group_vpc: "VPC",
+    group_availability_zone: "Availability Zone",
+    group_subnet: "Subnet",
+  }[name] || name)).join(" → ");
+
+  for (const c of cells) {
+    if (!c.id || c.edge === "1") continue;
+    const group = groupName(c);
+    if (group === "group_aws_cloud")
+      warnings.push(`AWS container "${c.id}" uses group_aws_cloud — use the black AWS Cloud container group_aws_cloud_alt.`);
+    const required = group ? AWS_GROUP_CHAIN[group] : null;
+    if (required && !follows(ancestors(c), required))
+      warnings.push(`AWS container "${c.id}" (${group}) requires parent chain ${label(required)}.`);
+
+    const service = serviceName(c);
+    const serviceFrame = /(?:^|;)serviceFrame=1(?:;|$)/.test(c.style);
+    const decorativeBadge = /__ci$/.test(c.id) || (c.geo && c.geo.w < 32 && c.geo.h < 32);
+    if ((service || serviceFrame) && !decorativeBadge) {
+      const requiredServiceChain = ["group_region", "group_account", "cloud"];
+      if (!follows(ancestors(c), requiredServiceChain))
+        warnings.push(`AWS service "${c.id}"${service ? ` (${service})` : ""} requires parent chain ${label(requiredServiceChain)}.`);
+    }
+  }
+
+  return warnings;
+}
+
+const IMPLICIT_CROSS_CUTTING_RE = /(?:^|_)(?:identity_and_access_management|iam|cloudformation|cloudwatch(?:_logs)?|cloudtrail|config|audit_manager|security_hub|guardduty|inspector|x_ray|organizations|control_tower|trusted_advisor)(?:_|$)/;
+
+/** Flag prose-heavy cells and operational AWS services with no incident relationship. */
+export function auditVisualSemantics(xml) {
+  const advice = [];
+  if (!/mxgraph\.aws4\.|serviceFrame=1(?:;|")/.test(xml)) return advice;
+  const cells = parseCells(xml);
+  const hasChildren = new Set(cells.map((c) => c.parent).filter(Boolean));
+  const incident = new Set();
+  for (const c of cells) {
+    if (c.edge !== "1") continue;
+    if (c.source) incident.add(c.source);
+    if (c.target) incident.add(c.target);
+  }
+  const serviceName = (c) => {
+    const resource = (c.style.match(/resIcon=mxgraph\.aws4\.([a-zA-Z0-9_]+)/) || [])[1];
+    if (resource) return resource;
+    const shape = (c.style.match(/shape=mxgraph\.aws4\.([a-zA-Z0-9_]+)/) || [])[1];
+    if (!shape || ["group", "groupCenter", "productIcon", "resourceIcon", "resourceIcon2"].includes(shape)) return null;
+    return shape;
+  };
+  const words = (value) => {
+    const text = String(value || "")
+      .replace(/&lt;br\s*\/?&gt;/gi, " ")
+      .replace(/&[a-zA-Z0-9#]+;/g, " ")
+      .replace(/<[^>]*>/g, " ")
+      .replace(/[^\p{L}\p{N}+#/.:-]+/gu, " ")
+      .trim();
+    return text ? text.split(/\s+/).length : 0;
+  };
+  const isText = (c) => /(?:^|;)text;/.test(c.style) || c.id === "__title";
+  const isContainer = (c) => hasChildren.has(c.id) || /container=1|shape=mxgraph\.aws4\.group|grIcon=/.test(c.style);
+  const verbose = [];
+  const deploymentNames = [];
+  for (const c of cells) {
+    if (c.edge === "1" || !c.id || isText(c)) continue;
+    const count = words(c.value);
+    if (!count) continue;
+    const service = serviceName(c);
+    const limit = service ? 4 : isContainer(c) ? 5 : 8;
+    if (count > limit) verbose.push(`${c.id} (${count} words; cap ${limit})`);
+    if (service && /&lt;|&gt;|[<>{}$]|(?:account|region)[_-]?id|\b\d{12}\b|\b(?:us|af|ap|ca|eu|il|me|mx|sa)-(?:gov-)?[a-z]+-\d\b/i.test(c.value || ""))
+      deploymentNames.push(c.id);
+  }
+  if (verbose.length)
+    advice.push(`Prose-heavy architecture label(s): ${verbose.slice(0, 5).join(", ")}${verbose.length > 5 ? "…" : ""} — replace explanatory text with icons, containers, and short edge labels; move details to the surrounding document.`);
+  if (deploymentNames.length)
+    advice.push(`AWS service label(s) contain deployment data, variables, or placeholders: ${deploymentNames.slice(0, 6).join(", ")}${deploymentNames.length > 6 ? "…" : ""} — use short human-readable service names.`);
+
+  const orphans = [];
+  for (const c of cells) {
+    if (c.edge === "1" || !c.id || incident.has(c.id)) continue;
+    const frameIcon = (c.style.match(/(?:^|;)serviceIcon=([^;]+)/) || [])[1];
+    const name = serviceName(c) || (/(?:^|;)serviceFrame=1(?:;|$)/.test(c.style) ? frameIcon : null);
+    if (!name || IMPLICIT_CROSS_CUTTING_RE.test(name)) continue;
+    const geometry = c.absGeo || c.geo;
+    if (!geometry || geometry.w < 32 || geometry.h < 32 || /__ci$/.test(c.id)) continue;
+    orphans.push(`${c.id} (${name})`);
+  }
+  if (orphans.length)
+    advice.push(`Orphan operational AWS service icon(s): ${orphans.slice(0, 6).join(", ")}${orphans.length > 6 ? "…" : ""} — add a direct producer, consumer, dependency, or data-flow edge. Decorative badges and cross-cutting governance, observability, or provisioning services may remain unwired.`);
+  return advice;
+}
+
+/** Validate the reusable serviceFrame visual contract emitted by the layout engine. */
+export function auditServiceFrames(catalog, xml) {
+  const advice = [];
+  const cells = parseCells(xml);
+  const byId = new Map(cells.filter((c) => c.id).map((c) => [c.id, c]));
+  const frames = cells.filter((c) => /(?:^|;)serviceFrame=1(?:;|$)/.test(c.style));
+  const borderPatterns = {
+    solid: /(?:^|;)dashed=0(?:;|$)/,
+    dashed: /(?:^|;)dashPattern=8 4(?:;|$)/,
+    dotted: /(?:^|;)dashPattern=1 4(?:;|$)/,
+    "dash-dot": /(?:^|;)dashPattern=8 4 1 4(?:;|$)/,
+  };
+  for (const frame of frames) {
+    const iconName = (frame.style.match(/(?:^|;)serviceIcon=([^;]+)/) || [])[1];
+    const borderStyle = (frame.style.match(/(?:^|;)serviceBorder=([^;]+)/) || [])[1];
+    const fontStyle = Number((frame.style.match(/(?:^|;)fontStyle=(\d+)/) || [])[1] || 0);
+    const badge = byId.get(`${frame.id}__ci`);
+    const entry = iconName ? catalog.byName.get(iconName) : null;
+    const stroke = (frame.style.match(/(?:^|;)strokeColor=([^;]+)/) || [])[1] || "";
+    const children = cells.filter((c) => c.parent === frame.id && c.id !== `${frame.id}__ci`);
+    if (!iconName || !entry)
+      advice.push(`Service frame "${frame.id}" has an unknown or missing serviceIcon — create it with serviceFrame(id, icon, name, opts, children).`);
+    if (fontStyle !== 0)
+      advice.push(`Service frame "${frame.id}" title is bold or italic — use normal fontStyle=0.`);
+    if (!badge || badge.parent !== frame.id || !badge.geo || Math.abs(badge.geo.x) > 0.1 || Math.abs(badge.geo.y) > 0.1)
+      advice.push(`Service frame "${frame.id}" corner icon is not flush with the top-left border — place its badge at relative x=0, y=0.`);
+    if (!borderPatterns[borderStyle]?.test(frame.style))
+      advice.push(`Service frame "${frame.id}" has an invalid border style — use solid, dashed, dotted, or dash-dot.`);
+    if (entry?.color && (!stroke.startsWith("light-dark(") || !stroke.toLowerCase().includes(String(entry.color).toLowerCase())))
+      advice.push(`Service frame "${frame.id}" border does not follow the ${iconName} category colour in light/dark mode.`);
+    if (!children.length)
+      advice.push(`Service frame "${frame.id}" has no owned child nodes — use a normal service icon instead.`);
+    if (/[<>{}$]|(?:account|region)[_-]?id|\b\d{12}\b|\b(?:us|af|ap|ca|eu|il|me|mx|sa)-(?:gov-)?[a-z]+-\d\b/i.test(frame.value || ""))
+      advice.push(`Service frame "${frame.id}" name contains deployment data, a variable, or a placeholder — use a short human-readable service name.`);
+    let parent = byId.get(frame.parent);
+    let depth = 1;
+    while (parent) {
+      if (/(?:^|;)serviceFrame=1(?:;|$)/.test(parent.style)) depth++;
+      parent = byId.get(parent.parent);
+    }
+    if (depth > 2)
+      advice.push(`Service frame "${frame.id}" is nested ${depth} service boundaries deep — flatten the diagram or use an edge.`);
+  }
   return advice;
 }
 

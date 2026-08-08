@@ -11,6 +11,7 @@
 import { THEME, stageFill, stageStroke } from "./theme.mjs";
 
 const ICON = 48;
+const SERVICE_FRAME_BORDERS = new Set(["solid", "dashed", "dotted", "dash-dot"]);
 
 // ---- node creators ----
 export const icon = (id, name, label = "", opts = {}) => ({ kind: "icon", id, name, label, ...opts });
@@ -36,12 +37,24 @@ export const group = (id, gname, label = "", opts = {}, children = []) => ({
   // cornerIcon: a catalog icon name drawn at the container's top-left (Azure/GCP frames — mimics the
   // corner icon baked into AWS group stencils; the label shifts right to sit next to it).
   cornerIcon: opts.cornerIcon ?? null,
+  serviceFrame: opts.serviceFrame ?? false,
+  borderStyle: opts.borderStyle ?? "solid",
   // routeGap: minimum gap enforced between children when routing lanes need to pass between them.
   // Set to ≥ 2×BM (48px) so the A* router has clearance. Overrides gap only when larger.
   routeGap: opts.routeGap ?? 0,
 });
 /** A group with no AWS stencil = a plain square frame (for logical layers/bands). */
 export const frame = (id, label, opts = {}, children = []) => group(id, null, label, opts, children);
+/** AWS service-owned boundary with a flush top-left service icon and category-coloured border.
+ * Use only when the named parent service owns or controls every child. Independent sibling
+ * services use normal icons in a normal group. The border is solid unless explicitly overridden. */
+export const serviceFrame = (id, iconName, name, opts = {}, children = []) => {
+  if (Array.isArray(opts)) { children = opts; opts = {}; }
+  const borderStyle = opts.borderStyle ?? "solid";
+  if (!SERVICE_FRAME_BORDERS.has(borderStyle))
+    throw new Error(`serviceFrame: invalid borderStyle "${borderStyle}" — use solid, dashed, dotted, or dash-dot.`);
+  return group(id, null, name, { ...opts, cornerIcon: iconName, serviceFrame: true, borderStyle }, children);
+};
 /** PHANTOM frame: an invisible layout-only wrapper distinct from visible containers. Lays out EXACTLY
  *  like a group (children in row/col, hugs them snugly) but emits NO mxCell — its children are
  *  reparented to the nearest VISIBLE ancestor (its own parent id is passed straight through the emit
@@ -258,6 +271,19 @@ function eBox(d, n, parent) {
 }
 function eGroup(d, n, parent) {
   if (n.gname) d.group(n.id, n.gname, [n.x, n.y], [n.w, n.h], n.label, { parent, fill: n.fill, stroke: n.stroke });
+  else if (n.serviceFrame) {
+    const CI = 22;
+    const entry = d.c.byName.get(n.cornerIcon);
+    const iconColor = entry?.color ?? "#5A6B7B";
+    const darkColor = brightenHex(iconColor, 0.35);
+    const border = serviceBorderStyle(n.borderStyle);
+    const fill = n.fill ?? "light-dark(#FFFFFF,#0F1620)";
+    const stroke = `light-dark(${iconColor},${darkColor})`;
+    const marker = `serviceFrame=1;serviceIcon=${n.cornerIcon};serviceBorder=${n.borderStyle};`;
+    const style = `rounded=0;whiteSpace=wrap;html=1;fillColor=${fill};strokeColor=${stroke};strokeWidth=2;${border}${marker}fontColor=light-dark(#1A1A1A,#E8EEF5);fontSize=12;fontStyle=0;verticalAlign=top;align=left;spacingLeft=${CI + 8};spacingTop=4;`;
+    const r = d._put(n.id, parent, n.x, n.y, n.w, n.h, style, n.label); r.ob = false;
+    d.cornerIcon(`${n.id}__ci`, n.cornerIcon, [Math.round(n.x), Math.round(n.y)], CI, n.id);
+  }
   else if (n.cornerIcon) {
     // Azure/GCP-style container: corner icon top-left, label beside it (like an AWS group stencil).
     const CI = 22;
@@ -272,6 +298,21 @@ function eGroup(d, n, parent) {
     d.box(n.id, [n.x, n.y], [n.w, n.h], n.label, { parent, va: "top", bold: true, fill: n.fill ?? "#FFFFFF", stroke: n.stroke ?? "#999999", ob: n.stroke === "none" ? null : false });
   }
   for (const c of n.children) emit(d, c, n.id);
+}
+
+function brightenHex(hex, ratio) {
+  const match = String(hex).match(/^#([0-9a-f]{6})$/i);
+  if (!match) return hex;
+  const value = Number.parseInt(match[1], 16);
+  const channel = (shift) => Math.round(((value >> shift) & 255) + (255 - ((value >> shift) & 255)) * ratio);
+  return `#${[channel(16), channel(8), channel(0)].map((v) => v.toString(16).padStart(2, "0")).join("").toUpperCase()}`;
+}
+
+function serviceBorderStyle(style) {
+  if (style === "dashed") return "dashed=1;dashPattern=8 4;";
+  if (style === "dotted") return "dashed=1;dashPattern=1 4;lineCap=round;";
+  if (style === "dash-dot") return "dashed=1;dashPattern=8 4 1 4;lineCap=round;";
+  return "dashed=0;";
 }
 function ePool(d, n, parent) { emitPool(d, n, parent); }
 /** Phantom emit: emits NO cell and does NOT touch this.R. It records its id in d.phantoms (so link()

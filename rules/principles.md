@@ -29,6 +29,11 @@ Sparsity is an **authoring** problem (one-icon-per-frame), not an engine limit �
 
 Use real group shapes (`search_icon --kind group`) and nest them parent-child in the real order — see the nesting tree in your domain preset (e.g. `aws-architecture.md` "Containers").
 
+- Use `serviceFrame(id, icon, name, opts, children)` only when one service owns or controls every child. The name is short, human-readable, and contains no generated suffix, variable, or placeholder. Its icon is flush with the top-left border and its normal-weight title sits beside it.
+- `opts.borderStyle` is optional and defaults to `solid`. Set `dashed`, `dotted`, or `dash-dot` only when the user asks or the distinction materially improves the diagram.
+- A service frame groups internal stages, pods, workflow states, or controls. It never replaces visible icons for separate deployed services. Keep independent services as normal icons in a normal group and connect their relationship with edges.
+- Avoid deep or decorative service-frame nesting. If a short edge label already explains the relationship, use the edge.
+
 ## 4. Color — restrained & theme-aware
 
 - Icons keep their official **category** color (hex table in the domain preset) — don't recolor icons arbitrarily.
@@ -43,6 +48,7 @@ Use real group shapes (`search_icon --kind group`) and nest them parent-child in
 - **Limit to 3–4 font sizes** and keep label text **≤ 14px**; never jump to oversized (18+) titles inside the canvas — put a title in its own area.
 - Long notes/constraints go in a separate **note box**, never crammed into the icon label.
 - A note box is a *fallback for a note you already need*, not an invitation to add prose. If the arrows already say it, delete it; background detail belongs in the doc beside the diagram.
+- Prefer structure over explanation: icons show services, containers show scope or ownership, and short edge labels show data or control flow. Do not add text that only states an absent component such as “no VPC.”
 
 ## 6. Edges — meaning is *intentional*
 
