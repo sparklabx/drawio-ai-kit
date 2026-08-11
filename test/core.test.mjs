@@ -18,6 +18,16 @@ test("arch: flags a database in a public subnet", () => {
   assert.ok(a.some((s) => /Database "db1".*PUBLIC subnet/.test(s)), a.join("\n"));
 });
 
+// A labelled subnet swaps its glyph to the security-group padlock but carries a `subnet=1` marker
+// (builder.group). The audit must still recognise it as a subnet via the marker, not the glyph.
+const _subnetPadlock = (id, label, parent = "1") =>
+  `<mxCell id="${id}" value="${label}" style="shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_security_group;subnet=1;" parent="${parent}"><mxGeometry x="0" y="0" width="300" height="200" as="geometry"/></mxCell>`;
+
+test("arch: DB in a padlock-glyph public subnet (subnet=1 marker) is still flagged", () => {
+  const xml = `<root>${_subnetPadlock("pub", "Public subnet")}${_icon("db1", "rds", "pub")}</root>`;
+  assert.ok(auditArchitecture(xml).some((s) => /Database "db1".*PUBLIC subnet/.test(s)));
+});
+
 test("arch: a database in a private subnet is fine", () => {
   const xml = `<root>${_subnet("prv", "Private subnet")}${_icon("db1", "rds", "prv")}</root>`;
   assert.equal(auditArchitecture(xml).length, 0);
@@ -74,6 +84,14 @@ test("search finds EKS by the keyword kubernetes", () => {
 test("search expands shorthand aliases (k8s -> kubernetes, pg -> postgresql)", () => {
   assert.ok(searchIcon(catalog, "k8s").some((x) => x.name === "kubernetes"));
   assert.ok(searchIcon(catalog, "pg").some((x) => /postgres/.test(x.name)));
+});
+
+// Head-noun boost: a qualifier token ("gateway") must not outrank the exact head noun ("endpoint").
+test("search head-noun: 'gateway vpc endpoint' ranks the endpoint first", () => {
+  assert.equal(searchIcon(catalog, "gateway vpc endpoint")[0].name, "endpoint");
+});
+test("search head-noun does not regress 'nat gateway'", () => {
+  assert.equal(searchIcon(catalog, "nat gateway")[0].name, "nat_gateway");
 });
 
 test("styleForIcon returns the style verbatim (S3 = green + points + aspect=fixed)", () => {
