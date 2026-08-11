@@ -109,3 +109,15 @@ test("contract default is scaffold when omitted", () => {
 test("contract: invalid value throws a clear error", () => {
   assert.throws(() => new Diagram("pipeline", { contract: "frozen" }), /Invalid contract/);
 });
+
+test("subnet: a labelled Private subnet renders the padlock glyph + subnet=1 marker", () => {
+  // draw.io draws Public/Private subnet with the security-group (padlock) glyph, not the generic
+  // subnet glyph. The builder swaps the glyph but stamps subnet=1 so the validator still knows it.
+  const d = new Diagram("network");
+  renderTree(d, group("vpc", "group_vpc", "VPC", { dir: "row", gap: 20 }, [
+    group("prv", "group_subnet", "Private subnet", { dir: "col" }, [icon("ec2", "ec2", "EC2")]),
+  ]));
+  const prv = d.toXML().split("<mxCell").find((c) => /value="Private subnet"/.test(c));
+  assert.match(prv, /grIcon=mxgraph\.aws4\.group_security_group/);   // padlock glyph
+  assert.match(prv, /subnet=1/);                                     // stable subnet marker
+});

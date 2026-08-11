@@ -63,6 +63,12 @@ function scoreEntry(entry, qTokens, qRaw) {
     else if (name.includes(t)) score += 12;
     if (haystack.includes(t)) score += 6;
   }
+  // Head-noun boost: the last token of a descriptive query is usually the THING itself
+  // ("gateway vpc ENDPOINT" → an endpoint), while earlier tokens are qualifiers. Without this,
+  // an icon matching two qualifier tokens by name (e.g. vpc_carrier_gateway) outranks the exact
+  // head-noun match (endpoint). Reward an exact head-noun word match so the head wins.
+  const head = qTokens[qTokens.length - 1];
+  if (head && qTokens.length > 1 && name.split(" ").includes(head)) score += 30;
   return score;
 }
 
@@ -400,7 +406,10 @@ export function auditAwsConventions(catalog, xml) {
   }
 
   // 2) Groups nested in the correct order.
-  const groupTok = (style) => (style.match(/grIcon=mxgraph\.aws4\.([a-zA-Z0-9_]+)/) || [])[1];
+  // A labelled subnet swaps its glyph to the security-group padlock but carries a `subnet=1` marker
+  // (builder.group) — treat it as a subnet, not a security group, for nesting order.
+  const groupTok = (style) =>
+    /(?:^|;)subnet=1;?/.test(style) ? "group_subnet" : (style.match(/grIcon=mxgraph\.aws4\.([a-zA-Z0-9_]+)/) || [])[1];
   const ancestorLevels = (c) => {
     const out = [];
     let p = byId.get(c.parent);
@@ -586,7 +595,7 @@ export function auditArchitecture(xml) {
   const cells = parseCells(xml);
   const byId = new Map(cells.filter((c) => c.id).map((c) => [c.id, c]));
   const iconName = (c) => (c.style.match(/resIcon=mxgraph\.aws4\.([a-z0-9_]+)/) ?? [])[1] ?? null;
-  const isSubnet = (c) => /grIcon=mxgraph\.aws4\.group_subnet\b/.test(c.style);
+  const isSubnet = (c) => /(?:^|;)subnet=1;?/.test(c.style) || /grIcon=mxgraph\.aws4\.group_subnet\b/.test(c.style);
   const isAZ = (c) => /grIcon=mxgraph\.aws4\.group_availability_zone\b/.test(c.style);
   const ancestors = (c) => { const o = []; let p = byId.get(c.parent), g = 0; while (p && g++ < 50) { o.push(p); p = byId.get(p.parent); } return o; };
 

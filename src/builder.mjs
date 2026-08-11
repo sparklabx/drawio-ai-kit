@@ -77,6 +77,13 @@ export class Diagram {
       const priv = /private/i.test(label);
       fill = priv ? THEME.subnetPrivate : THEME.subnetPublic;
       stroke = stroke || (priv ? THEME.subnetPrivateStroke : THEME.subnetPublicStroke);
+      // draw.io draws Public/Private subnet with the security-group glyph (the padlock), not the
+      // generic subnet glyph. Swap the glyph for labelled subnets but stamp a stable `subnet=1`
+      // marker so the validator still treats it as a subnet (level 4, DB-in-public-subnet audit)
+      // — the marker is glyph-independent, so it survives the swap. draw.io ignores unknown keys.
+      if (priv || /public/i.test(label))
+        style = style.replace("grIcon=mxgraph.aws4.group_subnet", "grIcon=mxgraph.aws4.group_security_group");
+      style += "subnet=1;";
     }
     if (!stroke && gname === "group_region") stroke = THEME.regionStroke;
     if (!stroke && gname === "group_vpc") stroke = THEME.vpcStroke;
