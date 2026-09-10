@@ -6,23 +6,20 @@ import { group, frame, icon, box, renderTree } from "../../src/layout-engine.mjs
 
 const d = new Diagram("mesh");
 
-// Workload accounts: concentric nesting — each group has 1 child → wraps tightly (concentric wrap)
+// Dev/Test/Prod are PEER accounts running the SAME stack → draw ONE account as a stack of 3 cards
+// (multiplicity), never nested. VPC → Private subnet → EC2 associates its VPC to the service network.
 const workloads =
-  group("acc_dev", "group_account", "Dev Workload Account", { dir: "col" }, [
-    group("acc_test", "group_account", "Test Workload Account", { dir: "col" }, [
-      group("acc_prod", "group_account", "Prod Workload Account", { dir: "col" }, [
-        group("prod_vpc", "group_vpc", "VPC", { dir: "col" }, [
-          group("prod_sub", "group_subnet", "Private subnet", { dir: "col" }, [
-            icon("prod_ec2", "ec2", "Amazon EC2"),
-          ]),
-        ]),
+  group("acc_prod", "group_account", "Workload Accounts (Dev · Test · Prod)", { dir: "col", stack: 3 }, [
+    group("prod_vpc", "group_vpc", "VPC", { dir: "col" }, [
+      group("prod_sub", "group_subnet", "Private subnet", { dir: "col" }, [
+        icon("prod_ec2", "ec2", "Amazon EC2"),
       ]),
     ]),
   ]);
 
 const tree = group("region", "group_region", "AWS Region", { dir: "row", gap: 70, pad: 40 }, [
-  // Generative AI Account: Bedrock → Proxy(VPC) → Service 1
-  group("genai", "group_account", "Generative AI Account", { dir: "row", gap: 36 }, [
+  // Generative AI Account: Bedrock → Proxy(VPC) → Service 1 (col so the box fills instead of a wide empty strip)
+  group("genai", "group_account", "Generative AI Account", { dir: "col", gap: 30 }, [
     icon("bedrock", "bedrock", "Amazon Bedrock"),
     group("genai_vpc", "group_vpc", "VPC", { dir: "row" }, [box("proxy", "Proxy Layer", { w: 150, h: 64 })]),
     icon("svc1", "vpc_lattice", "VPC Lattice (Service 1)"),

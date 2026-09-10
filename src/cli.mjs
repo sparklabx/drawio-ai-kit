@@ -20,6 +20,8 @@ import {
   validateDiagram,
   auditAesthetics,
   listCategories,
+  graphFromXml,
+  suggestLayout,
 } from "./core.mjs";
 import { packageRoot, findDrawioCli, buildRenderArgs, workflowText, scaffoldSource } from "./cli-lib.mjs";
 
@@ -108,6 +110,14 @@ switch (cmd) {
     const f = positional[0];
     if (!f) { console.error("A file is required. Example: drawio-ai audit diagram.drawio"); process.exit(1); }
     out(auditAesthetics(readFileSync(f, "utf8")));
+    break;
+  }
+  case "suggest-layout":
+  case "suggest": {
+    const f = positional[0];
+    if (!f) { console.error("A .drawio/.xml file is required. Example: drawio-ai suggest-layout diagram.drawio"); process.exit(1); }
+    const metrics = graphFromXml(readFileSync(f, "utf8"));
+    out({ ...suggestLayout(metrics), metrics });
     break;
   }
   case "logo": {
@@ -248,6 +258,7 @@ switch (cmd) {
   style <name>
   validate <file> [--strict]
   audit <file>
+  suggest-layout <file>                           recommend a layout archetype + sparsity/hub warnings from graph metrics
   logo <brand> [--embed] [--variant color|mono|text]
   categories
   types

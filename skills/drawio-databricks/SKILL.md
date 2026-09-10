@@ -126,6 +126,7 @@ metadata across workspaces.
 ## Self-check (before delivering)
 - [ ] Built with the layout engine — no hand-written coordinates.
 - [ ] `drawio-ai validate` → ok, no warnings, no advice.
+- [ ] `drawio-ai suggest-layout` → recommended archetype matches your layout; no sparsity (one-icon-frame) warning.
 - [ ] Every icon came from `drawio-ai search` (category colors intact).
 - [ ] `drawio-ai render` vision self-check passed.
 - [ ] Output written under the user's project, not the Kit.

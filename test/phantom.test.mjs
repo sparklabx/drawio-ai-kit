@@ -68,3 +68,27 @@ test("link() to a phantom throws a teaching message", () => {
   // a truly unknown id → still the generic "does not exist" error (not the phantom one)
   assert.throws(() => d.link("a", "nope"), /does not exist yet/);
 });
+
+// stack:N — a frame drawn as N offset "cards" (multiplicity, the AWS idiom for N identical envs).
+// Emits (N-1) decorative shadow cells BEHIND the frame; the geometry audit must not flag their
+// intentional overlap.
+test("stack:N draws N-1 shadow cards behind the frame, offset up-right, and passes the audit", () => {
+  const d = new Diagram("network");
+  renderTree(d, group("region", "group_region", "Region", { dir: "row" }, [
+    group("acc", "group_account", "Workload Accounts (Dev · Test · Prod)", { dir: "col", stack: 3 }, [
+      icon("ec2", "ec2", "Amazon EC2"),
+    ]),
+  ]));
+  const xml = d.toXML();
+  const stk1 = xml.split("<mxCell").find((c) => /id="acc__stk1"/.test(c));
+  const stk2 = xml.split("<mxCell").find((c) => /id="acc__stk2"/.test(c));
+  assert.ok(stk1 && stk2, "stack:3 emits two shadow cards");
+  assert.ok(!xml.includes("acc__stk3"), "…and no more than stack-1");
+  // shadow k sits BEFORE the real account cell (lower z-order = drawn behind)
+  const order = (id) => xml.indexOf(`id="${id}"`);
+  assert.ok(order("acc__stk2") < order("acc__stk1") && order("acc__stk1") < order("acc"), "shadows render behind, farthest first");
+  // farther card is offset further right + up than the nearer one (front/identity card stays at the bottom)
+  assert.ok(d.R["acc__stk2"].x > d.R["acc__stk1"].x && d.R["acc__stk2"].y < d.R["acc__stk1"].y, "cards step up-and-right");
+  const advice = d.validate().audit.advice.join(" ");
+  assert.doesNotMatch(advice, /acc__stk\d+.*overlap/, "shadow overlap is by design — audit must ignore it");
+});

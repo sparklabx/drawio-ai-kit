@@ -540,6 +540,7 @@ export function auditGeometry(xml) {
   const sibsOf = new Map();
   for (const c of cells) {
     if (!isVertex(c) || isContainer(c)) continue;
+    if (/__stk\d+$/.test(c.id)) continue;   // multiplicity shadow cards overlap BY DESIGN (stack:N frames)
     (sibsOf.get(c.parent) ?? sibsOf.set(c.parent, []).get(c.parent)).push(c);
   }
   const seen = new Set();
@@ -570,7 +571,112 @@ export function auditGeometry(xml) {
   for (const [k, n] of entryCount) if (n > 1)
     advice.push(`${n} edges enter "${k.split("@")[0]}" at the same point — spread their entry points so the arrowheads don't stack (fan-in).`);
 
+  // 4) ambiguous visual relay: an incoming edge and an outgoing edge attached to a node at the SAME
+  //    explicit port read as the signal passing THROUGH the node (a relay), not stopping at it.
+  //    (nexcanvas collision contract). Only flag explicit numeric ports — auto ports ("c") route apart.
+  const port = (style, ax, ay) => {
+    const x = (style.match(new RegExp(ax + "=([\\d.]+)")) ?? [])[1], y = (style.match(new RegExp(ay + "=([\\d.]+)")) ?? [])[1];
+    return x != null && y != null ? `${x},${y}` : null;                // null = auto → not a shared-port risk
+  };
+  const inPorts = new Map(), outPorts = new Map();
+  for (const c of cells) {
+    if (c.edge !== "1") continue;
+    const ip = c.target && port(c.style, "entryX", "entryY"); if (ip) (inPorts.get(c.target) ?? inPorts.set(c.target, new Set()).get(c.target)).add(ip);
+    const op = c.source && port(c.style, "exitX", "exitY"); if (op) (outPorts.get(c.source) ?? outPorts.set(c.source, new Set()).get(c.source)).add(op);
+  }
+  for (const [node, ins] of inPorts) {
+    const outs = outPorts.get(node); if (!outs) continue;
+    for (const p of ins) if (outs.has(p)) {
+      advice.push(`Node "${node}" has an incoming and an outgoing edge at the same port (${p}) — it reads as a pass-through relay; give the outgoing edge a different side (exit/entry) so the flow clearly stops at the node.`);
+      break;
+    }
+  }
+
   return advice;
+}
+
+const TOPOLOGY_GR = /group_(vpc|region|availability_zone|subnet|account|security_group|on_premise|corporate_data_center)|azure_.*(vnet|subnet|resource_group)|gcp_.*(vpc|subnet|project)/i;
+
+/** Measure the graph a diagram declares (from its .drawio) into archetype-selection metrics.
+ *  Inspired by nexcanvas' pre-geometry "layout brainstorm" — but computed from the built diagram so
+ *  it plugs into the existing validate/audit loop. */
+export function graphFromXml(xml) {
+  const cells = parseCells(xml);
+  const byId = new Map(cells.filter((c) => c.id).map((c) => [c.id, c]));
+  const hasChildren = new Set(cells.map((c) => c.parent).filter(Boolean));
+  const box = (c) => c.absGeo || c.geo;
+  const isEdge = (c) => c.edge === "1";
+  const isText = (c) => /(?:^|;)text;/.test(c.style) || c.id === "__title";
+  // container = an AWS group stencil, an explicit container, or any cell that has children. Pack-agnostic
+  // so GCP/Azure/Databricks label-frames (which carry no grIcon) still count as boundaries.
+  const isGroup = (c) => !isEdge(c) && (/grIcon=|container=1/.test(c.style) || hasChildren.has(c.id));
+  // node = any leaf vertex (service icon OR box tile), across every pack — not a container, edge, or text.
+  const isNode = (c) => !isEdge(c) && c.geo && c.id && !isText(c) && !isGroup(c);
+  const nodes = cells.filter(isNode);
+  const groups = cells.filter(isGroup);
+  const edges = cells.filter((c) => isEdge(c) && c.source && c.target);
+
+  const depthOf = (c, g = 0) => { const p = byId.get(c.parent); return !p || g > 40 ? g : depthOf(p, g + 1); };
+  const nestingDepth = groups.length ? Math.max(...groups.map((g) => depthOf(g))) : 0;
+  const inGroup = (c) => { let p = byId.get(c.parent); let n = 0; while (p && n++ < 40) { if (isGroup(p)) return true; p = byId.get(p.parent); } return false; };
+  const containmentRatio = nodes.length ? nodes.filter(inGroup).length / nodes.length : 0;
+  const TOPO_LABEL = /\b(vpc|subnet|region|zone|availability|project|vnet|resource group|account|namespace|cluster|data ?cent(er|re)|on[- ]?prem)\b/i;
+  const topologyBoundary = groups.some((g) => TOPOLOGY_GR.test(g.style) || TOPO_LABEL.test(g.value || ""));
+
+  const degree = new Map();
+  for (const e of edges) { degree.set(e.source, (degree.get(e.source) ?? 0) + 1); degree.set(e.target, (degree.get(e.target) ?? 0) + 1); }
+  let hubId = null, maxDegree = 0;
+  for (const [id, d] of degree) if (d > maxDegree) { maxDegree = d; hubId = id; }
+  const hubScore = edges.length ? maxDegree / edges.length : 0;
+
+  // back/feedback edges: a SOLID edge whose target sits left of (or above) the source. Dashed edges are
+  // dependency/sync/governance, not feedback loops — exclude them.
+  let backEdges = 0;
+  for (const e of edges) { if (/(?:^|;)dashed=1/.test(e.style)) continue; const s = byId.get(e.source), t = byId.get(e.target); if (!s || !t) continue; const sb = box(s), tb = box(t); if (!sb || !tb) continue; if (tb.x + tb.w / 2 < sb.x - 8 || tb.y + tb.h / 2 < sb.y - 8) backEdges++; }
+
+  // per-group icon packing — one-icon frames are the sparsity smell
+  const directIcons = new Map();
+  for (const n of nodes) { const p = byId.get(n.parent); if (p && isGroup(p)) directIcons.set(n.parent, (directIcons.get(n.parent) ?? 0) + 1); }
+  const maxIconsPerGroup = directIcons.size ? Math.max(...directIcons.values()) : nodes.length;
+  const singleIconFrames = [...directIcons.values()].filter((v) => v === 1).length;
+
+  const bx = nodes.concat(groups).map(box).filter(Boolean);
+  const W = bx.length ? Math.max(...bx.map((b) => b.x + b.w)) - Math.min(...bx.map((b) => b.x)) : 1;
+  const H = bx.length ? Math.max(...bx.map((b) => b.y + b.h)) - Math.min(...bx.map((b) => b.y)) : 1;
+
+  return { nodeCount: nodes.length, edgeCount: edges.length, boundaryCount: groups.length, nestingDepth,
+    containmentRatio: +containmentRatio.toFixed(2), topologyBoundary, maxDegree, hubId, hubScore: +hubScore.toFixed(2),
+    backEdges, maxIconsPerGroup, singleIconFrames, portrait: H > W * 1.1, aspect: +(W / H).toFixed(2) };
+}
+
+/** Recommend a layout archetype from graph metrics (nexcanvas decision-flow thresholds), plus
+ *  actionable warnings (sparsity, weak hub). Returns {recommended (our Diagram type), family, signals, warnings}. */
+export function suggestLayout(m) {
+  const warnings = [];
+  const feedbackRatio = m.edgeCount ? m.backEdges / m.edgeCount : 0;
+  const signals = { hubScore: m.hubScore, containmentRatio: m.containmentRatio, topologyBoundary: m.topologyBoundary,
+    feedbackRatio: +feedbackRatio.toFixed(2), nodeCount: m.nodeCount, maxIconsPerGroup: m.maxIconsPerGroup };
+
+  // Only classify from signals that are reliable off a built diagram. Containment is NOT one — the kit
+  // nests every icon in a layout wrapper, so it is high for all diagrams. Feedback/hybrid is surfaced as
+  // a warning (back-edge geometry is noisy), not a reclassification.
+  let family, type, reason;
+  if (m.topologyBoundary) { family = "nested-topology"; type = "network"; reason = "topology boundaries (VPC/region/subnet/zone/account…)"; }
+  else if (m.hubScore >= 0.45 && m.maxDegree >= 4) { family = "hub-and-spoke"; type = "hubspoke"; reason = `hub "${m.hubId}" carries ${Math.round(m.hubScore * 100)}% of edges (degree ${m.maxDegree})`; }
+  else if (m.portrait) { family = "phase-rows"; type = "hierarchy"; reason = "portrait / top-to-bottom canvas"; }
+  else if (m.nodeCount <= 10 && m.maxDegree <= 2) { family = "compact-pipeline"; type = "pipeline"; reason = `small linear story (${m.nodeCount} nodes, low branching)`; }
+  else if (m.nodeCount >= 16 || m.maxIconsPerGroup >= 5) { family = "dense-phase-columns"; type = "pipeline"; reason = `large lifecycle (${m.nodeCount} nodes, up to ${m.maxIconsPerGroup}/group) → pack phases as GRIDS`; }
+  else { family = "phase-columns"; type = "pipeline"; reason = "normal left-to-right lifecycle"; }
+
+  // sparsity: one-icon-per-frame is the #1 quality failure — but only for a LARGE, UNPACKED diagram.
+  // A small linear pipeline (a few stages, one service each) is fine; topology subnets carry 1 icon by
+  // design. Fire only when there are many services, nothing is packed, and lone frames dominate.
+  if (!m.topologyBoundary && m.nodeCount >= 12 && m.maxIconsPerGroup <= 2 && m.singleIconFrames >= 5)
+    warnings.push(`${m.singleIconFrames} frames each hold a single icon while ${m.nodeCount} services stay unpacked — group related services into fewer grid() boxes (3–8 icons each) so the sheet reads dense, not scattered.`);
+  if (family !== "hub-and-spoke" && !m.topologyBoundary && m.hubScore >= 0.38 && m.hubScore < 0.45 && m.maxDegree >= 4) warnings.push(`node "${m.hubId}" is a near-hub (${Math.round(m.hubScore * 100)}% of edges) — hub-and-spoke may read better.`);
+  if (!m.topologyBoundary && m.backEdges >= 2) warnings.push(`${m.backEdges} edges run backward — if they are feedback/sync draw them dashed; if the flow genuinely loops, a hybrid grid reads better.`);
+
+  return { recommended: type, family, reason, signals, warnings };
 }
 
 // Databases are detected by name (the catalog "Database" category is noisy — it also tags cloud9,

@@ -9,7 +9,9 @@ import { centerInGapX, panelSize } from "./layout.mjs";
 import { typePreset } from "./types.mjs";
 import { THEME } from "./theme.mjs";
 
-const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+// \n → &#10; so multi-line labels survive XML attribute-value normalization (a bare newline in an
+// attribute is collapsed to a space by the XML spec; the char-ref renders as a real line break in draw.io).
+const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/\n/g, "&#10;");
 
 // Kit repo root (parent of src/), real path so the symlinked-skill install resolves to the true repo.
 const KIT_ROOT = (() => { const d = resolve(dirname(fileURLToPath(import.meta.url)), ".."); try { return realpathSync(d); } catch { return d; } })();
@@ -38,7 +40,10 @@ export class Diagram {
     this.eid = 0;
     this.edgeSpecs = [];        // edges recorded first, built later (to bundle fan-out 1→N)
     this._edgesBuilt = false;
-    if (title) this.text("__title", [0, 24], page[0], title, { fs: 14 });
+    // Title is emitted in toXML(), NOT here — renderTree resizes this.page to the real content width, so
+    // centring it now (over the initial page width) would leave it off-centre. Deferring centres it right.
+    this._titleText = title || "";
+    this._titleFs = 14;
   }
   _put(id, parent, x, y, w, h, style, label) {
     this.R[id] = { x, y, w, h };
@@ -50,7 +55,12 @@ export class Diagram {
   icon(id, name, [x, y], { parent = "1", label = "", size = 48 } = {}) {
     const s = styleForIcon(this.c, name);
     if (!s) throw new Error(`Icon not found in catalog: "${name}" — use search_icon to look up the correct name.`);
-    const r = this._put(id, parent, x, y, size, size, s.style, label); r.ob = true; return r;   // ob = leaf obstacle (router avoids)
+    const r = this._put(id, parent, x, y, size, size, s.style, label); r.ob = true;
+    // The label renders in a ~34px band BELOW the 48px glyph (verticalLabelPosition=bottom, outside the
+    // cell). The router only sees the glyph rect, so lines cut straight through the caption. labelH tells
+    // _buildEdges to add that band as a SEPARATE obstacle card (not part of the R rect → audits unaffected).
+    r.labelH = label ? 34 : 0;
+    return r;   // ob = leaf obstacle (router avoids)
   }
   /** Small catalog icon at a container's top-left corner (for Azure/GCP frames — mimics the corner
    *  icon baked into AWS group stencils). Decorative but still an obstacle (ob:true) — an edge
@@ -121,7 +131,7 @@ export class Diagram {
     return this.R[id];
   }
   /** Title centered across the page width (call after the page size is known). */
-  title(label, { fs = 14 } = {}) { this.text("__title", [0, 24], this.page[0], label, { fs }); return this; }
+  title(label, { fs = 14 } = {}) { this._titleText = label; this._titleFs = fs; return this; }   // centred at toXML() over the final page width
   text(id, [x, y], w, label, { fs = 14, parent = "1" } = {}) {
     const ox = parent === "1" ? 0 : this.R[parent].x, oy = parent === "1" ? 0 : this.R[parent].y;
     this.R[id] = { x, y, w, h: 30 };
@@ -171,7 +181,27 @@ export class Diagram {
     this._edgesBuilt = true;
     const specs = this.edgeSpecs, R = (id) => this.R[id];
     const cards = [];
-    for (const id in this.R) { const r = this.R[id]; if (r.ob) cards.push({ id, x: r.x, y: r.y, w: r.w, h: r.h }); }
+    for (const id in this.R) {
+      const r = this.R[id];
+      if (!r.ob) continue;
+      cards.push({ id, x: r.x, y: r.y, w: r.w, h: r.h });
+      // A labeled icon's text renders in a ~34px band BELOW the glyph (outside the cell). Add it as a
+      // SEPARATE card with its own id so it is never in an edge's `ex` set — thus the glyph stays
+      // connectable for the icon's own edges, but no edge (its own included) may route through the label
+      // text. This is what kills "line straight through the caption" without forcing S-curves.
+      // ponytail: band is glyph-width; a very wide wrapped caption can still overhang left/right — the band
+      // pushes the route up to glyph level so it clears the text anyway, widen only if a case bites.
+      if (r.labelH) cards.push({ id: `${id}__lbl`, x: r.x, y: r.y + r.h, w: r.w, h: r.labelH });
+    }
+    // Obstacle-exclusion set for an edge: always its own endpoints, PLUS their caption bands when the two
+    // nodes are x-aligned (a straight vertical drop between stacked neighbours — orders-svc→RDS — should
+    // pass through a short caption rather than detour around it). Misaligned edges keep the bands blocking,
+    // so an angled approach (files→stream) is still steered off the label instead of piercing it.
+    const exOf = (e) => {
+      const s = new Set([e.src, e.tgt]), a = R(e.src), b = R(e.tgt);
+      if (a && b && Math.abs(a.x + a.w / 2 - (b.x + b.w / 2)) < 24) { s.add(`${e.src}__lbl`); s.add(`${e.tgt}__lbl`); }
+      return s;
+    };
     const M = 7;
     const segHit = (p, q, ex) => {
       for (const c of cards) {
@@ -406,7 +436,7 @@ export class Diagram {
     };
     const routes = specs.map(() => null);
     const heuristic = (e, i, strict) => {
-      const a = R(e.src), b = R(e.tgt), ex = new Set([e.src, e.tgt]), f = face[i], sf = frac[i].s, tf = frac[i].t;
+      const a = R(e.src), b = R(e.tgt), ex = exOf(e), f = face[i], sf = frac[i].s, tf = frac[i].t;
       const tryR = (r) => { if (!clearW(a, b, r, sf, tf, ex)) return null; const g = geom(a, b, r, sf, tf), pp = [g.sp, ...g.wp, g.ep]; if (pathAlong(pp, a, b)) return null; if (strict && overlapsUsed(pp)) return null; return r; };
       let r = null;
       if (f.horiz) {
@@ -425,6 +455,35 @@ export class Diagram {
     specs.forEach((e, i) => {
       if (e.opts.style) { routes[i] = { raw: true }; return; }
       if (e.opts.route) { routes[i] = e.opts.route; reg(geom(R(e.src), R(e.tgt), routes[i], frac[i].s, frac[i].t)); return; }
+      // rail: route a long/cross-cutting edge along an explicit top/bottom gutter (nexcanvas rails) so it
+      // does not cut through the dense middle. { rail:"top"|"bottom"|<Y>, lane:n } — lane offsets stacked rails.
+      if (e.opts.rail != null) {
+        const a = R(e.src), b = R(e.tgt), m = 30 + (e.opts.lane || 0) * 36;
+        const top = e.opts.rail === "top";
+        const railY = typeof e.opts.rail === "number" ? e.opts.rail : top ? Math.min(a.y, b.y) - m : Math.max(a.y + a.h, b.y + b.h) + m;
+        const dfltSide = typeof e.opts.rail === "number" ? (railY <= (a.y + b.y) / 2 ? "T" : "B") : top ? "T" : "B";
+        // exclude the endpoints AND their own caption bands — an edge may leave through its own node's
+        // caption going to the rail (like any bottom-port edge); only ANOTHER card in the drop forces a jog.
+        const ex = new Set([e.src, e.tgt, `${e.src}__lbl`, `${e.tgt}__lbl`]);
+        // Drop from node n straight to railY at its centre-x; if that vertical run pierces another card
+        // (node stacked under the source, common on a long feedback edge), jog out to the nearest column
+        // gap and enter/leave from that side instead — so the rail bypasses the nodes rather than spearing
+        // them. Falls back to the straight centre drop when neither gap is clear (no worse than before).
+        const stub = (n) => {
+          const cx = Math.round(n.x + n.w / 2), edgeY = dfltSide === "T" ? n.y : n.y + n.h;
+          if (!segHit({ x: cx, y: edgeY }, { x: cx, y: railY }, ex)) return { es: dfltSide, f: 0.5, pts: [{ x: cx, y: railY }] };
+          const cy = Math.round(n.y + n.h / 2);
+          for (const [sx, sd, px] of [[n.x - 22, "L", n.x], [n.x + n.w + 22, "R", n.x + n.w]])
+            if (!segHit({ x: px, y: cy }, { x: sx, y: cy }, ex) && !segHit({ x: sx, y: cy }, { x: sx, y: railY }, ex))
+              return { es: sd, f: (cy - n.y) / n.h, pts: [{ x: sx, y: cy }, { x: sx, y: railY }] };
+          return { es: dfltSide, f: 0.5, pts: [{ x: cx, y: railY }] };
+        };
+        const sa = stub(a), sb = stub(b);
+        frac[i] = { s: sa.f, t: sb.f };
+        routes[i] = { es: sa.es, en: sb.es, kind: "poly", pts: [...sa.pts, ...sb.pts.slice().reverse()] };
+        reg(geom(a, b, routes[i], frac[i].s, frac[i].t));
+        return;
+      }
       const r = heuristic(e, i, true) || heuristic(e, i, false);
       if (r) { routes[i] = r; reg(geom(R(e.src), R(e.tgt), r, frac[i].s, frac[i].t)); } else need.push(i);
     });
@@ -441,7 +500,7 @@ export class Diagram {
       return want;
     };
     for (const i of need) {
-      const e = specs[i], a = R(e.src), b = R(e.tgt), ex = new Set([e.src, e.tgt]), f = face[i];
+      const e = specs[i], a = R(e.src), b = R(e.tgt), ex = exOf(e), f = face[i];
       const fwdY = b.y + b.h / 2 >= a.y + a.h / 2, fwdX = b.x + b.w / 2 >= a.x + a.w / 2;
       const tries = f.horiz ? [[f.es, f.en], ["T", "T"], ["B", "B"], [fwdY ? "B" : "T", fwdX ? "L" : "R"]] : [[f.es, f.en], ["L", "L"], ["R", "R"], [fwdX ? "R" : "L", fwdY ? "T" : "B"]];
       let best = null;
@@ -507,7 +566,7 @@ export class Diagram {
         g.forEach((s, j) => {
           const target = Math.round(center + (j - (g.length - 1) / 2) * SEP);
           if (target === s.pos) return;
-          const old = s.pos, P = paths[s.i], a = R(specs[s.i].src), b = R(specs[s.i].tgt), ex = new Set([specs[s.i].src, specs[s.i].tgt]);
+          const old = s.pos, P = paths[s.i], a = R(specs[s.i].src), b = R(specs[s.i].tgt), ex = exOf(specs[s.i]);
           const alongBefore = pathAlong(P, a, b);   // container entry inherent to this path is NOT the nudge's fault
           if (s.o === "v") { s.a.x = target; s.b.x = target; } else { s.a.y = target; s.b.y = target; }
           // revert only if the move makes it WORSE: a new icon hit, or border-hugging it didn't have before
@@ -534,12 +593,12 @@ export class Diagram {
     // path through the very node the router bent around.
     specs.forEach((e, i) => { const r = routes[i]; if (!r || r.raw) return;
       const g = geom(R(e.src), R(e.tgt), r, frac[i].s, frac[i].t);
-      if (g.wp.length && segHit(g.sp, g.ep, new Set([e.src, e.tgt]))) r.freeze = true;
+      if (g.wp.length && segHit(g.sp, g.ep, exOf(e))) r.freeze = true;
     });
 
     // D. report residual crossings + parallel overlaps (for verification)
     this._cross = 0;
-    specs.forEach((e, i) => { const r = routes[i]; if (r.raw) return; const a = R(e.src), b = R(e.tgt), ex = new Set([e.src, e.tgt]); if (!clearW(a, b, r, frac[i].s, frac[i].t, ex)) this._cross++; });
+    specs.forEach((e, i) => { const r = routes[i]; if (r.raw) return; const a = R(e.src), b = R(e.tgt), ex = exOf(e); if (!clearW(a, b, r, frac[i].s, frac[i].t, ex)) this._cross++; });
     const finSeg = [];
     paths.forEach((P) => { if (!P) return;
       for (let k = 1; k < P.length - 2; k++) { const p = P[k], q = P[k + 1];
@@ -554,7 +613,7 @@ export class Diagram {
   }
 
   _emitEdge({ src, tgt, label = "", opts = {} }, r, fr, geom) {
-    const { dash = false, flow = false, rounded = false, stroke = THEME.edge.stroke, style = "", step = null } = opts;
+    const { dash = false, flow = false, rounded = false, stroke = THEME.edge.stroke, style = "", step = null, badge = null, badgePos = null } = opts;
     // step:N → a plain "N. " number prefix on the edge label (the reference-diagram convention for a
     // numbered walkthrough) — a small text tag, NOT a big filled circle on the line.
     const lbl = step != null ? (label ? `${step}. ${label}` : `${step}.`) : label;
@@ -593,7 +652,17 @@ export class Diagram {
       wpXml = (!freeze || !g.wp.length) ? "" : `<Array as="points">${g.wp.map((q) => `<mxPoint x="${Math.round(q.x)}" y="${Math.round(q.y)}"/>`).join("")}</Array>`;
     }
     if (style) st += style.endsWith(";") ? style : style + ";";
-    this.cells.push(`<mxCell id="ed${++this.eid}" value="${esc(lbl)}" style="${st}" edge="1" parent="1" source="${src}" target="${tgt}"><mxGeometry relative="1" as="geometry">${wpXml}</mxGeometry></mxCell>`);
+    const eid = `ed${++this.eid}`;
+    this.cells.push(`<mxCell id="${eid}" value="${esc(lbl)}" style="${st}" edge="1" parent="1" source="${src}" target="${tgt}"><mxGeometry relative="1" as="geometry">${wpXml}</mxGeometry></mxCell>`);
+    // badge:"1a" → a green step-badge ATTACHED to the edge (a child label with relative geometry, so it
+    // rides the line and moves with it). Default sits toward the source when the edge also has a text
+    // label (so they don't overlap); badgePos (-1..1 along the edge) overrides. Lettered steps (1a/2b)
+    // that step:N can't express.
+    if (badge != null) {
+      const bx = badgePos != null ? badgePos : (lbl ? -0.6 : 0);
+      // offset -12,-12 = half the 24×24 box, so the badge is CENTRED on the line point (not hung below-right).
+      this.cells.push(`<mxCell id="${eid}_b" value="${esc(String(badge))}" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3F7D20;strokeColor=#FFFFFF;fontColor=#FFFFFF;fontSize=11;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" connectable="0" parent="${eid}"><mxGeometry x="${bx}" y="0" width="24" height="24" relative="1" as="geometry"><mxPoint x="-12" y="-12" as="offset"/></mxGeometry></mxCell>`);
+    }
   }
 
   // reusable layout helpers
@@ -611,17 +680,23 @@ export class Diagram {
     const x = lane ? Math.round(this.R[lane].x + (this.R[lane].w - w) / 2)
                    : centerInGapX(this.R[between[0]], this.R[between[1]], w);
     const y = Math.round(F.y - pad), h = Math.round(T.y + T.h - F.y + pad * 2);
-    this.box(id, [x, y], [w, h], label, { fill, stroke, va: "bottom", fs: 10 });
-    if (icon) this.icon(`${id}_ic`, icon, [Math.round(x + (w - 48) / 2), y + 12]);
+    // Icon + label centred in the bar (not icon-at-top / label-at-bottom, which leaves a hollow middle
+    // on a tall span). The centre is also where the fan-in / fan-out edges meet the bus, so it reads right.
+    this.box(id, [x, y], [w, h], label, { fill, stroke, va: "middle", fs: 10 });
+    if (icon) this.icon(`${id}_ic`, icon, [Math.round(x + (w - 48) / 2), Math.round(y + h / 2 - 70)]);
     return this.R[id];
   }
 
   toXML() {
     this._buildEdges();
     const cellsXml = this.cells.join("");
+    // Title centred over the FINAL page width (renderTree has set it to the real content size by now).
+    const titleXml = this._titleText
+      ? `<mxCell id="__title" value="${esc(this._titleText)}" style="text;html=1;align=center;fontStyle=1;fontSize=${this._titleFs};fontColor=light-dark(#232F3E,#E8E8E8);" vertex="1" parent="1"><mxGeometry x="0" y="24" width="${this.page[0]}" height="30" as="geometry"/></mxCell>`
+      : "";
     // emit a separate (locked) layer for the dashed boundary frames, so editing the content layer is easy.
     const boundsLayer = cellsXml.includes('parent="boundaries"') ? `<mxCell id="boundaries" value="Stack boundaries (locked)" parent="0" style="locked=1;"/>` : "";
-    return `<mxGraphModel dx="1400" dy="900" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="${this.page[0]}" pageHeight="${this.page[1]}" math="0" shadow="0"><root><mxCell id="0"/><mxCell id="1" parent="0"/>${boundsLayer}${cellsXml}</root></mxGraphModel>`;
+    return `<mxGraphModel dx="1400" dy="900" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="${this.page[0]}" pageHeight="${this.page[1]}" math="0" shadow="0"><root><mxCell id="0"/><mxCell id="1" parent="0"/>${boundsLayer}${titleXml}${cellsXml}</root></mxGraphModel>`;
   }
   validate(opts = { strict: true }) { return validateDiagram(this.c, this.toXML(), opts); }
   mxfile(name = "Diagram") { return `<mxfile host="app.diagrams.net"><diagram name="${esc(name)}" id="d">${this.toXML()}</diagram></mxfile>`; }

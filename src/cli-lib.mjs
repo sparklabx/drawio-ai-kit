@@ -171,16 +171,33 @@ Declare the nested structure with \`group\`/\`frame\`/\`grid\` + \`icon\`/\`box\
 Edge API cheat-sheet (so you never have to read builder.mjs):
 \`\`\`js
 d.link(srcId, tgtId, label = "", opts = {})
+// DEFAULT: a bare d.link(src, tgt) with NO routing opts. The router picks the facing side and the exact
+// port for you — it "attacks" the nearest side (a target to the left is entered on its left, a node below
+// on its top) and de-collides parallel edges. Reach for a routing opt ONLY after a render shows a plain
+// link actually failing; a pre-emptive rail/dir/route usually makes the edge WORSE, not better.
 // opts: { role: "fanout"|"tree",  // sharp corners, bundled lanes
-//         dir: "LR"|"TB",         // force horizontal-first / vertical-first exit
+//         dir: "LR"|"TB",         // force horizontal-first / vertical-first exit (only when the auto side is wrong)
 //         dash: true,             // dashed (governance/replication semantics)
 //         flow: true,             // animated flow (draw.io/SVG only)
 //         rounded: true,          // rounded corners (flow edges)
+//         rail: "top"|"bottom",   // ONLY for a LONG edge that would otherwise cut through the dense middle —
+//                                 // e.g. a feedback edge spanning many columns. It drops BOTH ends to a
+//                                 // top/bottom gutter and runs along it (+ lane:n to stack parallel rails).
+//                                 // NOT for a short feedback between two nodes at a similar level: a plain
+//                                 // d.link connects them side-to-side, which is far tidier than a gutter loop.
+//                                 // Rails fix long HORIZONTAL runs; never rail a full-height edge — and a
+//                                 // cross-cutting band (governance/security) spanning the width needs NO arrow.
 //         stroke: "#hex" }        // override color
 // Router handles obstacle avoidance, port de-collision, waypoints — do not add coordinates.
 // Containers (frames/groups) are valid link targets — prefer linking a cluster frame over
 // each replica inside it.
 \`\`\`
+
+## 2b. Sanity-check the layout choice (cheap, catches the #1 quality failures)
+After the first build, run \`drawio-ai suggest-layout <file>\`. It reads the diagram's graph and returns:
+- \`recommended\` — the archetype that fits the graph: \`network\` (topology nesting), \`hubspoke\` (one node carries most edges), \`hierarchy\` (portrait/top-down), or \`pipeline\` (left-to-right; \`family\` says compact vs **dense-phase-columns** = pack phases as grids).
+- \`warnings\` — actionable smells, most importantly **"N frames hold a single icon"** (the sparsity failure — pack related services into fewer \`grid()\` boxes, 3–8 icons each) and near-hub / backward-edge hints.
+If \`recommended\` disagrees with how you drew it, or a sparsity warning fires, **restructure now** — before polishing. This is far cheaper than discovering it in the vision check.
 
 ## 3. Validate
 If your build script already prints its \`d.validate()\` result (the examples all do), read that during

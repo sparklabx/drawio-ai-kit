@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { loadCatalog, searchIcon, getIcon, styleForIcon, validateDiagram, auditAesthetics, auditGeometry, auditEdges, auditArchitecture } from "../src/core.mjs";
+import { loadCatalog, searchIcon, getIcon, styleForIcon, validateDiagram, auditAesthetics, auditGeometry, auditEdges, auditArchitecture, graphFromXml, suggestLayout } from "../src/core.mjs";
 
 const catalog = loadCatalog();
 
@@ -291,4 +291,52 @@ test("validate: empty file is rejected, not silently ok", () => {
   const r = validateDiagram(catalog, "<mxfile></mxfile>");
   assert.equal(r.ok, false);
   assert.ok(r.errors.some((e) => /No <mxCell>/.test(e)));
+});
+
+// ---- layout suggestion (archetype from graph metrics) ----
+test("suggest: a dominant hub → hub-and-spoke", () => {
+  const r = suggestLayout({ nodeCount: 8, edgeCount: 8, maxDegree: 6, hubScore: 0.75, hubId: "hub", topologyBoundary: false, backEdges: 0, maxIconsPerGroup: 1, singleIconFrames: 0, portrait: false });
+  assert.equal(r.recommended, "hubspoke");
+});
+test("suggest: topology boundaries → network (beats a busy central store)", () => {
+  const r = suggestLayout({ topologyBoundary: true, nodeCount: 9, edgeCount: 6, maxDegree: 3, hubScore: 0.5, backEdges: 0, maxIconsPerGroup: 2, singleIconFrames: 0, portrait: false });
+  assert.equal(r.recommended, "network");
+});
+test("suggest: a busy central store in a flat pipeline is NOT a hub", () => {
+  const r = suggestLayout({ topologyBoundary: false, nodeCount: 9, edgeCount: 8, maxDegree: 3, hubScore: 0.38, backEdges: 0, maxIconsPerGroup: 2, singleIconFrames: 0, portrait: false });
+  assert.equal(r.recommended, "pipeline");
+});
+test("suggest: large lifecycle → dense-phase-columns", () => {
+  const r = suggestLayout({ topologyBoundary: false, nodeCount: 20, edgeCount: 15, maxDegree: 3, hubScore: 0.2, backEdges: 0, maxIconsPerGroup: 6, singleIconFrames: 0, portrait: false });
+  assert.equal(r.family, "dense-phase-columns");
+});
+test("suggest: a large UNPACKED diagram → sparsity warning", () => {
+  const r = suggestLayout({ topologyBoundary: false, nodeCount: 16, edgeCount: 12, maxDegree: 2, hubScore: 0.2, backEdges: 0, maxIconsPerGroup: 1, singleIconFrames: 14, portrait: false });
+  assert.ok(r.warnings.some((w) => /single icon/.test(w)));
+});
+test("suggest: a small linear pipeline (1 service/stage) does NOT warn sparsity", () => {
+  const r = suggestLayout({ topologyBoundary: false, nodeCount: 5, edgeCount: 4, maxDegree: 2, hubScore: 0.5, backEdges: 0, maxIconsPerGroup: 1, singleIconFrames: 5, portrait: false });
+  assert.ok(!r.warnings.some((w) => /single icon/.test(w)));
+});
+test("suggest: a large TOPOLOGY (1 icon/subnet) does NOT warn sparsity", () => {
+  const r = suggestLayout({ topologyBoundary: true, nodeCount: 14, edgeCount: 8, maxDegree: 2, hubScore: 0.3, backEdges: 0, maxIconsPerGroup: 1, singleIconFrames: 10, portrait: false });
+  assert.ok(!r.warnings.some((w) => /single icon/.test(w)));
+});
+test("graphFromXml: counts leaf nodes/edges and finds the busiest node", () => {
+  const xml = `<root>${_icon("a", "ec2")}${_icon("b", "s3")}${_icon("c", "rds")}<mxCell id="e1" edge="1" source="a" target="b" style=""/><mxCell id="e2" edge="1" source="b" target="c" style=""/></root>`;
+  const m = graphFromXml(xml);
+  assert.equal(m.nodeCount, 3);
+  assert.equal(m.edgeCount, 2);
+  assert.equal(m.hubId, "b");
+});
+
+// ---- ambiguous visual relay (in-edge + out-edge share a node port) ----
+const _at = (id, x) => `<mxCell id="${id}" value="${id}" style="resIcon=mxgraph.aws4.ec2;" vertex="1" parent="1"><mxGeometry x="${x}" y="0" width="48" height="48" as="geometry"/></mxCell>`;
+test("geometry: flags a pass-through relay (in + out at the same port)", () => {
+  const xml = `<root>${_at("a", 0)}${_at("b", 200)}${_at("c", 400)}<mxCell id="e1" edge="1" source="a" target="b" style="exitX=1;exitY=0.5;entryX=0;entryY=0.5;"/><mxCell id="e2" edge="1" source="b" target="c" style="exitX=0;exitY=0.5;entryX=0;entryY=0.5;"/></root>`;
+  assert.ok(auditGeometry(xml).some((a) => /relay/.test(a) && /"b"/.test(a)));
+});
+test("geometry: in and out on DIFFERENT sides is not a relay", () => {
+  const xml = `<root>${_at("a", 0)}${_at("b", 200)}${_at("c", 400)}<mxCell id="e1" edge="1" source="a" target="b" style="exitX=1;exitY=0.5;entryX=0;entryY=0.5;"/><mxCell id="e2" edge="1" source="b" target="c" style="exitX=1;exitY=0.5;entryX=0;entryY=0.5;"/></root>`;
+  assert.ok(!auditGeometry(xml).some((a) => /relay/.test(a)));
 });

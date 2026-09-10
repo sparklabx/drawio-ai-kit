@@ -39,6 +39,9 @@ export const group = (id, gname, label = "", opts = {}, children = []) => ({
   // routeGap: minimum gap enforced between children when routing lanes need to pass between them.
   // Set to ≥ 2×BM (48px) so the A* router has clearance. Overrides gap only when larger.
   routeGap: opts.routeGap ?? 0,
+  // stack:N → draw the frame as N offset "cards" (multiplicity), the AWS idiom for N IDENTICAL copies
+  // (Dev/Test/Prod accounts, mirrored regions). One structure, labelled once — never nest environments.
+  stack: opts.stack ?? 1,
 });
 /** A group with no AWS stencil = a plain square frame (for logical layers/bands). */
 export const frame = (id, label, opts = {}, children = []) => group(id, null, label, opts, children);
@@ -257,7 +260,31 @@ function eBox(d, n, parent) {
   d.box(n.id, [n.x, n.y], [n.w, n.h], n.label, { parent, fill: n.fill, stroke: n.stroke, round: n.round, va: n.va, bold: n.bold });
 }
 function eGroup(d, n, parent) {
-  if (n.gname) d.group(n.id, n.gname, [n.x, n.y], [n.w, n.h], n.label, { parent, fill: n.fill, stroke: n.stroke });
+  // Multiplicity: draw (stack-1) offset shadow cards BEHIND the frame (emitted first = lower z-order),
+  // stepping up-and-right like a deck. Peek is small enough to sit in the surrounding pad/gap — no extra
+  // reservation. ponytail: widen the parent gap if a deep stack peeks into a neighbour.
+  if (n.stack > 1) {
+    const OFF = 11;
+    // shadow border = the SAME colour as the front frame (they are identical accounts, not neutral boxes);
+    // no corner icon / label on the back cards — only the front card carries the identity.
+    const deckStroke = n.stroke
+      || (n.gname === "group_subnet" ? (/private/i.test(n.label || "") ? THEME.subnetPrivateStroke : THEME.subnetPublicStroke)
+        : n.gname === "group_account" ? THEME.accountStroke
+        : n.gname === "group_region" ? THEME.regionStroke
+        : n.gname === "group_vpc" ? THEME.vpcStroke
+        : n.gname === "group_availability_zone" ? THEME.azStroke
+        : "#8593A3");
+    // Offset UP-and-right: copies recede up-and-behind, the identity (front) card stays at the bottom.
+    for (let k = n.stack - 1; k >= 1; k--) {
+      const r = d._put(`${n.id}__stk${k}`, parent, Math.round(n.x + k * OFF), Math.round(n.y - k * OFF), n.w, n.h,
+        `rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=${deckStroke};`, "");
+      r.ob = null;   // decorative — the router ignores it
+    }
+  }
+  // A stacked frame's front card gets an OPAQUE white fill so it covers the cards behind it (they must
+  // only peek at the edges); it is emitted after the shadows, so it is also the top layer.
+  const mainFill = n.stack > 1 ? (n.fill ?? "#FFFFFF") : n.fill;
+  if (n.gname) d.group(n.id, n.gname, [n.x, n.y], [n.w, n.h], n.label, { parent, fill: mainFill, stroke: n.stroke });
   else if (n.cornerIcon) {
     // Azure/GCP-style container: corner icon top-left, label beside it (like an AWS group stencil).
     const CI = 22;
