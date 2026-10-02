@@ -676,12 +676,23 @@ export class Diagram {
     // straightened path still clears every icon and hugs no border.
     const ortho = (X) => { for (let n = 0; n < X.length - 1; n++) if (Math.abs(X[n].x - X[n + 1].x) > 1.5 && Math.abs(X[n].y - X[n + 1].y) > 1.5) return false; return true; };
     const JOG = 24;
+    // A straightening must not park a run on top of ANOTHER edge: C3 only checked icon clipping, so it
+    // would merge two runs onto one track — trading a small kink for two wires drawn over each other.
+    const clash = (self) => { let n = 0;
+      const segs = (X) => { const o = []; for (let k = 0; k < X.length - 1; k++) { const p = X[k], q = X[k + 1];
+        if (Math.abs(p.y - q.y) < 1) o.push({ h: 1, pos: p.y, lo: Math.min(p.x, q.x), hi: Math.max(p.x, q.x) });
+        else if (Math.abs(p.x - q.x) < 1) o.push({ h: 0, pos: p.x, lo: Math.min(p.y, q.y), hi: Math.max(p.y, q.y) }); } return o; };
+      const A = segs(paths[self]);
+      for (let j = 0; j < paths.length; j++) { if (j === self || !paths[j]) continue;
+        for (const u of A) for (const v of segs(paths[j]))
+          if (u.h === v.h && Math.abs(u.pos - v.pos) < SEP && Math.min(u.hi, v.hi) - Math.max(u.lo, v.lo) > 24) n++; }
+      return n; };
     paths.forEach((P, i) => {
       if (!P) return;
       const ex = exOf(specs[i]), a = R(specs[i].src), b = R(specs[i].tgt);
       // Judge RELATIVE to the path we started with: an edge crossing from one container into another is
       // already "along" by nature, so demanding a clean sheet would reject every straightening.
-      const alongBefore = pathAlong(P, a, b);
+      const alongBefore = pathAlong(P, a, b), clashBefore = clash(i);
       for (let k = 1; k + 2 < P.length; k++) {
         const p = P[k], q = P[k + 1];
         const vert = Math.abs(p.x - q.x) < 1, horiz = Math.abs(p.y - q.y) < 1;
@@ -703,7 +714,7 @@ export class Diagram {
           if (keep === "p") { q[ax] = t; next[ax] = t; } else { p[ax] = t; prev[ax] = t; }
           // Moving a neighbour can break ITS own neighbour further along the chain, leaving a diagonal —
           // so the whole path must still be axis-parallel for the straightening to count as an improvement.
-          if (ortho(P) && !pathHit(P, ex) && (alongBefore || !pathAlong(P, a, b))) break;
+          if (ortho(P) && !pathHit(P, ex) && (alongBefore || !pathAlong(P, a, b)) && clash(i) <= clashBefore) break;
           restore();                                                   // worse → put it back, try the other end
         }
       }
