@@ -216,7 +216,7 @@ switch (cmd) {
       const m = readFileSync(file, "utf8").match(/pageWidth="(\d+)" pageHeight="(\d+)"/);
       if (m) scale = Math.min(1, Math.max(0.5, 1100 / Math.max(Number(m[1]), Number(m[2]))));
     }
-    const page = Number(flags.page) || 0;
+    const page = Number(flags.page) || 1;   // 1-based (draw.io ≥ v27.0.2 rejects page 0)
     const cli = findDrawioCli(process.env);
     if (!cli) {
       console.error("draw.io CLI not found. Set DRAWIO_CLI env var, install the draw.io desktop app, or use xvfb-run on headless Linux.");

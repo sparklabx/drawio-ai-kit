@@ -78,10 +78,12 @@ test("findDrawioCli: returns null when nothing found", () => {
 });
 
 // --- buildRenderArgs ---
-test("buildRenderArgs default scale=1 page=0", () => {
+// draw.io desktop numbers pages from 1 since v27.0.2 — passing -p 0 makes it bail with
+// "Invalid page index", which killed every render (and so the whole vision self-check).
+test("buildRenderArgs default scale=1 page=1 (pages are 1-based)", () => {
   const argv = buildRenderArgs({ file: "a.drawio", out: "b.png" });
   assert.deepEqual(argv, [
-    "-x", "-f", "png", "-s", "1", "-p", "0",
+    "-x", "-f", "png", "-s", "1", "-p", "1",
     "--no-sandbox", "-o", "b.png", "a.drawio",
   ]);
 });

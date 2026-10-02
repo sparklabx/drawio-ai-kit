@@ -104,7 +104,8 @@ export function selectRouter(contract, dotAvailable) {
  */
 // ponytail: scale 1 — the vision API downscales anything wider than ~1568px anyway,
 // so scale 2 only buys ~600 extra image tokens per self-check read. Deliverable PNGs pass --scale 2.
-export function buildRenderArgs({ file, out, scale = 1, page = 0 }) {
+// page is 1-BASED: draw.io desktop numbers pages from 1 since v27.0.2 (it rejects -p 0 outright).
+export function buildRenderArgs({ file, out, scale = 1, page = 1 }) {
   return [
     "-x", "-f", "png",
     "-s", String(scale),
