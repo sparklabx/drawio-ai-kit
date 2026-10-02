@@ -31,7 +31,7 @@ function buildTree() {
 const GOLDEN = {
   root: { x: 40, y: 70, w: 656, h: 594, ob: false },
   svc: { x: 64, y: 130, w: 608, h: 272, ob: false },
-  ic1: { x: 112, y: 243, w: 48, h: 48, ob: true, labelH: 34 },
+  ic1: { x: 112, y: 243, w: 48, h: 48, ob: true, labelH: 34, labelW: 48 },
   b1: { x: 204, y: 253, w: 120, h: 62, ob: true },
   g1: { x: 344, y: 190, w: 304, h: 188, ob: false },
   gc1: { x: 368, y: 250, w: 120, h: 44, ob: true },

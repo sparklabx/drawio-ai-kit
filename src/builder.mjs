@@ -52,14 +52,21 @@ export class Diagram {
     return this.R[id];
   }
   /** AWS icon by catalog name (verbatim style). [x,y] = top-left corner; size defaults to 48. */
-  icon(id, name, [x, y], { parent = "1", label = "", size = 48 } = {}) {
+  icon(id, name, [x, y], { parent = "1", label = "", size = 48, labelW = 0 } = {}) {
     const s = styleForIcon(this.c, name);
     if (!s) throw new Error(`Icon not found in catalog: "${name}" — use search_icon to look up the correct name.`);
     const r = this._put(id, parent, x, y, size, size, s.style, label); r.ob = true;
     // The label renders in a ~34px band BELOW the 48px glyph (verticalLabelPosition=bottom, outside the
     // cell). The router only sees the glyph rect, so lines cut straight through the caption. labelH tells
     // _buildEdges to add that band as a SEPARATE obstacle card (not part of the R rect → audits unaffected).
-    r.labelH = label ? 34 : 0;
+    // …and it grows with the line count, matching the space the layout reserves (layout-engine mIcon).
+    r.labelH = label ? 34 + (String(label).split("\n").length - 1) * 16 : 0;
+    // The caption is usually WIDER than the 48px glyph, so the band must span the TEXT, not the icon, or a
+    // line passing beside the icon still slices through the words. Width is estimated from the longest
+    // line (not the cell width, which has a 96px floor and would bloat the obstacle for short captions).
+    const lines = String(label || "").split("\n");
+    const textW = Math.max(...lines.map((l) => l.length)) * 6.6 + 8;
+    r.labelW = label ? Math.min(labelW || textW, Math.max(size, textW)) : 0;
     return r;   // ob = leaf obstacle (router avoids)
   }
   /** Small catalog icon at a container's top-left corner (for Azure/GCP frames — mimics the corner
@@ -191,7 +198,10 @@ export class Diagram {
       // text. This is what kills "line straight through the caption" without forcing S-curves.
       // ponytail: band is glyph-width; a very wide wrapped caption can still overhang left/right — the band
       // pushes the route up to glyph level so it clears the text anyway, widen only if a case bites.
-      if (r.labelH) cards.push({ id: `${id}__lbl`, x: r.x, y: r.y + r.h, w: r.w, h: r.labelH });
+      if (r.labelH) {
+        const lw = Math.max(r.labelW || r.w, r.w);
+        cards.push({ id: `${id}__lbl`, x: Math.round(r.x + r.w / 2 - lw / 2), y: r.y + r.h, w: lw, h: r.labelH });
+      }
     }
     // Obstacle-exclusion set for an edge: always its own endpoints, PLUS their caption bands when the two
     // nodes are x-aligned (a straight vertical drop between stacked neighbours — orders-svc→RDS — should
@@ -233,13 +243,17 @@ export class Diagram {
       return best;
     };
     const BM = 24;
-    const insideAny = (px, py) => containers.some(c => px > c.x + 1 && px < c.x + c.w - 1 && py > c.y + 1 && py < c.y + c.h - 1);
+    const encl = (c, n) => c.x <= n.x + 1 && c.y <= n.y + 1 && c.x + c.w >= n.x + n.w - 1 && c.y + c.h >= n.y + n.h - 1;
     const along = (p, q, a = null, b = null) => {
       if (Math.abs(p.x - q.x) < 1) { const y0 = Math.min(p.y, q.y), y1 = Math.max(p.y, q.y); if (y1 - y0 < 28) return false;
-        // interior routing — skip border-hugging penalty, only cross-container check applies
-        if (!insideAny(p.x, (y0 + y1) / 2)) {
-          for (const c of containers)
-            for (const bx of [c.x, c.x + c.w]) if (Math.abs(p.x - bx) < BM && Math.min(y1, c.y + c.h) - Math.max(y0, c.y) > 28) return true;
+        // Border-hugging is ugly from EITHER side: a long run 7px inside a frame edge looks glued to it just
+        // as much as one 7px outside. The old guard skipped the check for interior segments, which let
+        // lines slide along the inner edge of a frame while open space sat unused.
+        for (const c of containers) {
+          // Both ends inside this box = local routing: allowed closer than BM, but never sitting ON the
+          // border — a wire drawn exactly along a frame edge reads as part of the frame.
+          const m = a && b && encl(c, a) && encl(c, b) ? 10 : BM;
+          for (const bx of [c.x, c.x + c.w]) if (Math.abs(p.x - bx) < m && Math.min(y1, c.y + c.h) - Math.max(y0, c.y) > 28) return true;
         }
         if (a && b) for (const c of containers) {
           if (p.x > c.x + 8 && p.x < c.x + c.w - 8 && Math.min(y1, c.y + c.h) - Math.max(y0, c.y) > 28) {
@@ -250,9 +264,9 @@ export class Diagram {
         }
       }
       else { const x0 = Math.min(p.x, q.x), x1 = Math.max(p.x, q.x); if (x1 - x0 < 28) return false;
-        if (!insideAny((x0 + x1) / 2, p.y)) {
-          for (const c of containers)
-            for (const by of [c.y, c.y + c.h]) if (Math.abs(p.y - by) < BM && Math.min(x1, c.x + c.w) - Math.max(x0, c.x) > 28) return true;
+        for (const c of containers) {
+          const m = a && b && encl(c, a) && encl(c, b) ? 10 : BM;
+          for (const by of [c.y, c.y + c.h]) if (Math.abs(p.y - by) < m && Math.min(x1, c.x + c.w) - Math.max(x0, c.x) > 28) return true;
         }
         if (a && b) for (const c of containers) {
           if (p.y > c.y + 8 && p.y < c.y + c.h - 8 && Math.min(x1, c.x + c.w) - Math.max(x0, c.x) > 28) {
@@ -334,7 +348,10 @@ export class Diagram {
       const s0 = pushOff(sp, a, b), g0 = pushOff(ep, b, a);
       const xs = new Set([s0.x, g0.x, sp.x, ep.x]), ys = new Set([s0.y, g0.y, sp.y, ep.y]);
       for (const c of cards) { if (ex.has(c.id)) continue; xs.add(c.x - M); xs.add(c.x + c.w + M); ys.add(c.y - M); ys.add(c.y + c.h + M); }
-      for (const c of containers) { xs.add(c.x - M); xs.add(c.x + c.w + M); ys.add(c.y - M); ys.add(c.y + c.h + M); }
+      // Container lanes sit BM clear of the border, not M: M (7px) is the card-collision margin, and using
+      // it here handed A* a lane 7px off every frame edge — exactly the "line glued to the frame" look,
+      // chosen even when open space was available. BM matches the border-hugging penalty in along().
+      for (const c of containers) { xs.add(c.x - BM); xs.add(c.x + c.w + BM); ys.add(c.y - BM); ys.add(c.y + c.h + BM); }
       let X = [...xs].sort((p, q) => p - q), Y = [...ys].sort((p, q) => p - q);
       const newX = new Set(X), newY = new Set(Y);
       const step = 20;
@@ -367,7 +384,17 @@ export class Diagram {
           newY.add(Math.round((Y[k] + Y[k+1]) / 2));
         }
       }
-      X = [...newX].sort((p, q) => p - q); Y = [...newY].sort((p, q) => p - q);
+      // A* scores obstacles and crossings but never border proximity, so it would happily pick a lane a
+      // few px off a frame edge with a clear one right there. Drop lanes that skim a container border
+      // (either side) — but never the port/elbow coordinates, and only while a usable grid survives, so a
+      // genuinely tight gap still gets routed instead of falling through to the dirty fallback.
+      const keep = new Set([s0.x, g0.x, sp.x, ep.x, s0.y, g0.y, sp.y, ep.y]);
+      const skims = (v, lo, hi) => Math.abs(v - lo) < BM || Math.abs(v - hi) < BM;
+      const thin = (vals, axis) => {
+        const out = vals.filter((v) => keep.has(v) || !containers.some((c) => skims(v, axis === "x" ? c.x : c.y, axis === "x" ? c.x + c.w : c.y + c.h)));
+        return out.length >= 4 ? out : vals;
+      };
+      X = thin([...newX].sort((p, q) => p - q), "x"); Y = thin([...newY].sort((p, q) => p - q), "y");
 
       const xI = new Map(X.map((v, i) => [v, i])), yI = new Map(Y.map((v, i) => [v, i])), W = X.length;
       const idx = (i, j) => j * W + i, gi = xI.get(g0.x), gj = yI.get(g0.y);
@@ -576,6 +603,112 @@ export class Diagram {
       }
       if (!moved) break;
     }
+    // C2. UN-CROSS a fan-out bundle. Each edge picks its lane independently, and the nudge only separates
+    // lanes that already conflict — so two edges leaving one node can end up with their tracks in the
+    // OPPOSITE order to their ports and cross for no reason at all. Try swapping the two tracks and keep
+    // the swap only when it genuinely removes crossings without clipping an icon.
+    const cross2 = (p, q, r, s) => {   // proper intersection; touching/collinear does not count
+      const d = (a, b, c) => Math.sign((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x));
+      const d1 = d(p, q, r), d2 = d(p, q, s), d3 = d(r, s, p), d4 = d(r, s, q);
+      return d1 !== d2 && d3 !== d4 && d1 && d2 && d3 && d4;
+    };
+    const pathCross = (P, Q) => { let n = 0; for (let i = 0; i < P.length - 1; i++) for (let j = 0; j < Q.length - 1; j++) if (cross2(P[i], P[i + 1], Q[j], Q[j + 1])) n++; return n; };
+    const interior = (P) => { const out = [];
+      for (let k = 1; k < P.length - 2; k++) { const p = P[k], q = P[k + 1];
+        if (Math.abs(p.x - q.x) < 1 && Math.abs(p.y - q.y) >= 1) out.push({ o: "v", a: P[k], b: P[k + 1] });
+        else if (Math.abs(p.y - q.y) < 1 && Math.abs(p.x - q.x) >= 1) out.push({ o: "h", a: P[k], b: P[k + 1] });
+      } return out; };
+    for (let i = 0; i < specs.length; i++) for (let j = i + 1; j < specs.length; j++) {
+      const P = paths[i], Q = paths[j];
+      if (!P || !Q) continue;
+      if (specs[i].src !== specs[j].src && specs[i].tgt !== specs[j].tgt) continue;   // only bundles sharing an end
+      let before = pathCross(P, Q);
+      if (!before) continue;
+      const exI = exOf(specs[i]), exJ = exOf(specs[j]);
+      // Swapping the TRACK alone often is not enough — the edge moved to the outer track then crosses the
+      // inner one on its way out. The PORTS have to be exchanged with it (the farther target wants the
+      // outer port AND the outer track). Moving a port is only safe if the waypoint feeding it moves on
+      // the same axis, otherwise the terminal segment turns diagonal; applyPort does both.
+      const sharedSrc = specs[i].src === specs[j].src && routes[i].es === routes[j].es;
+      const sharedTgt = specs[i].tgt === specs[j].tgt && routes[i].en === routes[j].en;
+      const applyPort = (idx, path, which) => {
+        const node = which === "s" ? R(specs[idx].src) : R(specs[idx].tgt);
+        const side = which === "s" ? routes[idx].es : routes[idx].en;
+        const p = pt(node, side, which === "s" ? frac[idx].s : frac[idx].t);
+        const end = which === "s" ? path[0] : path[path.length - 1];
+        end.x = p.x; end.y = p.y;
+        if (path.length > 2) {   // keep the terminal segment orthogonal: its waypoint tracks the port
+          const adj = which === "s" ? path[1] : path[path.length - 2];
+          adj[side === "T" || side === "B" ? "x" : "y"] = side === "T" || side === "B" ? p.x : p.y;
+        }
+      };
+      const snap = (X) => X.map((p) => ({ x: p.x, y: p.y }));
+      const undo = (X, S) => X.forEach((p, n) => { p.x = S[n].x; p.y = S[n].y; });
+      const swapPorts = (which) => {
+        if (which === "s") [frac[i].s, frac[j].s] = [frac[j].s, frac[i].s];
+        else [frac[i].t, frac[j].t] = [frac[j].t, frac[i].t];
+        applyPort(i, P, which); applyPort(j, Q, which);
+      };
+      let done = false;
+      const As = interior(P), Bs = interior(Q);
+      // variants, cheapest first: track only → ports only → both
+      const variants = [["track"], ["port"], ["track", "port"]];
+      for (const v of variants) { if (done) break;
+        for (const A of As) { if (done) break;
+          for (const B of Bs) {
+            if (A.o !== B.o) continue;
+            const k = A.o === "v" ? "x" : "y";
+            if (v.includes("track") && A.a[k] === B.a[k]) continue;
+            const sP = snap(P), sQ = snap(Q), fi = { ...frac[i] }, fj = { ...frac[j] };
+            if (v.includes("track")) { const pa = A.a[k], pb = B.a[k]; A.a[k] = A.b[k] = pb; B.a[k] = B.b[k] = pa; }
+            if (v.includes("port")) { if (sharedSrc) swapPorts("s"); if (sharedTgt) swapPorts("t"); }
+            if (!pathHit(P, exI) && !pathHit(Q, exJ) && pathCross(P, Q) < before) { done = true; break; }
+            undo(P, sP); undo(Q, sQ); frac[i] = fi; frac[j] = fj;                     // no gain → put it all back
+          }
+        }
+        if (!done && !v.includes("track") && !sharedSrc && !sharedTgt) break;         // nothing a port swap could do
+      }
+    }
+
+    // C3. STRAIGHTEN micro-jogs. The nudge separates bundles by SEP, which can leave one edge with two
+    // nearly-collinear runs joined by a stub a dozen px long — a kink that buys nothing. Pull the stub's
+    // ends onto a single track (the dedup below then removes the leftover point); keep it only if the
+    // straightened path still clears every icon and hugs no border.
+    const ortho = (X) => { for (let n = 0; n < X.length - 1; n++) if (Math.abs(X[n].x - X[n + 1].x) > 1.5 && Math.abs(X[n].y - X[n + 1].y) > 1.5) return false; return true; };
+    const JOG = 24;
+    paths.forEach((P, i) => {
+      if (!P) return;
+      const ex = exOf(specs[i]), a = R(specs[i].src), b = R(specs[i].tgt);
+      // Judge RELATIVE to the path we started with: an edge crossing from one container into another is
+      // already "along" by nature, so demanding a clean sheet would reject every straightening.
+      const alongBefore = pathAlong(P, a, b);
+      for (let k = 1; k + 2 < P.length; k++) {
+        const p = P[k], q = P[k + 1];
+        const vert = Math.abs(p.x - q.x) < 1, horiz = Math.abs(p.y - q.y) < 1;
+        if (vert === horiz) continue;                                  // zero-length or diagonal → skip
+        const len = vert ? Math.abs(q.y - p.y) : Math.abs(q.x - p.x);
+        if (len < 1 || len >= JOG) continue;                           // only a genuinely tiny stub
+        // Collapsing the stub also drags the run on the far side of it: that neighbour shares the track
+        // with the endpoint being moved, so moving one without the other would leave a diagonal.
+        const prev = P[k - 1], next = P[k + 2];
+        const ax = vert ? "y" : "x";
+        const save = [p.x, p.y, q.x, q.y, prev.x, prev.y, next.x, next.y];
+        const restore = () => { [p.x, p.y, q.x, q.y, prev.x, prev.y, next.x, next.y] = save; };
+        // The first/last points are PORTS, pinned by frac — geom recomputes them, so moving one here only
+        // desynchronises the path from the emitted port and leaves a diagonal. Skip options that touch them.
+        const prevIsPort = k - 1 === 0, nextIsPort = k + 2 === P.length - 1;
+        for (const keep of ["p", "q"]) {
+          if ((keep === "p" && nextIsPort) || (keep === "q" && prevIsPort)) continue;
+          const t = keep === "p" ? p[ax] : q[ax];
+          if (keep === "p") { q[ax] = t; next[ax] = t; } else { p[ax] = t; prev[ax] = t; }
+          // Moving a neighbour can break ITS own neighbour further along the chain, leaving a diagonal —
+          // so the whole path must still be axis-parallel for the straightening to count as an improvement.
+          if (ortho(P) && !pathHit(P, ex) && (alongBefore || !pathAlong(P, a, b))) break;
+          restore();                                                   // worse → put it back, try the other end
+        }
+      }
+    });
+
     // re-emit nudged paths as explicit polylines (drop points the move made collinear/duplicate)
     paths.forEach((P, i) => { if (!P) return;
       const out = [P[0]];
@@ -630,17 +763,39 @@ export class Diagram {
       // segment meets the icon edge head-on instead of piercing through it to a far-side port
       // (the "arrow through the node" bug: cost search can pick a bottom entry while approaching
       // from above). Only for bent edges — a straight edge connects aligned ports and can't pierce.
-      const clamp01 = (v) => Math.max(0.04, Math.min(0.96, v));
+      // 0.15/0.85, not 0.04/0.96: a port pinned 4% along a side sits visually ON the corner, and the
+      // approach lane then runs flush with the icon's own edge ("the wire is glued to the icon").
+      const clamp01 = (v) => Math.max(0.15, Math.min(0.85, v));
       const snap = (n, adj, fb) => {
-        const inX = adj.x > n.x + 1 && adj.x < n.x + n.w - 1, inY = adj.y > n.y + 1 && adj.y < n.y + n.h - 1;
+        // Inclusive bounds: a waypoint sitting EXACTLY on the icon's edge line (x === n.x) is still a
+        // vertical approach. The old strict test called that ambiguous and kept the side port, which is
+        // what produced the descent running flush down the icon's border.
+        const inX = adj.x >= n.x - 1 && adj.x <= n.x + n.w + 1, inY = adj.y >= n.y - 1 && adj.y <= n.y + n.h + 1;
         if (inX === inY) return fb;                                  // corner / ambiguous → trust the router
         const cx = n.x + n.w / 2, cy = n.y + n.h / 2;
         return inX ? { x: clamp01((adj.x - n.x) / n.w), y: adj.y <= cy ? 0 : 1 }
                    : { x: adj.x <= cx ? 0 : 1, y: clamp01((adj.y - n.y) / n.h) };
       };
+      // Work on a copy so the router's own route objects stay untouched, and FIRST drop any end waypoint
+      // that merely repeats the port: it adds a pointless elbow, and it made snap() see a neighbour that
+      // is "inside the node on both axes" → ambiguous → no snap at all, which is how an edge ended up
+      // descending flush along the icon's border.
+      const wp = g.wp.map((p) => ({ x: p.x, y: p.y }));
+      const same = (p, q) => Math.abs(p.x - q.x) < 1 && Math.abs(p.y - q.y) < 1;
+      while (wp.length && same(wp[0], g.sp)) wp.shift();
+      while (wp.length && same(wp[wp.length - 1], g.ep)) wp.pop();
       const psR = port(r.es, fr.s), peR = port(r.en, fr.t);
-      const ps = g.wp.length ? snap(a, g.wp[0], psR) : psR;
-      const pe = g.wp.length ? snap(b, g.wp[g.wp.length - 1], peR) : peR;
+      const ps = wp.length ? snap(a, wp[0], psR) : psR;
+      const pe = wp.length ? snap(b, wp[wp.length - 1], peR) : peR;
+      // Snapping moves the PORT; the waypoint feeding it has to follow on the perpendicular axis, or the
+      // terminal segment stops being axis-parallel and draw.io inserts an elbow of its own.
+      const align = (n, p, q) => {
+        if (!q) return;
+        if (p.y === 0 || p.y === 1) q.x = n.x + p.x * n.w;           // top/bottom port → vertical approach
+        else if (p.x === 0 || p.x === 1) q.y = n.y + p.y * n.h;      // left/right port → horizontal approach
+      };
+      align(a, ps, wp[0]);
+      align(b, pe, wp[wp.length - 1]);
       st += `exitX=${ps.x};exitY=${r3(ps.y)};exitDx=0;exitDy=0;entryX=${pe.x};entryY=${r3(pe.y)};entryDx=0;entryDy=0;`;
       // Contract fork: Scaffold omits waypoints (draw.io re-routes from pins on every edit);
       // Bake freezes the router's waypoints as absolute <mxPoint>s. Pins are emitted in BOTH.
@@ -649,7 +804,7 @@ export class Diagram {
       // (b) routes flagged r.freeze — a straight pin→pin re-route would clip a node the router
       // deliberately bent around. (The declarative API has no other way to satisfy the audits.)
       const freeze = this.contract === "bake" || lbl || r.freeze;
-      wpXml = (!freeze || !g.wp.length) ? "" : `<Array as="points">${g.wp.map((q) => `<mxPoint x="${Math.round(q.x)}" y="${Math.round(q.y)}"/>`).join("")}</Array>`;
+      wpXml = (!freeze || !wp.length) ? "" : `<Array as="points">${wp.map((q) => `<mxPoint x="${Math.round(q.x)}" y="${Math.round(q.y)}"/>`).join("")}</Array>`;
     }
     if (style) st += style.endsWith(";") ? style : style + ";";
     const eid = `ed${++this.eid}`;
