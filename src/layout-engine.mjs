@@ -114,7 +114,10 @@ export const onpremFrame = (id, label, children = [], opts = {}) =>
 function mIcon(n) {
   const s = n.size ?? ICON;
   n.w = Math.max(96, s + 20, Math.min(200, (n.label?.length ?? 0) * 7 + 24)); // cell never narrower than the glyph
-  n.h = s + 34; // icon + label below
+  // icon + caption below. The caption band must grow with the LINE COUNT: a fixed 34px fits exactly one
+  // line, so a two-line caption ate into the parent's padding (text ending 8px from the frame border) and
+  // a three-line one spilled straight through it. Single-line keeps 34 → existing layouts are untouched.
+  n.h = s + 34 + (String(n.label ?? "").split("\n").length - 1) * 16;
 }
 function mBox(n) { /* w,h provided */ }
 function mPool(n) {
@@ -151,7 +154,14 @@ function measureContainer(n) {
     // Equal-height siblings: stretch each container block in a row up to the tallest sibling, so
     // side-by-side frames share a bottom edge (leaf icons/boxes keep their natural size, top-aligned).
     const maxH = max((c) => c.h);
-    for (const c of ch) if (c.kind === "group" || c.kind === "grid" || c.kind === "pool") c.h = Math.max(c.h, maxH);
+    // …but only among siblings of COMPARABLE height. Stretching a box that is far shorter than the
+    // tallest (a 2-icon group beside a 5-row column) buries it in dead white space — the empty-band
+    // failure. Below the ratio the box hugs its content instead; a ragged bottom reads far better
+    // than a frame that is two-thirds white.
+    // The cap is absolute, not a ratio: what looks broken is the SIZE of the dead band, and a ratio lets
+    // a 600px hole through whenever the row happens to be tall.
+    const EQ_SLACK = 200;
+    for (const c of ch) if ((c.kind === "group" || c.kind === "grid" || c.kind === "pool") && maxH - c.h <= EQ_SLACK) c.h = Math.max(c.h, maxH);
     n.w = p * 2 + sum((c) => c.w) + eg * Math.max(0, ch.length - 1);
     n.h = head + p * 2 + max((c) => c.h);
   } else { // col
@@ -253,7 +263,7 @@ function emitPool(d, n, parent) {
 // ---- emit: output to the Diagram builder ----
 function eIcon(d, n, parent) {
   const s = n.size ?? ICON;
-  d.icon(n.id, n.name, [Math.round(n.x + (n.w - s) / 2), n.y], { parent, label: n.label, size: s });
+  d.icon(n.id, n.name, [Math.round(n.x + (n.w - s) / 2), n.y], { parent, label: n.label, size: s, labelW: n.w });
 }
 function eBox(d, n, parent) {
   if (n.style) { const r = d._put(n.id, parent, n.x, n.y, n.w, n.h, n.style, n.label); r.ob = true; return; }   // BPMN/curated shape: raw style, leaf obstacle
