@@ -17,6 +17,7 @@ The engine computes all x/y, spacing, alignment, and sibling-size equalization; 
 - **Few dense boxes beat many sparse ones.** Aim for a compact grid of labelled area-boxes, each full of icons — not a scattered field of lone icons.
 - Need per-component detail? Put a short caption `box` (or `note`) under the icon; keep the glyph normal-sized and the box tight — never inflate spacing to fill a page.
 - One consistent icon size per diagram (`new Diagram({ iconSize })` bumps them all if a page-embedded figure needs bigger glyphs).
+- **Dense is not cramped — nothing may overlap.** Icons, boxes, arrows and **text** (icon captions AND edge labels) must never sit on top of each other; a line crossing a caption reads as a broken wire. The engine spaces siblings and the router avoids obstacles and caption bands, so fix overlap by **restructuring** (pack into a grid, offset the node) — never by nudging coordinates. `validate` reports any residual overlap: clear it before delivering.
 
 Sparsity is an **authoring** problem (one-icon-per-frame), not an engine limit — pack into grids and the engine hugs + balances the rest.
 
@@ -49,7 +50,7 @@ The builder applies the edge style, corner rounding by role, connection-point pi
 
 - **Solid** = primary data/control flow; **dashed** = sync/dependency/policy enforcement/lineage. Color edges by source layer to trace them.
 - Double-headed arrows for bidirectional links (Direct Connect, metadata sync).
-- In **dense / error-handling diagrams add deliberate waypoints** to avoid line crossings and overlaps — don't rely purely on auto-route there.
+- **Default to a bare `d.link(src, tgt)`** — the router picks the facing side and port, avoids icons and caption text, and de-collides parallel runs. Reach for a routing opt (`rail`, `dir`) only after a render shows a plain link failing; a pre-emptive opt or hand-placed waypoint usually makes the edge worse. Two nodes stacked directly in one column with a long caption between them cannot be wired cleanly either way — **offset them instead**.
 
 ## 7. Managed vs self-managed
 
