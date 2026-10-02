@@ -29,6 +29,13 @@ Build node trees declaratively. **No hardcoded coordinates.**
   - `stack: N` draws the frame as N offset cards (multiplicity) — the AWS idiom for N **identical** copies
     (Dev/Test/Prod accounts, mirrored regions). Draw ONE structure, label it once; NEVER nest environments
     (nesting means containment). Use peer frames only when the environments genuinely differ.
+- `grid(id, gname, label, opts, children)`: **The packing primitive** — lays children into `cols` columns of
+  equal cells. Use it for every functional area (3–8 icons per box) instead of one frame per icon.
+  - `opts: { cols: 3, gap: 14, pad: 12, fill, stroke }`
+  - **Pick `cols` to balance siblings.** Frames side by side share a bottom edge only while their heights
+    are close (the engine stops equalising past ~200px of stretch, so a far-shorter box hugs its content
+    rather than becoming a white hole). For a level row, choose `cols` per box so `ceil(n/cols)` (the row
+    count) comes out close across siblings — 5 icons at `cols:2` = 3 rows sits level with a 2-row neighbour.
 - `stage(id, i, label, children, opts)`: Pipeline stage column. `i` is 0-based index (applies pale per-stage border color).
 - `band(id, label, children, opts)`: Cross-cutting row band (governance/security/ops).
 - `subnet(id, label, children, opts)`: AWS/Cloud subnet container. Border green if label contains `"Public"`, teal if `"Private"`.
