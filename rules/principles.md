@@ -18,10 +18,14 @@ The engine computes all x/y, spacing, alignment, and sibling-size equalization; 
 - Need per-component detail? Put a short caption `box` (or `note`) under the icon; keep the glyph normal-sized and the box tight — never inflate spacing to fill a page.
 - One consistent icon size per diagram (`new Diagram({ iconSize })` bumps them all if a page-embedded figure needs bigger glyphs).
 - **Balance siblings so the row reads level.** Frames side by side share a bottom edge *when their heights are close* — the engine stops equalising once the stretch would exceed ~200px, so a far-shorter box hugs its content instead of becoming a white hole (you get a ragged bottom, which is the better of the two). You still get a tidier sheet by sizing the boxes yourself: pick each grid's `cols` so the siblings' **row counts** come out close (`rows ≈ ceil(n / cols)` — 5 icons at `cols: 2` = 3 rows sits level with a 2-row neighbour). `suggest-layout` reports any `empty band` that survives, but that is the safety net, not the plan.
-- **Two wires converging on one icon go on DIFFERENT SIDES.** A 48px glyph only has ~10px between two
-  ports on the same side, so a second arrow arriving there reads as a doubled line. Send the one coming
-  from further away into another side — `d.link(a, b, "", { route: { es: "R", en: "T", kind: "Lhv" } })`
-  pins it to the top. Cheaper and far more effective than fighting the router.
+- **Don't overload one icon with arrows.** A 48px glyph has room for about one arrow per side: two edges
+  arriving on the same side end up ~10px apart and read as a doubled line. That is the icon's width, not
+  a routing bug, so no amount of router work fixes it. Instead, **retarget the edge coming from far away
+  onto the enclosing container** (`d.link("ecr", "ml_vpc", …)` rather than `"eks"`) — a frame has a whole
+  perimeter to land on, and "ECR feeds the ML account" is the truer statement anyway. Pinning a side with
+  `route:` only moves the crowding somewhere else.
+- **A badge/label on a short edge between stacked icons lands in the caption.** Slide it clear with
+  `badgePos` (-1 source … 1 target) instead of accepting text on text.
 - **Dense is not cramped — nothing may overlap.** Icons, boxes, arrows and **text** (icon captions AND edge labels) must never sit on top of each other; a line crossing a caption reads as a broken wire. The engine spaces siblings and the router avoids obstacles and caption bands, so fix overlap by **restructuring** (pack into a grid, offset the node) — never by nudging coordinates. `validate` reports any residual overlap: clear it before delivering.
 
 Sparsity is an **authoring** problem (one-icon-per-frame), not an engine limit — pack into grids and the engine hugs + balances the rest.
