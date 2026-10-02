@@ -340,3 +340,41 @@ test("geometry: in and out on DIFFERENT sides is not a relay", () => {
   const xml = `<root>${_at("a", 0)}${_at("b", 200)}${_at("c", 400)}<mxCell id="e1" edge="1" source="a" target="b" style="exitX=1;exitY=0.5;entryX=0;entryY=0.5;"/><mxCell id="e2" edge="1" source="b" target="c" style="exitX=1;exitY=0.5;entryX=0;entryY=0.5;"/></root>`;
   assert.ok(!auditGeometry(xml).some((a) => /relay/.test(a)));
 });
+
+// --- wasted white space: a short frame stretched to match a tall sibling ---
+// The single-icon-frame warning misses this (the frame holds several icons); the empty-band metric
+// catches it. Verified against azure_vnet_kit, where the PaaS box is stretched beside a tall VNet.
+// PREVENTION (engine): side-by-side frames are equalised in height only while the stretch stays modest.
+// A frame far shorter than its tallest sibling keeps its own height instead of gaining a dead white band.
+test("engine does not stretch a frame far shorter than its tallest sibling", async () => {
+  const { Diagram } = await import("../src/builder.mjs");
+  const { frame, icon, renderTree } = await import("../src/layout-engine.mjs");
+  const d = new Diagram("network");
+  renderTree(d, frame("root", "", { dir: "row", gap: 40, header: 0 }, [
+    frame("tall", "Tall", { dir: "col", gap: 20 }, ["a", "b", "c", "d", "e"].map((i) => icon(`t_${i}`, "s3", `T ${i}`))),
+    frame("short", "Short", { dir: "col", gap: 20 }, [icon("s_a", "ec2", "S a")]),
+  ]));
+  assert.ok(d.R.short.h < d.R.tall.h - 200, `short frame must hug its content (short=${d.R.short.h}, tall=${d.R.tall.h})`);
+  assert.doesNotMatch(suggestLayout(graphFromXml(d.toXML())).warnings.join(" "), /empty band/);
+
+  // siblings of comparable height still share a bottom edge (the tidy-row behaviour is preserved)
+  const d2 = new Diagram("network");
+  renderTree(d2, frame("root2", "", { dir: "row", gap: 40, header: 0 }, [
+    frame("l", "L", { dir: "col", gap: 20 }, ["a", "b", "c"].map((i) => icon(`l_${i}`, "s3", `L ${i}`))),
+    frame("r", "R", { dir: "col", gap: 20 }, ["a", "b"].map((i) => icon(`r_${i}`, "ec2", `R ${i}`))),
+  ]));
+  assert.equal(d2.R.l.h, d2.R.r.h, "a modest difference is still equalised");
+});
+
+// SAFETY NET (detector): a container left far taller than what it holds is still reported.
+test("graphFromXml/suggestLayout report a container with a tall empty band", () => {
+  const xml = `<mxGraphModel><root><mxCell id="0"/><mxCell id="1" parent="0"/>` +
+    `<mxCell id="box" value="Box" style="container=1;" vertex="1" parent="1"><mxGeometry x="0" y="0" width="400" height="700" as="geometry"/></mxCell>` +
+    `<mxCell id="ic" value="One" style="shape=image;" vertex="1" parent="box"><mxGeometry x="20" y="20" width="48" height="48" as="geometry"/></mxCell>` +
+    `</root></mxGraphModel>`;
+  const m = graphFromXml(xml);
+  assert.equal(m.emptyBandId, "box");
+  assert.equal(m.emptyBandSide, "bottom");
+  assert.ok(m.emptyBand > 200, `expected a big empty band, got ${m.emptyBand}`);
+  assert.match(suggestLayout(m).warnings.join(" "), /empty band/);
+});

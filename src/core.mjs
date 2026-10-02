@@ -644,9 +644,28 @@ export function graphFromXml(xml) {
   const W = bx.length ? Math.max(...bx.map((b) => b.x + b.w)) - Math.min(...bx.map((b) => b.x)) : 1;
   const H = bx.length ? Math.max(...bx.map((b) => b.y + b.h)) - Math.min(...bx.map((b) => b.y)) : 1;
 
+  // Wasted white space: the tallest EMPTY vertical band left inside any container (gap between the
+  // children's bounding box and the frame edge). Vertical only — horizontal centring inside a wider frame
+  // is normal, but a tall band above/below the content means the frame was stretched past what it holds.
+  let emptyBand = 0, emptyBandId = null, emptyBandSide = null;
+  for (const p of cells) {
+    if (!p.geo || !isGroup(p)) continue;
+    const kids = cells.filter((c) => c.parent === p.id && !isEdge(c) && c.geo && !isText(c) && !/__stk\d+$/.test(c.id));
+    if (!kids.length) continue;
+    const pb = box(p);
+    if (!pb || pb.h < 240) continue;                 // short frames: padding dominates, nothing to say
+    const bs = kids.map(box).filter(Boolean);
+    if (!bs.length) continue;
+    const top = Math.min(...bs.map((b) => b.y)) - pb.y - 40;   // the top also carries the header strip
+    const bottom = pb.y + pb.h - Math.max(...bs.map((b) => b.y + b.h));
+    const [side, gap] = bottom >= top ? ["bottom", bottom] : ["top", top];
+    if (gap > emptyBand) { emptyBand = gap; emptyBandId = p.id; emptyBandSide = side; }
+  }
+
   return { nodeCount: nodes.length, edgeCount: edges.length, boundaryCount: groups.length, nestingDepth,
     containmentRatio: +containmentRatio.toFixed(2), topologyBoundary, maxDegree, hubId, hubScore: +hubScore.toFixed(2),
-    backEdges, maxIconsPerGroup, singleIconFrames, portrait: H > W * 1.1, aspect: +(W / H).toFixed(2) };
+    backEdges, maxIconsPerGroup, singleIconFrames, emptyBand: Math.round(emptyBand), emptyBandId, emptyBandSide,
+    portrait: H > W * 1.1, aspect: +(W / H).toFixed(2) };
 }
 
 /** Recommend a layout archetype from graph metrics (nexcanvas decision-flow thresholds), plus
@@ -673,6 +692,8 @@ export function suggestLayout(m) {
   // design. Fire only when there are many services, nothing is packed, and lone frames dominate.
   if (!m.topologyBoundary && m.nodeCount >= 12 && m.maxIconsPerGroup <= 2 && m.singleIconFrames >= 5)
     warnings.push(`${m.singleIconFrames} frames each hold a single icon while ${m.nodeCount} services stay unpacked — group related services into fewer grid() boxes (3–8 icons each) so the sheet reads dense, not scattered.`);
+  if (m.emptyBand > 200)
+    warnings.push(`"${m.emptyBandId}" leaves a ~${m.emptyBand}px empty band at the ${m.emptyBandSide} — it is far taller than what it holds (usually a short frame stretched to match a tall sibling). Pack more into it, split the tall sibling, or move a neighbouring box in, so the sheet has no dead white space.`);
   if (family !== "hub-and-spoke" && !m.topologyBoundary && m.hubScore >= 0.38 && m.hubScore < 0.45 && m.maxDegree >= 4) warnings.push(`node "${m.hubId}" is a near-hub (${Math.round(m.hubScore * 100)}% of edges) — hub-and-spoke may read better.`);
   if (!m.topologyBoundary && m.backEdges >= 2) warnings.push(`${m.backEdges} edges run backward — if they are feedback/sync draw them dashed; if the flow genuinely loops, a hybrid grid reads better.`);
 
