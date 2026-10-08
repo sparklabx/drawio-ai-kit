@@ -54,7 +54,7 @@ export class Diagram {
   /** AWS icon by catalog name (verbatim style). [x,y] = top-left corner; size defaults to 48. */
   icon(id, name, [x, y], { parent = "1", label = "", size = 48, labelW = 0 } = {}) {
     const s = styleForIcon(this.c, name);
-    if (!s) throw new Error(`Icon not found in catalog: "${name}" — use search_icon to look up the correct name.`);
+    if (!s) throw new Error(`Icon not found in catalog: "${name}" — run: drawio-ai search ${name}`);
     const r = this._put(id, parent, x, y, size, size, s.style, label); r.ob = true;
     // The label renders in a ~34px band BELOW the 48px glyph (verticalLabelPosition=bottom, outside the
     // cell). The router only sees the glyph rect, so lines cut straight through the caption. labelH tells
@@ -74,7 +74,7 @@ export class Diagram {
    *  slicing through the badge looks broken, and the geometry audit rightly flags it. */
   cornerIcon(id, name, [x, y], size = 22, parent = "1") {
     const s = styleForIcon(this.c, name);
-    if (!s) throw new Error(`cornerIcon not found in catalog: "${name}" — use search_icon.`);
+    if (!s) throw new Error(`cornerIcon not found in catalog: "${name}" — run: drawio-ai search ${name}`);
     const r = this._put(id, parent, x, y, size, size, s.style, ""); r.ob = true; return r;
   }
   // Default SQUARE CORNERS — AWS diagrams rarely use rounded frames. (round:true if needed.)

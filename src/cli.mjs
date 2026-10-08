@@ -12,7 +12,7 @@
 import { readFileSync, existsSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import {
   loadCatalog,
   searchIcon,
@@ -23,7 +23,7 @@ import {
   graphFromXml,
   suggestLayout,
 } from "./core.mjs";
-import { packageRoot, findDrawioCli, buildRenderArgs, workflowText, scaffoldSource } from "./cli-lib.mjs";
+import { packageRoot, skillDir, findDrawioCli, buildRenderArgs, workflowText, scaffoldSource } from "./cli-lib.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -135,7 +135,7 @@ switch (cmd) {
     out(listCategories(catalog));
     break;
   case "principles": {
-    const base = join(__dirname, "..", "rules");
+    const base = join(skillDir(), "references");
     const read = (f) => readFileSync(join(base, f), "utf8");
     const MODES = ["aws", "azure", "gcp", "databricks", "bpmn"];
     // ponytail: one "Category: count" line beats 2.4KB of pretty JSON — agents search, they don't browse.
@@ -164,7 +164,7 @@ switch (cmd) {
     break;
   }
   case "scaffold": {
-    // drawio-ai scaffold <domain/build_x.mjs | build_x.mjs> [-o out.mjs] | --list
+    // drawio-ai scaffold <domain/build_x.mjs | build_x.mjs> [-o out.mjs] [--name x.drawio] | --list
     const { readdirSync: rd } = await import("node:fs");
     const exDir = join(__dirname, "..", "examples");
     const domains = rd(exDir).filter((d) => !d.includes("."));
@@ -188,9 +188,15 @@ switch (cmd) {
     const pos2 = [...positional];
     for (let i = 0; i < pos2.length - 1; i++) if (pos2[i] === "-o") { outFlag2 = pos2[i + 1]; break; }
     const outMjs = outFlag2 ?? join(process.cwd(), rel.split("/").pop());
-    const { writeFileSync: wf } = await import("node:fs");
-    wf(outMjs, scaffoldSource(readFileSync(srcPath, "utf8"), packageRoot()));
-    out({ ok: true, path: outMjs, run: `node ${outMjs}`, note: "script builds + validates + renders --check + prints issues in ONE run; .drawio/.png land next to it" });
+    const { writeFileSync: wf, mkdirSync } = await import("node:fs");
+    mkdirSync(dirname(outMjs), { recursive: true });
+    // the bundled CLI points scripts at the bundled library; a dev clone running src/ points at src/
+    const lib = basename(__dirname) === "dist" ? "dist/kit.mjs" : "src/kit.mjs";
+    const name = typeof flags.name === "string" ? basename(flags.name).replace(/(\.drawio)?$/, ".drawio") : undefined;
+    const script = scaffoldSource(readFileSync(srcPath, "utf8"), packageRoot(), lib, name);
+    wf(outMjs, script);
+    const drawio = script.match(/new URL\("\.\/([^"]+\.drawio)"/)?.[1];
+    out({ ok: true, path: outMjs, ...(drawio && { drawio: join(dirname(outMjs), drawio) }), run: `node ${outMjs}`, note: "script builds + validates + renders --check + prints issues in ONE run; .drawio/.png land next to it" });
     break;
   }
   case "root":
@@ -263,7 +269,7 @@ switch (cmd) {
   categories
   types
   principles [--mode aws|azure|gcp|databricks|bpmn]
-  scaffold <template.mjs> [-o out.mjs] | --list   copy a template as a standalone build script
+  scaffold <template.mjs> [-o out.mjs] [--name x.drawio] | --list   copy a template as a standalone build script
   root
   render <file> [-o out.png] [--scale N] [--page N] [--check]
   workflow

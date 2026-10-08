@@ -1,6 +1,6 @@
 # Azure architecture diagram preset
 
-Icons: `search_icon` with `azure …` (e.g. `azure kubernetes`, `azure sql`, `azure functions`). Azure has **no group/container stencils** in the catalog — draw containers with the engine's `frame(id, label, …)` (a plain labelled box); the icons carry the identity.
+Icons: `drawio-ai search` with `azure …` (e.g. `azure kubernetes`, `azure sql`, `azure functions`). Azure has **no group/container stencils** in the catalog — draw containers with the engine's `frame(id, label, …)` (a plain labelled box); the icons carry the identity.
 
 ## Containers — nest in the real order
 
@@ -38,4 +38,4 @@ Management Group  →  Subscription  →  Resource Group  →  (resources)     �
 
 ## Multi-cloud / hybrid composition
 
-A diagram that mixes clouds or spans on-prem is **composed**, not forced into one preset (see `rules/diagram-types.md` §Composing). Each cloud is its **own sibling top-level `frame`** following its own containment rules; connect them through a **neutral boundary node** — Internet, ExpressRoute/VPN, or a partner interconnect — never nest one cloud inside another. Fetch the other cloud's rules too (`get_principles` `mode:"aws"` / `"gcp"`).
+A diagram that mixes clouds or spans on-prem is **composed**, not forced into one preset (see `diagram-types.md` §Composing). Each cloud is its **own sibling top-level `frame`** following its own containment rules; connect them through a **neutral boundary node** — Internet, ExpressRoute/VPN, or a partner interconnect — never nest one cloud inside another. Read the other cloud's reference too (`references/<cloud>-architecture.md`).

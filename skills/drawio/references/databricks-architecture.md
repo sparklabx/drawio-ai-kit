@@ -1,12 +1,12 @@
 # Databricks / Lakehouse architecture preset
 
-Icons: `search_icon "databricks …"`. Databricks has **no group/container stencils** — draw containers with `frame`/`stage`/`band`; the icons carry identity. Accent red `#FF3621` on **borders only**, never as a fill (clean house style).
+Icons: `drawio-ai search "databricks …"`. Databricks has **no group/container stencils** — draw containers with `frame`/`stage`/`band`; the icons carry identity. Accent red `#FF3621` on **borders only**, never as a fill (clean house style).
 
 **Pick the view first — the two Databricks diagrams have different containment:**
 
 ## A. Data Intelligence Platform / lakehouse reference (default — "lakehouse / data platform / pipeline")
 
-The canonical Databricks reference. **Copy `examples/databricks/build_data_intelligence_platform.mjs`** and adapt.
+The canonical Databricks reference. **Copy `drawio-ai scaffold build_data_intelligence_platform.mjs`** and adapt.
 
 **Signature look — do these, they're what makes a diagram read as Databricks:**
 - **Coral platform header band** (fill `#FF3621`, WHITE bold text) titling the platform, plus a **navy `Orchestration` band** (fill `#1B3139`, WHITE text) just inside it. `box()` hardcodes dark text, so draw these bands with a **raw style**: `rounded=0;whiteSpace=wrap;html=1;fillColor=<coral|navy>;strokeColor=none;fontColor=#FFFFFF;fontStyle=1;verticalAlign=middle;align=center;`. Give the bands an explicit width so the column hugs them.
@@ -16,7 +16,7 @@ The canonical Databricks reference. **Copy `examples/databricks/build_data_intel
 - **Unity Catalog is cross-cutting governance** — dash-link (`governs`) to storage AND serving/ML; never a node inside the flow.
 - The only tint used is the **light-coral foundation** (`#FDECEA`); everything else is white + colored bands. No gray anywhere.
 
-**Icon vocabulary (all merged into the `databricks` pack — `search_icon "databricks …"`):**
+**Icon vocabulary (all merged into the `databricks` pack — `drawio-ai search "databricks …"`):**
 - Concept line-icons (navy): `dbx_data_warehouse` · `dbx_external` (on-prem) · `dbx_apps_line` · `dbx_logs` · `dbx_events` · `dbx_cloud_database` · `dbx_ingestion` · `dbx_streaming` · `dbx_pipeline` · `dbx_data_engineering` · `dbx_ai_ml` · `dbx_query` · `dbx_dashboards_line` · `dbx_data_sharing` · `dbx_business_users` · `dbx_orchestration` · `dbx_catalog_line` · `dbx_notebook_line` · `dbx_cluster` · `dbx_table` · `dbx_lineage` · `dbx_security`.
 - Medallion layers (recolored DB icons, in the **Big Data** pack): `medallion_landing` (green) · `medallion_bronze` · `medallion_silver` · `medallion_gold`.
 - Products/logos: `unity_catalog` · `databricks_sql` · `mosaic_ai` · `bi_genie` · `lakeflow_connect` / `lakeflow_declarative_pipelines` / `lakeflow_jobs` · `delta` / `parquet` / `iceberg` (Big Data pack) · `tableau` · `power_bi`.
@@ -30,11 +30,11 @@ The plane split is an **account-ownership boundary, NOT a network tier**:
 - **Control plane = frame "Databricks account (control plane)"** (red border) — workspace/web app (`databricks`), `notebooks`, `lakeflow_jobs` (jobs UI), `databricks_sql` (query UI), `unity_catalog` (metastore + governance). Databricks-managed.
 - **Classic compute plane = a dashed customer-cloud VPC frame** (`clusterBox`) in the **customer cloud account**, holding the Spark/`photon` clusters. **Serverless compute plane** = a separate frame on the Databricks-account side.
 - **Storage lives in the customer cloud account** — `s3`/ADLS/GCS bucket(s) for workspace storage + the data lake (medallion). Object storage is **not** in the VPC — draw beside the classic compute VPC.
-- Edges: control plane ↔ compute = **secure cluster connectivity** (solid); compute → storage = read/write (flow); UC → storage & compute = `governs` (dashed). Composing with a cloud follows `rules/diagram-types.md` §Composing — the cloud is a sibling frame; only the classic compute VPC genuinely nests in the customer account.
+- Edges: control plane ↔ compute = **secure cluster connectivity** (solid); compute → storage = read/write (flow); UC → storage & compute = `governs` (dashed). Composing with a cloud follows `diagram-types.md` §Composing — the cloud is a sibling frame; only the classic compute VPC genuinely nests in the customer account.
 
 ## C. MLOps across workspaces ("MLOps / CI/CD / dev-staging-prod / promote model")
 
-The "Big Book of MLOps" layout — copy `examples/databricks/build_mlops.mjs`.
+The "Big Book of MLOps" layout — copy `drawio-ai scaffold build_mlops.mjs`.
 
 - **Git provider** band on top (dev → main → release repos, `github`; CI/CD boxes) → **three workspace zones** side by side: **Development · Staging · Production** → **Unity Catalog** band with per-env catalogs (each = Tables + Models) → **Lakehouse** band at the bottom.
 - Each workspace holds an MLflow Tracking Server + its stage's work (dev: EDA + train/validate/deploy/monitor; staging: integration tests; prod: model train-deploy Workflow + Batch Inference + Monitoring) and a **Model Serving Endpoint** (coral).

@@ -1,6 +1,6 @@
 # Style guide (the house design system)
 
-The kit has ONE visual style, encoded as tokens in `src/theme.mjs` and applied through themed
+The kit has ONE visual style, encoded as tokens in the engine theme and applied through themed
 creators. **Use the themed creators — don't hand-pick colors.**
 
 ## The look (what makes it good)
@@ -10,7 +10,7 @@ creators. **Use the themed creators — don't hand-pick colors.**
 - **Clean 2px edges**, orthogonal. Main flow is **animated**; fan-out/in are sharp combs.
 - **Square frames** (AWS convention); icons keep their category color.
 
-## Themed creators (`src/layout-engine.mjs`) — pick by use, tokens are applied for you
+## Themed creators — pick by use, tokens are applied for you
 
 | Creator | Use for |
 | --- | --- |

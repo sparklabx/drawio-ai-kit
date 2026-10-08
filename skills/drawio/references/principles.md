@@ -4,8 +4,8 @@ Goal: draw.io XML with **correct stencil names**, **clean layout**, and a **read
 
 ## 0. Mandatory workflow for the AI
 
-- **Match a template first.** If the request fits an archetype with a template (the "Templates" table in `diagram-types.md` has exact `examples/<domain>/*.mjs` paths), open that file, reproduce its structure, and run the **Reproduction loop** there. Don't free-hand a pattern a template already encodes.
-- **Look up every icon via `search_icon`** — do NOT recall or invent stencil names. Batch all lookups for the diagram in ONE call: `drawio-ai search "s3, lambda, nat gateway"`. Build with `icon("<name>")` using the returned `name`.
+- **Match a template first.** Run `drawio-ai scaffold --list`, scaffold the closest template, reproduce its structure. Don't free-hand a pattern a template already encodes.
+- **Look up every icon via `drawio-ai search`** — do NOT recall or invent stencil names. Batch all lookups for the diagram in ONE call: `drawio-ai search "s3, lambda, nat gateway"`. Build with `icon("<name>")` using the returned `name`.
 
 ## 1. Density & compactness — pack, don't scatter (DEFAULT)
 
@@ -37,7 +37,7 @@ Sparsity is an **authoring** problem (one-icon-per-frame), not an engine limit �
 
 ## 3. Group with official containers
 
-Use real group shapes (`search_icon --kind group`) and nest them parent-child in the real order — see the nesting tree in your domain preset (e.g. `aws-architecture.md` "Containers").
+Use real group shapes (`drawio-ai search "<name>" --kind group`) and nest them parent-child in the real order — see the nesting tree in your domain preset (e.g. `aws-architecture.md` "Containers").
 
 ## 4. Color — restrained & theme-aware
 
@@ -72,4 +72,4 @@ Left: **sources/clients**. Center: the **cloud frame** holding the pipeline. Rig
 
 ## 9. Self-check
 
-Run `validate_diagram`; clear ALL `errors`, `warnings`, and `audit.advice` before delivering.
+Run `drawio-ai validate <file>`; clear ALL `errors`, `warnings`, and `audit.advice` before delivering.

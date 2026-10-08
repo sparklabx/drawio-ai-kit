@@ -20,7 +20,7 @@ Node ≥18 (`.nvmrc` = 22), plain ESM `.mjs` — no bundler, no transpiler, no T
 - **The kit is read-only infrastructure**: generated `.drawio`/`.xml` output belongs in the user's cwd, never in this repo.
 - New catalog entries / colors / nesting rules must pass the structural validator (`npm run cli -- validate`).
 
-Architecture details live in [docs/developer-guide.md](docs/developer-guide.md); adding a new domain skill is covered in [docs/adding-a-domain-skill.md](docs/adding-a-domain-skill.md).
+Architecture details live in [docs/developer-guide.md](docs/developer-guide.md); adding a new domain is covered in [docs/adding-a-domain.md](docs/adding-a-domain.md).
 
 ## Pull requests
 

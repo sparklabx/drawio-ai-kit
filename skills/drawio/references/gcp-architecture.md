@@ -1,6 +1,6 @@
 # GCP architecture diagram preset
 
-Icons: `search_icon` with `gcp …` (e.g. `gcp compute engine`, `gcp bigquery`, `gcp cloud run`). GCP has **no group/container stencils** in the catalog — draw containers with the engine's `frame(id, label, …)`; the icons carry the identity.
+Icons: `drawio-ai search` with `gcp …` (e.g. `gcp compute engine`, `gcp bigquery`, `gcp cloud run`). GCP has **no group/container stencils** in the catalog — draw containers with the engine's `frame(id, label, …)`; the icons carry the identity.
 
 ## Containers — nest in the real order
 
@@ -39,4 +39,4 @@ Organization → Folder → Project → (resources)                 ← logical 
 
 ## Multi-cloud / hybrid composition
 
-A diagram that mixes clouds or spans on-prem is **composed**, not forced into one preset (see `rules/diagram-types.md` §Composing). Each cloud is its **own sibling top-level `frame`** following its own containment rules; connect them through a **neutral boundary node** — Internet, Cloud Interconnect/VPN, or a partner interconnect — never nest one cloud inside another. Fetch the other cloud's rules too (`get_principles` `mode:"aws"` / `"azure"`).
+A diagram that mixes clouds or spans on-prem is **composed**, not forced into one preset (see `diagram-types.md` §Composing). Each cloud is its **own sibling top-level `frame`** following its own containment rules; connect them through a **neutral boundary node** — Internet, Cloud Interconnect/VPN, or a partner interconnect — never nest one cloud inside another. Read the other cloud's reference too (`references/<cloud>-architecture.md`).

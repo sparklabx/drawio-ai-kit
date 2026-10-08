@@ -16,23 +16,26 @@ npm i -g github:sparklabx/drawio-ai-kit
 This puts the `drawio-ai` binary on PATH. The package isn't on the npm registry —
 it installs straight from GitHub. Pin a specific version for reproducibility:
 `npm i -g github:sparklabx/drawio-ai-kit#<commit-sha>` (or `#v1.0.0` once a tag
-exists). To install from a local clone instead: `npm i -g .` (or `npm link` for
-live edits).
+exists). To install from a local clone instead: `npm run build`, then `npm i -g .`
+(building needs [Bun](https://bun.sh); `npm link` for live edits).
 
-## Add Domain Skills
+The CLI is a Bun-minified production bundle in `dist/` (committed, ~76 KB of JS); it runs on
+plain Node — installing never needs Bun.
 
-The kit ships 5 thin Domain Skills — one per cloud/domain — in its `skills/`
-folder. Install them with the `skills` CLI (auto-detects Claude Code, Cursor,
-Codex, Gemini CLI, … and writes to each agent's skill dir):
+## Add the skill
+
+The kit ships ONE skill, `skills/drawio/` (SKILL.md + `references/` + `workflows/`), covering
+AWS, Azure, GCP, Databricks, multi-cloud and BPMN. Install it with the `skills` CLI (auto-detects
+Claude Code, Cursor, Codex, Gemini CLI, … and writes to each agent's skill dir):
 
 ```bash
-npx skills add sparklabx/drawio-ai-kit --list               # preview the 5 skills
-npx skills add sparklabx/drawio-ai-kit --skill drawio-aws   # just AWS
-npx skills add sparklabx/drawio-ai-kit --skill drawio-azure # ...or azure/gcp/databricks/bpmn
-npx skills add sparklabx/drawio-ai-kit                      # ...or install all 5
+npx skills add sparklabx/drawio-ai-kit
 ```
 
-Restart your agent after adding a skill. Try: *"draw an AWS 3-tier web app"*
+Restart your agent after adding it. Try: *"draw an AWS 3-tier web app"*
+
+Upgrading from 1.x? Remove the old domain skills first:
+`npx skills remove drawio-aws drawio-azure drawio-gcp drawio-databricks drawio-bpmn`.
 
 ## Verify
 
