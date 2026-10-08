@@ -5,10 +5,11 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.0.2-22D3EE?style=flat-square" alt="Version 1.0.2">
+  <img src="https://img.shields.io/badge/version-2.0.0-22D3EE?style=flat-square" alt="Version 2.0.0">
   <img src="https://img.shields.io/badge/dependencies-0-2BB3A3?style=flat-square" alt="Dependencies: 0">
-  <img src="https://img.shields.io/badge/skills-5-5AA9FF?style=flat-square" alt="5 domain skills">
+  <img src="https://img.shields.io/badge/skill-1%20(all%20domains)-5AA9FF?style=flat-square" alt="1 skill, all domains">
   <img src="https://img.shields.io/badge/node-%E2%89%A518-B98CF0?style=flat-square" alt="Node ≥18">
+  <img src="https://img.shields.io/badge/built%20with-Bun-F9F1E1?style=flat-square" alt="Built with Bun">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-F59E0B?style=flat-square" alt="License: MIT"></a>
   <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-welcome-ff69b4?style=flat-square" alt="PRs welcome"></a>
 </p>
