@@ -38,12 +38,18 @@ Full install — the CLI plus the `drawio` skill (AWS, Azure, GCP, Databricks, m
 npm i -g github:sparklabx/drawio-ai-kit && npx skills add sparklabx/drawio-ai-kit
 ```
 
+Using Bun? Same thing:
+
+```bash
+bun add -g github:sparklabx/drawio-ai-kit && bunx skills add sparklabx/drawio-ai-kit
+```
+
 Restart your agent, then try: *"draw an AWS 3-tier web app"*.
 
 The first command puts the `drawio-ai` binary on PATH (installs straight from
 GitHub — not yet on the npm registry; see [INSTALL.md](INSTALL.md) to pin a version
 or install from a clone). The CLI ships as a **Bun-minified production bundle** (`dist/`, ~76 KB of JS)
-that runs on plain Node ≥18 — no Bun needed to install or run it. The second command registers the
+that runs on plain Node ≥18, so you only need Bun if you choose to install with it (Node must still be on PATH). The second command registers the
 single `drawio` skill with your agent (the `skills` CLI auto-detects Claude Code, Codex, Gemini CLI, …) —
 without it the agent never picks the kit up on its own.
 
@@ -63,15 +69,15 @@ Short answer: yes — and you don't have to take my word for it.
 - **Easy to undo:**
 
 ```bash
-npm uninstall -g drawio-ai-kit              # remove the CLI
-npx skills remove drawio                  # remove the skill
+npm uninstall -g drawio-ai-kit              # remove the CLI (Bun: bun remove -g drawio-ai-kit)
+npx skills remove drawio                  # remove the skill (Bun: bunx skills remove drawio)
 ```
 
 - **Updating** — two independent channels:
 
 ```bash
-npm i -g github:sparklabx/drawio-ai-kit   # CLI/engine (icon search, workflow, validator, rules)
-npx skills update                         # the skill (SKILL.md + references/ + workflows/)
+npm i -g github:sparklabx/drawio-ai-kit   # CLI/engine (Bun: bun add -g github:sparklabx/drawio-ai-kit)
+npx skills update                         # the skill (Bun: bunx skills update)
 ```
 
 The skill drives `drawio-ai` at runtime, so engine fixes reach you the moment you update the
