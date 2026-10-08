@@ -22,7 +22,7 @@ template names. Add the domain words to the frontmatter `description` so the ski
 
 Only for hosts that can't read the skill folder. In `src/cli.mjs`, add the file to the `cloudMap`
 in the `principles` case (cloud-like domains get `principles.md`, `diagram-types.md` and
-`style-guide.md` appended), add the mode to `MODES`, then `npm run build`.
+`style-guide.md` appended), add the mode to `MODES`, then `bun run build`.
 
 ## 4. Add a template
 
@@ -34,4 +34,4 @@ description — `scaffold --list` prints it). Engine only, no hand-written coord
 - [ ] `references/<domain>-architecture.md` written in short, explicit steps.
 - [ ] SKILL.md Step 2 row + `description` keywords added.
 - [ ] `drawio-ai scaffold build_<name>.mjs -o /tmp/t/build.mjs && node /tmp/t/build.mjs` prints `"ok":true`.
-- [ ] `npm test` passes; `npm run build` committed if `src/` changed.
+- [ ] `bun test` and `npm test` pass; `bun run build` committed if `src/` changed.

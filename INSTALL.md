@@ -16,8 +16,9 @@ npm i -g github:sparklabx/drawio-ai-kit
 This puts the `drawio-ai` binary on PATH. The package isn't on the npm registry —
 it installs straight from GitHub. Pin a specific version for reproducibility:
 `npm i -g github:sparklabx/drawio-ai-kit#<commit-sha>` (or `#v1.0.0` once a tag
-exists). To install from a local clone instead: `npm run build`, then `npm i -g .`
-(building needs [Bun](https://bun.sh); `npm link` for live edits).
+exists). To install from a local clone instead: `npm i -g .` (the committed `dist/` is
+ready to run; after editing `src/`, rebuild it with `bun run build`, which needs
+[Bun](https://bun.sh); `npm link` for live edits).
 
 The CLI is a Bun-minified production bundle in `dist/` (committed, ~76 KB of JS); it runs on
 plain Node — installing never needs Bun.

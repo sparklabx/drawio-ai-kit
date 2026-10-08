@@ -8,8 +8,9 @@ This document describes the codebase structure, architecture, development comman
 |-------|-------|-------|
 | Runtime (CLI) | Node.js ≥18 (ESM, `.nvmrc` = 22) | `"type": "module"`; zero default exports anywhere; **zero runtime dependencies** |
 | Runtime (data cook) | Python 3.11, stdlib only | regenerates `catalog/*.json`; not run by CI |
-| Package manager | **npm** (`package-lock.json`, lockfile v3) | zero runtime deps |
-| Test framework | Node built-in `node:test` | no test deps |
+| Dev tooling | **Bun 1.4+** (`bun test`, `bun run build`) | maintainers only; users run the bundle on plain Node |
+| Package manager | **npm** (`package-lock.json`, lockfile v3) for users | zero deps, so `bun install` writes no `bun.lock`; `npm ci`/`npm audit` stay in CI |
+| Test framework | Node built-in `node:test` | no test deps; runs unchanged under both `node --test` and `bun test` |
 | Rendering | draw.io desktop CLI (optional) + Graphviz `dot` (optional, for >15-node autolayout) | both probed at runtime, absent → browser-URL fallback |
 
 ## Project Overview
@@ -68,7 +69,7 @@ const report = d.validate({ strict: true }); // { ok, errors, warnings, audit, s
 | Path | Purpose |
 |------|---------|
 | `src/` | Node ESM modules — the readable source of the runtime (see Important Files). Not shipped. |
-| `dist/` | **Shipped runtime**: Bun `--production` bundle of `src/cli.mjs` + `src/kit.mjs` (`npm run build`). Committed; CI fails if stale. |
+| `dist/` | **Shipped runtime**: Bun `--production` bundle of `src/cli.mjs` + `src/kit.mjs` (`bun run build` → `scripts/build.mjs`). Committed; CI fails if stale or non-deterministic. |
 | `catalog/*.json` | **Prebuilt icon catalogs** (aws + 8 packs). Committed. One schema: `{ meta, categoryColors, groups[], icons[] }` where each icon carries verbatim draw.io `style` strings. `loadCatalog()` auto-merges every sibling file. |
 | `packs/<name>/` | Source manifests for non-AWS packs: `manifest.json` (+ optional `assets/`). Fields: `name, label, devicon|slug|url, color, tags`. Tiles generated at build time → `catalog/<name>.json`. |
 | `data/shape-index.json.gz` | Vendored 10,446-shape index (Apache-2.0, jgraph/drawio-mcp). Source of `catalog/aws.json`. |
@@ -76,6 +77,7 @@ const report = d.validate({ strict: true }); // { ok, errors, warnings, audit, s
 | `skills/drawio/` | The single skill. `SKILL.md` (4 steps: CLI check → ask → route → build), `references/*.md` (`api.md`, `principles.md`, per-domain `*-architecture.md`, `bpmn.md`, `diagram-types.md`, `style-guide.md` — also served by `principles --mode`), `workflows/*.md` (`build.md` — also served by `workflow`; `from-iac.md`; `delegate.md`). See `docs/adding-a-domain.md`. |
 | `examples/<domain>/build_*.mjs` | 18 declarative templates grouped by domain (`aws/`, `azure/`, `gcp/`, `multicloud/`, `bpmn/`). Run → `out/<name>_kit.drawio`. |
 | `scripts/*.py` | Catalog regenerators (Python 3.11, stdlib only). |
+| `scripts/build.mjs` | Bun-only maintainer build (`Bun.build`): writes `dist/` + a size report; `--check` verifies dist is fresh, `--analyze` writes a metafile + module-graph markdown to `$TMPDIR`. |
 | `vendor/*.py` | Runtime helpers (third-party/MIT): autolayout, encode URL, repair PNG, aiicons. |
 | `test/` | `core.test.mjs` (engine), `edges.test.mjs` (edge audits), `save-guard.test.mjs` (kit-is-read-only), `cli.test.mjs` (`cli-lib.mjs` pure fns). |
 
@@ -94,12 +96,16 @@ const report = d.validate({ strict: true }); // { ok, errors, warnings, audit, s
 ## Development Commands
 
 ```bash
-npm install              # zero deps — installs nothing but dev familiarity
-npm test                 # node --test (runs test/*.test.mjs)
-npm run cli              # node src/cli.mjs
-npm run build            # bun build --production → dist/ (commit it)
-npm run gen:catalog      # python3.11 scripts/ingest_index.py → catalog/aws.json
-npx drawio-ai search s3  # via bin
+bun test                 # runs test/*.test.mjs (node:test suites) under Bun
+bun test --watch         # re-run on change (also: bun run test:watch)
+bun run coverage         # bun test --coverage (report only, no gate)
+npm test                 # node --test — the Node compatibility check; must also pass
+bun run cli search s3    # node src/cli.mjs (the CLI itself runs on Node)
+bun run build            # scripts/build.mjs → dist/ + size report (commit it)
+bun run build:check      # rebuild into a temp dir; fail if dist/ differs
+bun run build:analyze    # build + metafile.json / bundle.md module-graph report in $TMPDIR
+bun run gen:catalog      # python3.11 scripts/ingest_index.py → catalog/aws.json
+node dist/cli.mjs search s3  # the shipped bundle, as users run it
 ```
 
 Catalog regeneration (Python, manual, macOS-only rasterizer):
@@ -111,11 +117,11 @@ python3 scripts/build_pack.py <pack>        # packs/<pack>/manifest.json → cat
 
 ## Runtime / Tooling Preferences
 
-- **Node ≥18**, dev version **22** (`.nvmrc`); CI pins 20.
-- **npm** (not pnpm/yarn) — respect `package-lock.json`.
+- **Node ≥18**, dev version **22** (`.nvmrc`); CI pins 20. `src/` must stay Node-compatible: no `Bun.*` APIs there.
+- **Bun 1.4+** for dev commands (tests, build); CI pins 1.4.2. **npm** stays the user install path — respect `package-lock.json` (not pnpm/yarn).
 - **Python 3.11** for `scripts/` and `vendor/aiicons.py`; stdlib only, no `requirements.txt`.
 - **Zero runtime dependencies.** `npm audit --omit=dev --audit-level=high` runs in CI and **fails on high/critical** — keep it dep-free.
-- **No bundler, no transpiler, no TypeScript.** Plain `.mjs`. Edit files directly; Node runs them.
+- **No transpiler, no TypeScript.** Plain `.mjs`. Edit files directly; Node runs `src/` as-is. The only bundling step is `bun run build` for the shipped `dist/`.
 - Env overrides: `DRAWIO_CLI` (draw.io desktop CLI for `render`), `DRAWIO_CATALOG` (catalog path), CLI flag `--catalog PATH`.
 - Optional externals: draw.io desktop CLI (PNG export via `render`), Graphviz `dot` (autolayout for >15 nodes). Both absent → `vendor/encode_drawio_url.py` browser-URL fallback (no upload).
 
@@ -148,5 +154,5 @@ python3 scripts/build_pack.py <pack>        # packs/<pack>/manifest.json → cat
 
 - Framework: **`node:test`** (built-in). `core.test.mjs` (engine), `edges.test.mjs` (edge audits), `save-guard.test.mjs` (save refuses to write inside the kit), `cli.test.mjs` (`cli-lib.mjs` pure functions).
 - Covered: `core.mjs` (`loadCatalog`, `searchIcon`, `getIcon`, `styleForIcon`, `validateDiagram` + all 5 audits), `layout.mjs` (`routeLR`, `routeTB`, `centerInGapX`), `layout-engine.mjs` + `builder.mjs` (`Diagram`, `renderTree`, `group`, `icon`), `cli-lib.mjs` (`packageRoot`, `findDrawioCli` all branches, `buildRenderArgs`, `workflowText`). No fixtures, no subprocess spawns.
-- Run: `npm test`. CI runs the same on push/PR to `main`.
-- No coverage gate; no Python script tests (data builders, validated by the Node catalog tests that consume their output).
+- Run: `bun test` (fast) and `npm test` (Node). CI runs both on push/PR to `main`: the `test` job on Node 20, the `bun` job on Bun 1.4.2 (with `--coverage`).
+- No coverage gate (`bun run coverage` prints a report); no Python script tests (data builders, validated by the Node catalog tests that consume their output).

@@ -6,11 +6,14 @@ Thanks for helping make AI-drawn diagrams better. PRs and issues welcome.
 
 ```bash
 git clone https://github.com/sparklabx/drawio-ai-kit && cd drawio-ai-kit
-npm install   # no runtime deps — this only wires up the workspace
-npm test      # node:test, zero test dependencies
+bun test           # fast runner for the node:test suites (zero test dependencies)
+npm test           # the same suites on plain Node (node --test): the compatibility check
+bun run build      # rebuild dist/ (commit it; CI fails if it is stale)
 ```
 
-Node ≥18 (`.nvmrc` = 22), plain ESM `.mjs` — no bundler, no transpiler, no TypeScript.
+Dev tooling is [Bun](https://bun.sh) 1.4+ plus Node ≥18 (`.nvmrc` = 22). There are no dependencies, so
+there is nothing to install. The code is plain ESM `.mjs` (no transpiler, no TypeScript) and must stay
+runnable on Node: no `Bun.*` APIs in `src/`. Bun APIs are fine in `scripts/` and CI.
 
 ## Ground rules
 
@@ -18,12 +21,12 @@ Node ≥18 (`.nvmrc` = 22), plain ESM `.mjs` — no bundler, no transpiler, no T
 - **Named exports only**, no default exports.
 - **Declarative layout, never hardcoded coordinates** — build node trees with `layout-engine.mjs` factories and let `renderTree` compute geometry.
 - **The kit is read-only infrastructure**: generated `.drawio`/`.xml` output belongs in the user's cwd, never in this repo.
-- New catalog entries / colors / nesting rules must pass the structural validator (`npm run cli -- validate`).
+- New catalog entries / colors / nesting rules must pass the structural validator (`bun run cli validate <file>`).
 
 Architecture details live in [docs/developer-guide.md](docs/developer-guide.md); adding a new domain is covered in [docs/adding-a-domain.md](docs/adding-a-domain.md).
 
 ## Pull requests
 
 - Keep diffs small and focused; one concern per PR.
-- Add or extend a test in [test/](test/) when behavior changes — `npm test` must pass.
+- Add or extend a test in [test/](test/) when behavior changes — `bun test` and `npm test` must both pass.
 - For security issues, don't open a public issue — see [SECURITY.md](SECURITY.md).

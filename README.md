@@ -159,7 +159,7 @@ Each file builds one common architecture via the layout engine (zero hardcoded c
 
 ## Runtime architecture
 - **Node 18+** (`.nvmrc` pins the current LTS) — orchestration and validation layer: CLI and validator (`src/`). Supported runtimes include Node 20, 22 (LTS), or 24.
-- **Bun 1.4+** — maintainers only: `npm run build` bundles `src/` into the minified `dist/` that ships (`--production --splitting --target=node`). Users never need Bun.
+- **Bun 1.4+** — maintainers only: `bun test` runs the suites, `bun run build` bundles `src/` into the minified `dist/` that ships (`--production --splitting --target=node`). Users never need Bun.
 - **Python 3.11** (`.python-version`) — data ingestion and compilation pipeline: catalog generator + icon-pack builder (`scripts/build_pack.py`, stdlib only).
 
 Install the dependencies:
@@ -270,8 +270,10 @@ See `THIRD_PARTY_NOTICES.md` for attributions.
 ## Tests
 
 ```bash
-npm test        # node --test (runs against src/)
-npm run build   # bun → dist/ — commit the result; CI fails if dist/ is stale
+bun test            # the node:test suites, run by Bun (fast)
+npm test            # the same suites on plain Node — must also pass
+bun run build       # bun → dist/ — commit the result; CI fails if dist/ is stale
+bun run build:check # rebuild into a temp dir and fail if dist/ differs
 ```
 
 ## Notes & licensing
