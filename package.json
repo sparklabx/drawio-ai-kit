@@ -8,8 +8,13 @@
   },
   "scripts": {
     "cli": "node src/cli.mjs",
-    "build": "rm -rf dist && bun build src/cli.mjs src/kit.mjs --target=node --format=esm --production --splitting --sourcemap=none --outdir=dist --entry-naming='[name].mjs' --chunk-naming='[name]-[hash].mjs'",
+    "build": "bun scripts/build.mjs",
+    "build:check": "bun scripts/build.mjs --check",
+    "build:analyze": "bun scripts/build.mjs --analyze",
     "test": "node --test",
+    "test:bun": "bun test",
+    "test:watch": "bun test --watch",
+    "coverage": "bun test --coverage",
     "gen:catalog": "python3.11 scripts/ingest_index.py"
   },
   "files": [

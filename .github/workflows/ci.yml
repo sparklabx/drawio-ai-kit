@@ -10,6 +10,7 @@ permissions:
   contents: read
 
 jobs:
+  # The user path: plain Node, no Bun. This is the canonical compatibility check.
   test:
     runs-on: ubuntu-latest
     steps:
@@ -20,21 +21,37 @@ jobs:
       - run: npm ci
       - name: Audit dependencies (fail on high/critical)
         run: npm audit --omit=dev --audit-level=high
-      - name: Tests
+      - name: Tests (node --test)
         run: npm test
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-        with:
-          bun-version: 1.4.2
-      - name: dist/ is the fresh bundle of src/
-        run: |
-          npm run build
-          git diff --exit-code --stat -- dist || { echo "::error::dist/ is stale — run 'npm run build' and commit it"; exit 1; }
-      - name: Smoke-test the bundled CLI
+      - name: Smoke-test the bundled CLI on Node
         run: |
           node dist/cli.mjs search "s3, lambda" >/dev/null
           node dist/cli.mjs scaffold build_vpc.mjs -o "$RUNNER_TEMP/smoke/build.mjs" --name smoke
           node "$RUNNER_TEMP/smoke/build.mjs" | grep -q '"ok":true'
           node dist/cli.mjs validate "$RUNNER_TEMP/smoke/smoke.drawio"
+
+  # The maintainer path: Bun runs the same suites, rebuilds dist/, and proves it is fresh + deterministic.
+  bun:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.2
+      - name: Tests (bun test, with coverage report)
+        run: bun test --coverage
+      - name: dist/ is the fresh bundle of src/
+        run: |
+          bun run build
+          git diff --exit-code --stat -- dist || { echo "::error::dist/ is stale — run 'bun run build' and commit it"; exit 1; }
+      - name: The build is deterministic (second build matches the first)
+        run: bun run build:check
+      - name: Smoke-test the bundled CLI on Bun
+        run: |
+          bun dist/cli.mjs search "s3, lambda" >/dev/null
+          bun dist/cli.mjs scaffold build_vpc.mjs -o "$RUNNER_TEMP/smoke/build.mjs" --name smoke
+          bun "$RUNNER_TEMP/smoke/build.mjs" | grep -q '"ok":true'
+          bun dist/cli.mjs validate "$RUNNER_TEMP/smoke/smoke.drawio"
 
   security:
     runs-on: ubuntu-latest
