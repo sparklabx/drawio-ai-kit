@@ -29,7 +29,7 @@ jobs:
         run: |
           node dist/cli.mjs search "s3, lambda" >/dev/null
           node dist/cli.mjs scaffold build_vpc.mjs -o "$RUNNER_TEMP/smoke/build.mjs" --name smoke
-          node "$RUNNER_TEMP/smoke/build.mjs" | grep -q '"ok":true'
+          node dist/cli.mjs run "$RUNNER_TEMP/smoke/build.mjs" | grep -q '"ok":true'
           node dist/cli.mjs validate "$RUNNER_TEMP/smoke/smoke.drawio"
       # Install speed = package size. Fail the PR if the npm tarball grows past the budget.
       - name: Package size budget (packed ≤ 2.5 MB)
@@ -43,6 +43,10 @@ jobs:
           npm install --prefix "$RUNNER_TEMP/inst" --no-audit --no-fund ./drawio-ai-kit-*.tgz
           "$RUNNER_TEMP/inst/node_modules/.bin/drawio-ai" search lambda | grep -q '"name":"lambda"'
           test -f "$RUNNER_TEMP/inst/node_modules/drawio-ai-kit/skills/drawio/SKILL.md"
+          # scaffold → run from an empty dir with the installed CLI (kit resolved to its own install)
+          mkdir "$RUNNER_TEMP/proj" && cd "$RUNNER_TEMP/proj"
+          "$RUNNER_TEMP/inst/node_modules/.bin/drawio-ai" scaffold build_vpc.mjs -o build.mjs --name smoke
+          PATH="$RUNNER_TEMP/inst/node_modules/.bin:$PATH" "$RUNNER_TEMP/inst/node_modules/.bin/drawio-ai" run build.mjs | grep -q '"ok":true'
 
   # The user path: dist/ is plain ESM and must run on the oldest supported Node (>=20). No TypeScript, no tests.
   smoke-node20:
@@ -56,7 +60,7 @@ jobs:
         run: |
           node dist/cli.mjs search "s3, lambda" >/dev/null
           node dist/cli.mjs scaffold build_vpc.mjs -o "$RUNNER_TEMP/smoke/build.mjs" --name smoke
-          node "$RUNNER_TEMP/smoke/build.mjs" | grep -q '"ok":true'
+          node dist/cli.mjs run "$RUNNER_TEMP/smoke/build.mjs" | grep -q '"ok":true'
           node dist/cli.mjs validate "$RUNNER_TEMP/smoke/smoke.drawio"
 
   # The maintainer path: Bun runs the same suites, rebuilds dist/, and proves it is fresh + deterministic.
@@ -80,7 +84,7 @@ jobs:
         run: |
           bun dist/cli.mjs search "s3, lambda" >/dev/null
           bun dist/cli.mjs scaffold build_vpc.mjs -o "$RUNNER_TEMP/smoke/build.mjs" --name smoke
-          bun "$RUNNER_TEMP/smoke/build.mjs" | grep -q '"ok":true'
+          bun dist/cli.mjs run "$RUNNER_TEMP/smoke/build.mjs" | grep -q '"ok":true'
           bun dist/cli.mjs validate "$RUNNER_TEMP/smoke/smoke.drawio"
 
   security:

@@ -1,8 +1,8 @@
 // Serverless event-driven — type "hubspoke". Layout engine: NO hardcoded coordinates.
 // EventBridge hub spans vertically across rows positioned by the rect the ENGINE COMPUTES.
 import { writeFileSync } from "node:fs";
-import { Diagram } from "../../src/builder.ts";
-import { group, icon, phantom, renderTree } from "../../src/layout-engine.ts";
+import { Diagram } from "drawio-ai-kit";
+import { group, icon, phantom, renderTree } from "drawio-ai-kit";
 
 const d = new Diagram("hubspoke");
 

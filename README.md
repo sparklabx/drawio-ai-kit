@@ -92,7 +92,7 @@ To report a security issue, see [`SECURITY.md`](SECURITY.md).
 Define a diagram **topology** (`pipeline`/`hierarchy`/`network`/`hubspoke`/`hybrid`/`mesh`/`sequence`), declare the **nested structure**, and the layout engine programmatically computes spatial coordinates (x/y/w/h) — frames auto-size to fit their children, while rows and columns auto-space. You define the logical topology, not raw pixels.
 
 ```js
-import { Diagram, group, icon, box, renderTree } from "<ROOT>/dist/kit.mjs";   // <ROOT> = `drawio-ai root`
+import { Diagram, group, icon, box, renderTree } from "drawio-ai-kit";   // run: drawio-ai run build.mjs (or plain node/bun where drawio-ai-kit is installed)
 
 const d = new Diagram("network");
 const tree = group("region", "group_region", "Region", { dir: "row" }, [
@@ -117,7 +117,7 @@ At **2.0.0** the 5 domain skills (`drawio-aws`, `drawio-azure`, `drawio-gcp`, `d
 
 - **Skills:** `npx skills remove drawio-aws drawio-azure drawio-gcp drawio-databricks drawio-bpmn`, then `drawio-ai skill install`.
 - **CLI:** `npm i -g drawio-ai-kit` (now on the npm registry; the bin points at `dist/cli.mjs`).
-- **Your build scripts:** import everything from `<ROOT>/dist/kit.mjs` (the package no longer ships `src/`). Re-scaffold, or replace `<ROOT>/src/builder.ts` / `layout-engine.ts` / `bpmn.ts` imports with that one path.
+- **Your build scripts:** import everything from `"drawio-ai-kit"` (the package no longer ships `src/`). Re-scaffold, or replace the `<ROOT>/src/builder.ts` / `layout-engine.ts` / `bpmn.ts` imports with that one name. Run with `drawio-ai run build.mjs`.
 - `drawio-ai principles --mode …` and `drawio-ai workflow` still work; they now print the skill's `references/` and `workflows/build.md`.
 
 ## Migration (from <1.0)
@@ -190,7 +190,8 @@ brew install python@3.11              # then: python3.11 --version
 | `categories` | List all catalog categories. |
 | `types` | List supported diagram topologies. |
 | `principles` | Design rules + architecture preset + catalog categories (from the skill's `references/`). Pass `--mode aws|azure|gcp|databricks|bpmn` for a domain. |
-| `root` | Print the installed Kit's absolute path (for `import` by path). |
+| `run <script> [args]` | Run a script whose `import "drawio-ai-kit"` resolves to this CLI's own install (Node >=20.6, Bun). |
+| `root` | Print the installed Kit's absolute path. |
 | `skill install` | Register the bundled `drawio` skill with your agents through the `skills` CLI (`-g`, `-a <agent>`, `-y` pass through). No extra download. |
 | `workflow` | Print the build → validate → render → write workflow (`skills/drawio/workflows/build.md`). |
 | `scaffold` | Copy a template as a runnable build script: `scaffold build_vpc.mjs -o <dir>/build.mjs --name vpc.drawio` (`--list` shows all). |

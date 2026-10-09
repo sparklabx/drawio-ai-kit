@@ -4,8 +4,8 @@
 // GLOBAL; regions are labelled frames (GCP ships no region stencil — only VPC/Project carry an icon).
 // Sibling regions are equal-height (engine-enforced). Run: node examples/gcp/build_gcp_hybrid_dr.mjs
 import { writeFileSync } from "node:fs";
-import { Diagram } from "../../src/builder.ts";
-import { frame, icon, box, phantom, renderTree } from "../../src/layout-engine.ts";
+import { Diagram } from "drawio-ai-kit";
+import { frame, icon, box, phantom, renderTree } from "drawio-ai-kit";
 
 const d = new Diagram("network");
 const GBLUE = "#4285F4";

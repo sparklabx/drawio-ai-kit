@@ -377,7 +377,7 @@
       "ok": true,
       "path": "<TMP>/cwd/build_gcp_vpc.mjs",
       "drawio": "<TMP>/cwd/gcp_vpc_kit.drawio",
-      "run": "node <TMP>/cwd/build_gcp_vpc.mjs",
+      "run": "drawio-ai run <TMP>/cwd/build_gcp_vpc.mjs",
       "note": "script builds + validates + renders --check + prints issues in ONE run; .drawio/.png land next to it"
     },
     "stderr": ""
@@ -435,7 +435,7 @@
       "ok": true,
       "path": "<TMP>/sc/build_serverless.mjs",
       "drawio": "<TMP>/sc/serverless_kit.drawio",
-      "run": "node <TMP>/sc/build_serverless.mjs",
+      "run": "drawio-ai run <TMP>/sc/build_serverless.mjs",
       "note": "script builds + validates + renders --check + prints issues in ONE run; .drawio/.png land next to it"
     },
     "stderr": ""
@@ -461,7 +461,7 @@
       "ok": true,
       "path": "<TMP>/sc2/x.mjs",
       "drawio": "<TMP>/sc2/shop.drawio",
-      "run": "node <TMP>/sc2/x.mjs",
+      "run": "drawio-ai run <TMP>/sc2/x.mjs",
       "note": "script builds + validates + renders --check + prints issues in ONE run; .drawio/.png land next to it"
     },
     "stderr": ""

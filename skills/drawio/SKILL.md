@@ -73,7 +73,7 @@ Follow `workflows/build.md`. Short version:
 2. `drawio-ai scaffold <template>.mjs -o <out-dir>/build.mjs --name <name>.drawio` — copy the closest
    template. `<out-dir>` = the folder of the output path from Step 1; the `.drawio` lands there.
 3. Edit the tree in `build.mjs`. No x/y numbers.
-4. `node <out-dir>/build.mjs` — it builds, prints `VALIDATE: {…}`, and renders a PNG with an `issues` list.
+4. `drawio-ai run <out-dir>/build.mjs` — it builds, prints `VALIDATE: {…}`, and renders a PNG with an `issues` list.
 5. Fix **all** errors/warnings/advice/issues in one edit. Run again. Repeat until all are empty (max 5 runs).
 6. Look at the PNG once. Fix what you see. Done. (No draw.io desktop app → no PNG: skip this step.)
 

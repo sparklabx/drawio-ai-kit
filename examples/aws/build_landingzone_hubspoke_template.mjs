@@ -23,8 +23,8 @@
 //   [ ] Edges go to the Transit Gateway (hub-and-spoke), not node-to-node spaghetti.
 // ============================================================================
 import { writeFileSync } from "node:fs";
-import { Diagram } from "../../src/builder.ts";
-import { group, frame, icon, box, band, endpoint, onpremFrame, phantom, renderTree } from "../../src/layout-engine.ts";
+import { Diagram } from "drawio-ai-kit";
+import { group, frame, icon, box, band, endpoint, onpremFrame, phantom, renderTree } from "drawio-ai-kit";
 
 const REGION = "AWS Region · <primary>";
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");

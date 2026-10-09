@@ -102,11 +102,11 @@ test("workflowText returns non-empty string", () => {
   assert.ok(txt.length > 50, "workflow text should be substantial");
 });
 
-test("workflowText mentions validate, render, and write to absolute project path", () => {
+test("workflowText mentions validate, render, and run via drawio-ai run", () => {
   const txt = workflowText();
   assert.ok(/\bvalidate\b/.test(txt), "must mention validate");
   assert.ok(/\brender\b/.test(txt), "must mention render");
-  assert.ok(/\babsolute\b/.test(txt), "must mention absolute");
+  assert.ok(/drawio-ai run/.test(txt), "must mention drawio-ai run");
   assert.ok(/\bproject\b/.test(txt), "must mention project");
 });
 
@@ -124,7 +124,7 @@ for (const [label, txt] of [
   ["references/api.md", readFileSync(join(packageRoot(), "skills/drawio/references/api.md"), "utf8")],
 ]) {
   test(`${label} import snippet names only real exports`, async () => {
-    const imports = [...txt.matchAll(/import\s*\{([^}]+)\}\s*from\s*"<ROOT>\/dist\/kit\.mjs"/g)];
+    const imports = [...txt.matchAll(/import\s*\{([^}]+)\}\s*from\s*"drawio-ai-kit"/g)];
     assert.ok(imports.length >= 1, `${label} must show the engine import line`);
     const mod = await import(join(packageRoot(), "src", "kit.ts"));   // dist/kit.mjs is built from it
     for (const [, names] of imports)
@@ -136,30 +136,30 @@ for (const [label, txt] of [
 }
 
 // --- scaffoldSource ---
-test("scaffoldSource rewrites kit imports to absolute and retargets output", () => {
-  const src = `import { Diagram } from "../../src/builder.ts";\nwriteFileSync(new URL("../../out/x_kit.drawio", import.meta.url), d.mxfile("X"));\n`;
-  const out = scaffoldSource(src, "/opt/kit");
-  assert.match(out, /from "\/opt\/kit\/dist\/kit\.mjs"/);
+test("scaffoldSource keeps the bare kit import and retargets output", () => {
+  const src = `import { Diagram } from "drawio-ai-kit";\nwriteFileSync(new URL("../../out/x_kit.drawio", import.meta.url), d.mxfile("X"));\n`;
+  const out = scaffoldSource(src);
+  assert.match(out, /from "drawio-ai-kit"/);
   assert.match(out, /new URL\("\.\/x_kit\.drawio"/);
   assert.match(out, /render", __f, "--check"/, "self-check tail appended");
 });
 
 test("scaffoldSource --name renames the output in the write line AND the self-check tail", () => {
   const src = `writeFileSync(new URL("../../out/x_kit.drawio", import.meta.url), d.mxfile("X"));\n`;
-  const out = scaffoldSource(src, "/opt/kit", "dist/kit.mjs", "shop.drawio");
+  const out = scaffoldSource(src, "shop.drawio");
   assert.doesNotMatch(out, /x_kit/);
   assert.equal(out.match(/"\.\/shop\.drawio"/g)!.length, 2);
 });
 
 test("scaffoldSource without a drawio write appends no self-check tail", () => {
-  const out = scaffoldSource(`import { a } from "../../src/core.ts";\n`, "/opt/kit");
+  const out = scaffoldSource(`import { a } from "drawio-ai-kit";\n`);
   assert.doesNotMatch(out, /--check/);
 });
 
 test("scaffoldSource adds a VALIDATE line only when the template prints none", () => {
   const w = `writeFileSync(new URL("../../out/x.drawio", import.meta.url), d.mxfile("X"));\n`;
-  assert.match(scaffoldSource(w, "/opt/kit"), /\["validate", __f\]/);
-  assert.doesNotMatch(scaffoldSource(`console.log("VALIDATE:", 1);\n` + w, "/opt/kit"), /\["validate", __f\]/);
+  assert.match(scaffoldSource(w), /\["validate", __f\]/);
+  assert.doesNotMatch(scaffoldSource(`console.log("VALIDATE:", 1);\n` + w), /\["validate", __f\]/);
 });
 
 test("skill: anything but `install` prints usage and exits 1 (never shells out)", () => {
