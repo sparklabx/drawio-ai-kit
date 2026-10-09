@@ -170,7 +170,7 @@ Icons are embedded as `data:image/svg+xml,<base64>` (vector, small). Keep each i
 
 - Framework: **`node:test`** (built-in). `core.test.ts` (engine), `edges.test.ts` (edge audits), `save-guard.test.ts` (save refuses to write inside the kit), `cli.test.ts` (`cli-lib.ts` pure functions).
 - Covered: `core.ts` (`loadCatalog`, `searchIcon`, `getIcon`, `styleForIcon`, `validateDiagram` + all 5 audits), `layout.ts` (`routeLR`, `routeTB`, `centerInGapX`), `layout-engine.ts` + `builder.ts` (`Diagram`, `renderTree`, `group`, `icon`), `cli-lib.ts` (`packageRoot`, `findDrawioCli` all branches, `buildRenderArgs`, `workflowText`). No fixtures, no subprocess spawns.
-- Run: `bun test` (fast) and `npm test` (Node). CI runs both on push/PR to `main`: the `test` job on Node 20, the `bun` job on Bun 1.4.2 (with `--coverage`).
+- Run: `bun test` (fast) and `npm test` (Node). CI runs both on push/PR to `main`: the `test` job on Node 24, `smoke-node20` on Node 20.6.0 (dist only), the `bun` job on Bun 1.4.2 (with `--coverage`).
 - No coverage gate (`bun run coverage` prints a report); no Python script tests (data builders, validated by the Node catalog tests that consume their output).
 
 ## Search design

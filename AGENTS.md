@@ -18,7 +18,7 @@
 ## Code Conventions & Common Patterns
 - **Erasable-syntax TypeScript in `src/` and `test/` (`.ts`, no enums/namespaces/parameter properties); `npm run typecheck` must pass.** Bun is the only bundler, and it is used only to build `dist/`. Import local files with the `.ts` extension. Use `import type` for types.
 - **Shared types live in `src/model.ts`** (types only, erased at build). A type used by one module stays in that module.
-- **`src/` must run on Node.** No `Bun.*` APIs in `src/`; they are allowed only in `scripts/` and CI.
+- **`src/` must run on Node.** No `Bun.*` APIs in `src/`; they are allowed only in `scripts/` and CI. Sole exception: `src/run-hook.ts` uses `Bun.plugin` behind a runtime check (it only runs under Bun).
 - **After any `src/` change**: run `bun run build`, then commit `dist/`. CI rebuilds it and fails on drift.
 - **One skill**: `skills/drawio/` (`SKILL.md` + `references/` + `workflows/`). There are no per-domain skills; a new domain is a new reference file (see `docs/adding-a-domain.md`). Write skill docs in short, explicit steps that small models (Haiku-class) can follow.
 - **Catalog injection**: `loadCatalog()` returns the merged catalog; every `core.ts` function takes `catalog` as first arg; `builder.ts` stores it as `this.c`.
