@@ -21,10 +21,10 @@ Rebuild `dist/` (`bun run build`) before you compare. The harness measures what 
 | Group | Metric | How |
 |---|---|---|
 | `<rt>.cli.{root,search_lambda,search_multi}` | `wall_ms`, `peak_rss_mb` | Spawns `<rt> dist/cli.mjs root`, `search lambda`, `search "k8s, pg, es"` in a fresh process. RSS comes from `/usr/bin/time -l` (macOS) or `-v` (GNU). If neither exists, RSS is `null`. |
-| `<rt>.inproc.import_ms` | import `dist/kit.mjs` | One fresh child per run. Today this includes the default catalog parse, because `bpmn` calls `loadCatalog()` when it is imported. |
-| `<rt>.inproc.loadCatalog_ms` | `loadCatalog()` | Today this only reads the memoized cache (about 0 ms). If a refactor moves the parse out of import, the cost moves from `import_ms` to here. Compare the two together. |
+| `<rt>.inproc.import_ms` | import `dist/kit.mjs` | One fresh child per run. The catalog is loaded lazily, so this no longer includes the catalog parse. |
+| `<rt>.inproc.loadCatalog_ms` | `loadCatalog()` | The first call parses the default catalog (about 4 ms) because import no longer does. The compare table flags this as a regression; it is an artifact. Judge `import_ms + loadCatalog_ms` together. |
 | `<rt>.inproc.search_first_ms` / `search_warm_ms` | `searchIcon` | The first call includes lazy pack loading. The warm value is the median of 200 calls over 5 queries. |
-| `<rt>.inproc.example_{aws,azure,bpmn}_{first,warm}_ms` | end-to-end build + validate + mxfile | Copies `examples/aws/build_serverless.mjs`, `azure/build_azure_vnet.mjs`, and `bpmn/build_bpmn.mjs` to a temp dir and rewrites their imports to `dist/kit.mjs`. It works with `../../src/*`, `drawio-ai-kit`, and absolute paths. |
+| `<rt>.inproc.example_{aws,azure,bpmn}_{first,warm}_ms` | end-to-end build + validate + mxfile | Copies `examples/aws/build_serverless.mjs`, `azure/build_azure_vnet.mjs`, and `bpmn/build_bpmn.mjs` to a temp dir and rewrites their imports to `dist/kit.mjs`. It handles `drawio-ai-kit` (current), `../../src/*` and absolute paths. |
 | `package` | `npm_pack.size_bytes`, `unpacked_bytes`, `dist_bytes` | `npm pack --dry-run --json` and a byte count of `dist/`. |
 
 Each metric records `median`, `p95`, and `n`. `--compare` checks only the medians and the `*_bytes` values.
