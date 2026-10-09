@@ -204,10 +204,19 @@ function flatten(o, pre = "", acc = {}) {
   }
   return acc;
 }
-const gated = (k) => (/\.median$/.test(k) || /_bytes$/.test(k)) && !/\.n$/.test(k);
+// import and loadCatalog trade cost as parsing moves between them (lazy loading), so only their sum is gated.
+const SPLIT = /\.inproc\.(import_ms|loadCatalog_ms)\.median$/;
+const withSum = (m) => {
+  for (const k of Object.keys(m)) {
+    const rt = k.match(/^(\w+)\.inproc\.import_ms\.median$/)?.[1];
+    if (rt) m[`${rt}.inproc.import_plus_loadCatalog_ms.median`] = m[k] + (m[`${rt}.inproc.loadCatalog_ms.median`] ?? 0);
+  }
+  return m;
+};
+const gated = (k) => (/\.median$/.test(k) || /_bytes$/.test(k)) && !/\.n$/.test(k) && !SPLIT.test(k);
 
 function compare(cur, base, o) {
-  const a = flatten(base.results), b = flatten(cur.results);
+  const a = withSum(flatten(base.results)), b = withSum(flatten(cur.results));
   const rows = [];
   let bad = 0;
   for (const k of Object.keys(a)) {

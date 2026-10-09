@@ -44,6 +44,7 @@
     "catalog",
     "data/lobe-icons.json",
     "data/catalog-index.json",
+    "data/aliases.json",
     "vendor",
     "examples",
     "skills",
@@ -67,6 +68,7 @@
   },
   "devDependencies": {
     "@types/node": "^26.6.5",
+    "minisearch": "^7.2.0",
     "typescript": "^7.0.2"
   }
 }

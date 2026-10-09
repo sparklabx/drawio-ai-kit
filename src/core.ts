@@ -5,6 +5,7 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join, isAbsolute, basename } from "node:path";
+import { searchEntries } from "./search.ts";
 import type {
   AuditResult, Catalog, CatalogEntry, EntryKind, GraphMetrics, LayoutSuggestion, Pack, RawEntry,
   SearchHit, SearchOptions, StyleResult, ValidationResult,
@@ -101,53 +102,13 @@ function norm(s: unknown): string {
     .trim();
 }
 
-/** Simple match score between the query and an entry. */
-function scoreEntry(entry: CatalogEntry, qTokens: string[], qRaw: string): number {
-  const name = norm(entry.name);
-  const haystack = norm(
-    [entry.name, entry.label, entry.category, entry.tags, ...(entry.aliases ?? []), ...(entry.keywords ?? [])].join(" ")
-  );
-  let score = 0;
-  if (name === qRaw) score += 100; // exact name match
-  if (name.replace(/ /g, "") === qRaw.replace(/ /g, "")) score += 60;
-  for (const t of qTokens) {
-    if (!t) continue;
-    if (name.split(" ").includes(t)) score += 25;
-    else if (name.includes(t)) score += 12;
-    if (haystack.includes(t)) score += 6;
-  }
-  // Head-noun boost: the last token of a descriptive query is usually the THING itself
-  // ("gateway vpc ENDPOINT" → an endpoint), while earlier tokens are qualifiers. Without this,
-  // an icon matching two qualifier tokens by name (e.g. vpc_carrier_gateway) outranks the exact
-  // head-noun match (endpoint). Reward an exact head-noun word match so the head wins.
-  const head = qTokens[qTokens.length - 1];
-  if (head && qTokens.length > 1 && name.split(" ").includes(head)) score += 30;
-  return score;
-}
-
-// ponytail: catalog entries carry zero aliases, so common shorthand returns [] and the agent
-// falls back to a plain box. Whole-token expansion here beats editing 12 catalog JSONs.
-const QUERY_ALIASES: Record<string, string> = {
-  k8s: "kubernetes", psql: "postgresql", pg: "postgresql", es: "elasticsearch",
-  mongo: "mongodb", rabbit: "rabbitmq", "hashicorp": "hashicorp vault",
-};
-
-/** Search for an icon/group by keyword. */
+/** Search for an icon/group by keyword (minisearch: aliases, typo tolerance, vendor scope, multi-keyword). */
 export function searchIcon(catalog: Catalog, query: string, { category, limit = 8, kind, full = false }: SearchOptions = {}): SearchHit[] {
-  const qTokens = norm(query).split(" ").filter(Boolean).map((t) => QUERY_ALIASES[t] ?? t);
-  const qRaw = qTokens.join(" ");
   const cat = category ? norm(category) : null;
-  const pool = [...catalog.byName.values()].filter((e) => {
+  return searchEntries(catalog, query, limit, (e) => {
     if (kind && e.kind !== kind) return false;
-    if (cat && norm(e.category) !== cat && !norm(e.category).includes(cat)) return false;
-    return true;
-  });
-  return pool
-    .map((e) => ({ entry: e, score: scoreEntry(e, qTokens, qRaw) }))
-    .filter((r) => r.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, limit)
-    .map((r) => decorate(catalog, r.entry, r.score, { lean: true, compact: !full }));
+    return !cat || norm(e.category) === cat || norm(e.category).includes(cat);
+  }).map((e) => decorate(catalog, e, undefined, { lean: true, compact: !full }));
 }
 
 function colorFor(catalog: Catalog, entry: CatalogEntry): string {
