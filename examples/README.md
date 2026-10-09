@@ -1,7 +1,7 @@
 # Examples
 
-Generic templates built with the layout engine (zero hardcoded coordinates). Copy one as a starting point.
-Organized into **domain subfolders**. Run any: `node examples/<dir>/<file>` → writes to `out/*.drawio`.
+Generic templates built with the layout engine (no hardcoded coordinates). Each imports `drawio-ai-kit` by name. Copy one as a starting point.
+Organized into **domain subfolders**. Run one outside the kit: `drawio-ai scaffold <file> -o <dir>/build.mjs --name <name>.drawio && drawio-ai run <dir>/build.mjs` (the `.drawio` lands next to the script).
 
 ```text
 examples/

@@ -13,8 +13,9 @@ The latest `main` is supported.
 
 ## What this project runs (threat surface)
 
-- **Zero runtime dependencies** — the single dependency (`@modelcontextprotocol/sdk`)
-  was removed at 1.0.0. The package is fully self-contained.
+- **No runtime dependencies** — the package declares none. The one library it uses
+  (`minisearch`) is a devDependency bundled into the committed `dist/`, which CI rebuilds
+  and compares on every PR.
 - **No `postinstall` (or any lifecycle) hooks** — nothing executes on `npm install`.
 - The **CLI runs locally** and sends **no telemetry**. The only optional outbound
   calls are icon-logo fetches from public CDNs (lobe-icons), invoked explicitly by `drawio-ai logo`.

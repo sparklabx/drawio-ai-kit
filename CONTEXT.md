@@ -7,8 +7,8 @@ live in code and ADRs, not here.
 
 **drawio-ai-kit** — the deterministic *tooling backend*. The repo itself: the
 AWS/OSS stencil catalog, the `drawio-ai` CLI, the diagram engine, and the
-rules. A zero-dependency global npm package
-(`npm i -g drawio-ai-kit`) on Node 20+. Has no opinions about which
+rules. A self-contained global npm package
+(`npm i -g drawio-ai-kit`, or the `install.sh` one-liner) on Node 20.6+ or Bun; libraries are bundled into `dist/`. Has no opinions about which
 agent consumes it.
 
 ## CLI
@@ -83,7 +83,7 @@ The edge-routing engine that decides how arrows run between elements. Two
 coexist:
 
 - **Kit router** — the in-process A* + nudge orthogonal router. Collision-free,
-  deterministic, zero-dependency. Used for the bake contract.
+  deterministic, no network. Used for the bake contract.
 - **Graphviz** (`dot`, optional) — an external binary detected at runtime. When
   available it replaces the kit router for the bake contract, producing
   higher-quality presentation routes. When absent, the kit router is the

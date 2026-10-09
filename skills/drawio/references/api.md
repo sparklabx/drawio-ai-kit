@@ -12,6 +12,9 @@ import { Diagram, group, frame, grid, icon, box, phantom, renderTree, stage, ban
 import { pool, start, end, gateway, userTask, serviceTask, task } from "drawio-ai-kit";
 ```
 
+## Finding icon names
+`drawio-ai search "a, b, c"` returns real catalog names. Comma or space separated; abbreviations (`k8s`, `pg`, `es`), plurals and small typos work; add `aws`/`azure`/`gcp` to scope. Pass the returned `name` to `icon(id, name, label)`.
+
 ## 2. Layout Elements
 Build node trees declaratively. **No hardcoded coordinates.**
 

@@ -8,7 +8,9 @@ Use this loop for every diagram. Run the commands exactly as written.
 drawio-ai search "s3, lambda, api gateway, dynamodb"
 ```
 
-- Comma-separated = one batch. Put **all** the diagram's services in one call.
+- Comma-separated = one batch. Put **all** the diagram's services in one call. Spaces also work: `"k8s pg es"` gives one hit per service.
+- Short names, abbreviations and small typos are fine: `k8s`, `pg`, `alb`, `kubenetes`.
+- Add `aws`, `azure` or `gcp` to a term to pick that cloud: `"azure sql"`.
 - Use the returned `name` field in `icon(id, name, label)`. Never guess a name.
 - Containers (VPC, subnet, region, account): add `--kind group`.
 - No good hit? Try a shorter word (`"nat"` instead of `"nat gateway service"`), or draw a
