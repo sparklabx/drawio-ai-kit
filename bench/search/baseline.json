@@ -1,0 +1,3090 @@
+{
+  "tool": "bench-search",
+  "version": 1,
+  "date": "2026-10-09T18:40:19.814Z",
+  "runtime": "node v22.20.0",
+  "catalogSize": 2168,
+  "overall": {
+    "queries": 98,
+    "passRate": 0.602,
+    "recallAt1": 0.5913,
+    "recallAtK": 0.6522,
+    "mrr": 0.6075
+  },
+  "scenarios": {
+    "abbreviation": {
+      "queries": 29,
+      "passRate": 0.4828,
+      "recallAt1": 0.4828,
+      "recallAtK": 0.4828,
+      "mrr": 0.4828
+    },
+    "multi-keyword": {
+      "queries": 9,
+      "passRate": 0.4444,
+      "recallAt1": 0.5806,
+      "recallAtK": 0.7097,
+      "mrr": 0.5643
+    },
+    "typo": {
+      "queries": 9,
+      "passRate": 0.1111,
+      "recallAt1": 0.1111,
+      "recallAtK": 0.1111,
+      "mrr": 0.1111
+    },
+    "synonym": {
+      "queries": 11,
+      "passRate": 0.4545,
+      "recallAt1": 0.3636,
+      "recallAtK": 0.4545,
+      "mrr": 0.4878
+    },
+    "vendor-scoped": {
+      "queries": 10,
+      "passRate": 0.8,
+      "recallAt1": 0.6,
+      "recallAtK": 0.8,
+      "mrr": 0.7
+    },
+    "exact": {
+      "queries": 17,
+      "passRate": 1,
+      "recallAt1": 1,
+      "recallAtK": 1,
+      "mrr": 1
+    },
+    "negative": {
+      "queries": 6,
+      "passRate": 0.5,
+      "recallAt1": 1,
+      "recallAtK": 1,
+      "mrr": 1
+    },
+    "case-punct": {
+      "queries": 7,
+      "passRate": 1,
+      "recallAt1": 1,
+      "recallAtK": 1,
+      "mrr": 1
+    }
+  },
+  "latency": {
+    "itersPerQuery": 20,
+    "perQueryMedianMs": {
+      "median": 2.712,
+      "p95": 7.776,
+      "max": 10.915
+    },
+    "perCallMs": {
+      "median": 2.723,
+      "p95": 7.73
+    },
+    "coldIndexBuild": {
+      "runs": 5,
+      "importMs": 7.23,
+      "loadCatalogMs": 0.01,
+      "firstSearchMs": 4.24,
+      "totalMs": 11.46
+    },
+    "cliSpawnMs": {
+      "n": 9,
+      "median": 34.7,
+      "p95": 40.3
+    }
+  },
+  "cli": {
+    "checked": 9,
+    "mismatches": []
+  },
+  "failures": [
+    {
+      "id": "abbr-ddb",
+      "query": "ddb",
+      "reasons": [
+        "missing dynamodb (rank >20, k=3)"
+      ],
+      "top": [
+        []
+      ]
+    },
+    {
+      "id": "abbr-apigw",
+      "query": "apigw",
+      "reasons": [
+        "missing api_gateway (rank >20, k=3)"
+      ],
+      "top": [
+        []
+      ]
+    },
+    {
+      "id": "abbr-alb",
+      "query": "alb",
+      "reasons": [
+        "missing application_load_balancer (rank >20, k=3)"
+      ],
+      "top": [
+        []
+      ]
+    },
+    {
+      "id": "abbr-elb",
+      "query": "elb",
+      "reasons": [
+        "missing elastic_load_balancing (rank >20, k=3)"
+      ],
+      "top": [
+        []
+      ]
+    },
+    {
+      "id": "abbr-nlb",
+      "query": "nlb",
+      "reasons": [
+        "missing network_load_balancer (rank >20, k=3)"
+      ],
+      "top": [
+        []
+      ]
+    },
+    {
+      "id": "abbr-vm",
+      "query": "vm",
+      "reasons": [
+        "missing azure_virtual_machine|… (rank >20, k=3)"
+      ],
+      "top": [
+        [
+          "azure_automanaged_vm",
+          "azure_vm_scale_sets",
+          "azure_vm_images_classic",
+          "azure_azure_sql_vm",
+          "azure_spot_vm"
+        ]
+      ]
+    },
+    {
+      "id": "abbr-aks",
+      "query": "aks",
+      "reasons": [
+        "missing azure_kubernetes_services (rank >20, k=3)"
+      ],
+      "top": [
+        [
+          "azure_aks_automatic",
+          "azure_aks_network_policy",
+          "azure_aks_istio",
+          "azure_hdi_aks_cluster"
+        ]
+      ]
+    },
+    {
+      "id": "abbr-gke",
+      "query": "gke",
+      "reasons": [
+        "missing gcp_google_kubernetes_engine (rank >20, k=3)"
+      ],
+      "top": [
+        [
+          "gcp_gke_on_prem"
+        ]
+      ]
+    },
+    {
+      "id": "abbr-kms",
+      "query": "kms",
+      "reasons": [
+        "missing key_management_service (rank >20, k=3)"
+      ],
+      "top": [
+        []
+      ]
+    },
+    {
+      "id": "abbr-iam",
+      "query": "iam",
+      "reasons": [
+        "missing identity_and_access_management (rank >20, k=3)"
+      ],
+      "top": [
+        [
+          "identity_access_management_iam_roles_anywhere",
+          "victoriametrics",
+          "access_analyzer",
+          "keycloak"
+        ]
+      ]
+    },
+    {
+      "id": "abbr-msk",
+      "query": "msk",
+      "reasons": [
+        "missing managed_streaming_for_kafka (rank >20, k=3)"
+      ],
+      "top": [
+        [
+          "msk_amazon_msk_connect"
+        ]
+      ]
+    },
+    {
+      "id": "abbr-ebs",
+      "query": "ebs",
+      "reasons": [
+        "missing elastic_block_store (rank >20, k=3)"
+      ],
+      "top": [
+        [
+          "azure_folder_website",
+          "azure_website_power",
+          "azure_website_staging"
+        ]
+      ]
+    },
+    {
+      "id": "abbr-efs",
+      "query": "efs",
+      "reasons": [
+        "missing elastic_file_system (rank >20, k=3)"
+      ],
+      "top": [
+        [
+          "efs_infrequentaccess",
+          "efs_standard",
+          "lakefs",
+          "elastic_file_system_infrequent_access",
+          "elastic_file_system_one_zone_infrequent_access"
+        ]
+      ]
+    },
+    {
+      "id": "abbr-ses",
+      "query": "ses",
+      "reasons": [
+        "missing simple_email_service (rank >20, k=3)"
+      ],
+      "top": [
+        [
+          "file_cache_on_premises_nfs_linked_datasets",
+          "systems_manager_session_manager",
+          "azure_sql_data_warehouses",
+          "azure_azure_sql_server_stretch_databases",
+          "azure_entra_identity_licenses"
+        ]
+      ]
+    },
+    {
+      "id": "abbr-gcs",
+      "query": "gcs",
+      "reasons": [
+        "missing gcp_cloud_storage (rank >20, k=3)"
+      ],
+      "top": [
+        []
+      ]
+    },
+    {
+      "id": "multi-space-k8s-pg-es",
+      "query": "k8s pg es",
+      "reasons": [
+        "missing kubernetes (rank 14, k=8)"
+      ],
+      "top": [
+        [
+          "elasticsearch_service",
+          "elasticsearch",
+          "postgresql_instance",
+          "rds_postgresql_instance",
+          "rds_postgresql_instance_alt"
+        ]
+      ]
+    },
+    {
+      "id": "multi-comma-aws-web",
+      "query": "alb, ec2, rds, s3",
+      "reasons": [
+        "missing application_load_balancer (rank >20, k=3)"
+      ],
+      "top": [
+        [],
+        [
+          "ec2",
+          "ec2_aws_microservice_extractor_for_net",
+          "ec2_c6a_instance",
+          "ec2_c6gn_instance",
+          "ec2_c6i_instance"
+        ],
+        [
+          "rds",
+          "rds_blue_green_deployments",
+          "rds_instance",
+          "rds_instance_alt",
+          "rds_mariadb_instance"
+        ],
+        [
+          "s3",
+          "backup_aws_backup_support_for_amazon_s3",
+          "file_cache_s3_linked_datasets",
+          "s3_batch_operations",
+          "s3_express_one_zone"
+        ]
+      ]
+    },
+    {
+      "id": "multi-space-aws-web",
+      "query": "alb ec2 rds s3",
+      "reasons": [
+        "missing application_load_balancer (rank >20, k=8)",
+        "missing ec2 (rank 18, k=8)",
+        "missing rds (rank >20, k=8)"
+      ],
+      "top": [
+        [
+          "backup_aws_backup_support_for_amazon_s3",
+          "file_cache_s3_linked_datasets",
+          "s3",
+          "s3_batch_operations",
+          "s3_express_one_zone"
+        ]
+      ]
+    },
+    {
+      "id": "multi-space-serverless",
+      "query": "lambda sqs dynamodb",
+      "reasons": [
+        "missing sqs (rank 10, k=8)"
+      ],
+      "top": [
+        [
+          "dynamodb",
+          "dynamodb_dax",
+          "dynamodb_standard_access_table_class",
+          "dynamodb_standard_infrequent_access_table_class",
+          "dynamodb_stream"
+        ]
+      ]
+    },
+    {
+      "id": "multi-comma-abbr-aws",
+      "query": "apigw, ddb, kms",
+      "reasons": [
+        "missing api_gateway (rank >20, k=3)",
+        "missing dynamodb (rank >20, k=3)",
+        "missing key_management_service (rank >20, k=3)"
+      ],
+      "top": [
+        [],
+        [],
+        []
+      ]
+    },
+    {
+      "id": "typo-kubernets",
+      "query": "kubernets",
+      "reasons": [
+        "missing kubernetes (rank >20, k=3)"
+      ],
+      "top": [
+        []
+      ]
+    },
+    {
+      "id": "typo-postgress",
+      "query": "postgress",
+      "reasons": [
+        "missing postgres|… (rank >20, k=3)"
+      ],
+      "top": [
+        []
+      ]
+    },
+    {
+      "id": "typo-lamda",
+      "query": "lamda",
+      "reasons": [
+        "missing lambda|… (rank >20, k=3)"
+      ],
+      "top": [
+        []
+      ]
+    },
+    {
+      "id": "typo-elasticsearh",
+      "query": "elasticsearh",
+      "reasons": [
+        "missing elasticsearch|… (rank >20, k=3)"
+      ],
+      "top": [
+        []
+      ]
+    },
+    {
+      "id": "typo-cloudfrnt",
+      "query": "cloudfrnt",
+      "reasons": [
+        "missing cloudfront (rank >20, k=3)"
+      ],
+      "top": [
+        []
+      ]
+    },
+    {
+      "id": "typo-kafak",
+      "query": "kafak",
+      "reasons": [
+        "missing kafka|… (rank >20, k=3)"
+      ],
+      "top": [
+        []
+      ]
+    },
+    {
+      "id": "typo-redshfit",
+      "query": "redshfit",
+      "reasons": [
+        "missing redshift (rank >20, k=3)"
+      ],
+      "top": [
+        []
+      ]
+    },
+    {
+      "id": "typo-mongdb",
+      "query": "mongdb",
+      "reasons": [
+        "missing mongodb (rank >20, k=3)"
+      ],
+      "top": [
+        []
+      ]
+    },
+    {
+      "id": "syn-object-storage",
+      "query": "object storage",
+      "reasons": [
+        "missing s3|… (rank 14, k=3)"
+      ],
+      "top": [
+        [
+          "dbx_object_storage",
+          "backup_storage",
+          "cold_storage",
+          "dense_storage_node",
+          "infrequent_access_storage_class"
+        ]
+      ]
+    },
+    {
+      "id": "syn-cache",
+      "query": "in-memory cache",
+      "reasons": [
+        "missing elasticache|… (rank 7, k=3)"
+      ],
+      "top": [
+        [
+          "file_cache_hybrid_nfs_linked_datasets",
+          "file_cache_on_premises_nfs_linked_datasets",
+          "file_cache_s3_linked_datasets",
+          "azure_connected_cache",
+          "cache_node"
+        ]
+      ]
+    },
+    {
+      "id": "syn-secrets",
+      "query": "secret store",
+      "reasons": [
+        "missing secrets_manager|… (rank 11, k=3)"
+      ],
+      "top": [
+        [
+          "elastic_block_store",
+          "elastic_block_store_amazon_data_lifecycle_manager",
+          "elastic_block_store_volume_gp3",
+          "iot_analytics_data_store",
+          "key_management_service_external_key_store"
+        ]
+      ]
+    },
+    {
+      "id": "syn-dns",
+      "query": "dns",
+      "reasons": [
+        "missing route_53|… (rank 5, k=3)"
+      ],
+      "top": [
+        [
+          "route_53_resolver_dns_firewall",
+          "azure_dns_private_resolver",
+          "azure_dns_security_policy",
+          "azure_dns_multistack",
+          "azure_dns_zones"
+        ]
+      ]
+    },
+    {
+      "id": "syn-search-engine",
+      "query": "full text search",
+      "reasons": [
+        "missing elasticsearch|… (rank 9, k=3)"
+      ],
+      "top": [
+        [
+          "search_documents",
+          "azure_serverless_search",
+          "azure_cognitive_search",
+          "azure_search",
+          "azure_search_grid"
+        ]
+      ]
+    },
+    {
+      "id": "syn-event-bus",
+      "query": "event bus",
+      "reasons": [
+        "missing eventbridge|… (rank 4, k=3)"
+      ],
+      "top": [
+        [
+          "eventbridge_custom_event_bus_resource",
+          "eventbridge_default_event_bus_resource",
+          "eventbridge_saas_partner_event_bus_resource",
+          "azure_azure_service_bus",
+          "event"
+        ]
+      ]
+    },
+    {
+      "id": "vendor-aws-k8s",
+      "query": "aws kubernetes",
+      "reasons": [
+        "missing eks (rank >20, k=1)"
+      ],
+      "top": [
+        [
+          "azure_kubernetes_services",
+          "azure_kubernetes_hub",
+          "azure_arc_kubernetes",
+          "azure_kubernetes_fleet_manager",
+          "kubernetes"
+        ]
+      ]
+    },
+    {
+      "id": "vendor-azure-vm",
+      "query": "azure vm",
+      "reasons": [
+        "missing azure_virtual_machine (rank >20, k=1)"
+      ],
+      "top": [
+        [
+          "azure_automanaged_vm",
+          "azure_vm_scale_sets",
+          "azure_vm_images_classic",
+          "azure_azure_sql_vm",
+          "azure_spot_vm"
+        ]
+      ]
+    },
+    {
+      "id": "noise-a",
+      "query": "a",
+      "reasons": [
+        "8 results > maxResults 0"
+      ],
+      "top": [
+        [
+          "azure_verification_as_a_service",
+          "azure_software_as_a_service",
+          "azure_azure_a",
+          "a1_instance",
+          "access_analyzer"
+        ]
+      ]
+    },
+    {
+      "id": "noise-the",
+      "query": "the",
+      "reasons": [
+        "8 results > maxResults 0"
+      ],
+      "top": [
+        [
+          "iot_over_the_air_update",
+          "athena",
+          "athena_data_source_connectors",
+          "authenticated_user",
+          "cloudwatch_synthetics"
+        ]
+      ]
+    },
+    {
+      "id": "noise-x",
+      "query": "x",
+      "reasons": [
+        "8 results > maxResults 0"
+      ],
+      "top": [
+        [
+          "alexa_enabled_device",
+          "alexa_for_business",
+          "alexa_skill",
+          "alexa_smart_home_skill",
+          "alexa_voice_service"
+        ]
+      ]
+    }
+  ],
+  "queries": [
+    {
+      "id": "abbr-k8s",
+      "scenario": "abbreviation",
+      "query": "k8s",
+      "k": 3,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "kubernetes",
+          "azure_kubernetes_services",
+          "azure_kubernetes_hub",
+          "azure_arc_kubernetes",
+          "azure_kubernetes_fleet_manager"
+        ]
+      ],
+      "medianMs": 2.501
+    },
+    {
+      "id": "abbr-pg",
+      "scenario": "abbreviation",
+      "query": "pg",
+      "k": 3,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "postgresql_instance",
+          "rds_postgresql_instance",
+          "rds_postgresql_instance_alt",
+          "rds_trusted_language_extensions_for_postgresql",
+          "azure_azure_database_postgresql_server_group"
+        ]
+      ],
+      "medianMs": 2.531
+    },
+    {
+      "id": "abbr-psql",
+      "scenario": "abbreviation",
+      "query": "psql",
+      "k": 3,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "postgresql_instance",
+          "rds_postgresql_instance",
+          "rds_postgresql_instance_alt",
+          "rds_trusted_language_extensions_for_postgresql",
+          "azure_azure_database_postgresql_server_group"
+        ]
+      ],
+      "medianMs": 2.534
+    },
+    {
+      "id": "abbr-es",
+      "scenario": "abbreviation",
+      "query": "es",
+      "k": 3,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "elasticsearch",
+          "elasticsearch_service",
+          "opensearch"
+        ]
+      ],
+      "medianMs": 2.722
+    },
+    {
+      "id": "abbr-mongo",
+      "scenario": "abbreviation",
+      "query": "mongo",
+      "k": 3,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "mongodb",
+          "documentdb_with_mongodb_compatibility"
+        ]
+      ],
+      "medianMs": 2.576
+    },
+    {
+      "id": "abbr-rabbit",
+      "scenario": "abbreviation",
+      "query": "rabbit",
+      "k": 3,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "rabbitmq"
+        ]
+      ],
+      "medianMs": 2.66
+    },
+    {
+      "id": "abbr-ddb",
+      "scenario": "abbreviation",
+      "query": "ddb",
+      "k": 3,
+      "pass": false,
+      "reasons": [
+        "missing dynamodb (rank >20, k=3)"
+      ],
+      "groups": 1,
+      "hitK": 0,
+      "hit1": 0,
+      "rr": 0,
+      "ranks": [
+        null
+      ],
+      "top": [
+        []
+      ],
+      "medianMs": 2.614
+    },
+    {
+      "id": "abbr-sqs",
+      "scenario": "abbreviation",
+      "query": "sqs",
+      "k": 1,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "sqs"
+        ]
+      ],
+      "medianMs": 2.603
+    },
+    {
+      "id": "abbr-apigw",
+      "scenario": "abbreviation",
+      "query": "apigw",
+      "k": 3,
+      "pass": false,
+      "reasons": [
+        "missing api_gateway (rank >20, k=3)"
+      ],
+      "groups": 1,
+      "hitK": 0,
+      "hit1": 0,
+      "rr": 0,
+      "ranks": [
+        null
+      ],
+      "top": [
+        []
+      ],
+      "medianMs": 2.697
+    },
+    {
+      "id": "abbr-alb",
+      "scenario": "abbreviation",
+      "query": "alb",
+      "k": 3,
+      "pass": false,
+      "reasons": [
+        "missing application_load_balancer (rank >20, k=3)"
+      ],
+      "groups": 1,
+      "hitK": 0,
+      "hit1": 0,
+      "rr": 0,
+      "ranks": [
+        null
+      ],
+      "top": [
+        []
+      ],
+      "medianMs": 2.695
+    },
+    {
+      "id": "abbr-elb",
+      "scenario": "abbreviation",
+      "query": "elb",
+      "k": 3,
+      "pass": false,
+      "reasons": [
+        "missing elastic_load_balancing (rank >20, k=3)"
+      ],
+      "groups": 1,
+      "hitK": 0,
+      "hit1": 0,
+      "rr": 0,
+      "ranks": [
+        null
+      ],
+      "top": [
+        []
+      ],
+      "medianMs": 2.723
+    },
+    {
+      "id": "abbr-nlb",
+      "scenario": "abbreviation",
+      "query": "nlb",
+      "k": 3,
+      "pass": false,
+      "reasons": [
+        "missing network_load_balancer (rank >20, k=3)"
+      ],
+      "groups": 1,
+      "hitK": 0,
+      "hit1": 0,
+      "rr": 0,
+      "ranks": [
+        null
+      ],
+      "top": [
+        []
+      ],
+      "medianMs": 2.616
+    },
+    {
+      "id": "abbr-ec2",
+      "scenario": "abbreviation",
+      "query": "ec2",
+      "k": 1,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "ec2",
+          "ec2_aws_microservice_extractor_for_net",
+          "ec2_c6a_instance",
+          "ec2_c6gn_instance",
+          "ec2_c6i_instance"
+        ]
+      ],
+      "medianMs": 2.728
+    },
+    {
+      "id": "abbr-vm",
+      "scenario": "abbreviation",
+      "query": "vm",
+      "k": 3,
+      "pass": false,
+      "reasons": [
+        "missing azure_virtual_machine|… (rank >20, k=3)"
+      ],
+      "groups": 1,
+      "hitK": 0,
+      "hit1": 0,
+      "rr": 0,
+      "ranks": [
+        null
+      ],
+      "top": [
+        [
+          "azure_automanaged_vm",
+          "azure_vm_scale_sets",
+          "azure_vm_images_classic",
+          "azure_azure_sql_vm",
+          "azure_spot_vm"
+        ]
+      ],
+      "medianMs": 2.525
+    },
+    {
+      "id": "abbr-aks",
+      "scenario": "abbreviation",
+      "query": "aks",
+      "k": 3,
+      "pass": false,
+      "reasons": [
+        "missing azure_kubernetes_services (rank >20, k=3)"
+      ],
+      "groups": 1,
+      "hitK": 0,
+      "hit1": 0,
+      "rr": 0,
+      "ranks": [
+        null
+      ],
+      "top": [
+        [
+          "azure_aks_automatic",
+          "azure_aks_network_policy",
+          "azure_aks_istio",
+          "azure_hdi_aks_cluster"
+        ]
+      ],
+      "medianMs": 2.718
+    },
+    {
+      "id": "abbr-gke",
+      "scenario": "abbreviation",
+      "query": "gke",
+      "k": 3,
+      "pass": false,
+      "reasons": [
+        "missing gcp_google_kubernetes_engine (rank >20, k=3)"
+      ],
+      "groups": 1,
+      "hitK": 0,
+      "hit1": 0,
+      "rr": 0,
+      "ranks": [
+        null
+      ],
+      "top": [
+        [
+          "gcp_gke_on_prem"
+        ]
+      ],
+      "medianMs": 2.545
+    },
+    {
+      "id": "abbr-eks",
+      "scenario": "abbreviation",
+      "query": "eks",
+      "k": 1,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "eks",
+          "eks_anywhere",
+          "eks_cloud",
+          "eks_distro",
+          "eks_on_outposts"
+        ]
+      ],
+      "medianMs": 2.744
+    },
+    {
+      "id": "abbr-kms",
+      "scenario": "abbreviation",
+      "query": "kms",
+      "k": 3,
+      "pass": false,
+      "reasons": [
+        "missing key_management_service (rank >20, k=3)"
+      ],
+      "groups": 1,
+      "hitK": 0,
+      "hit1": 0,
+      "rr": 0,
+      "ranks": [
+        null
+      ],
+      "top": [
+        []
+      ],
+      "medianMs": 2.468
+    },
+    {
+      "id": "abbr-iam",
+      "scenario": "abbreviation",
+      "query": "iam",
+      "k": 3,
+      "pass": false,
+      "reasons": [
+        "missing identity_and_access_management (rank >20, k=3)"
+      ],
+      "groups": 1,
+      "hitK": 0,
+      "hit1": 0,
+      "rr": 0,
+      "ranks": [
+        null
+      ],
+      "top": [
+        [
+          "identity_access_management_iam_roles_anywhere",
+          "victoriametrics",
+          "access_analyzer",
+          "keycloak"
+        ]
+      ],
+      "medianMs": 2.628
+    },
+    {
+      "id": "abbr-cdn",
+      "scenario": "abbreviation",
+      "query": "cdn",
+      "k": 3,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "azure_cdn_profiles",
+          "azure_front_door_and_cdn_profiles",
+          "gcp_cloud_cdn"
+        ]
+      ],
+      "medianMs": 2.585
+    },
+    {
+      "id": "abbr-ecr",
+      "scenario": "abbreviation",
+      "query": "ecr",
+      "k": 1,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "ecr",
+          "secrets_manager",
+          "gcp_secret_manager",
+          "vault_hashicorp"
+        ]
+      ],
+      "medianMs": 2.737
+    },
+    {
+      "id": "abbr-msk",
+      "scenario": "abbreviation",
+      "query": "msk",
+      "k": 3,
+      "pass": false,
+      "reasons": [
+        "missing managed_streaming_for_kafka (rank >20, k=3)"
+      ],
+      "groups": 1,
+      "hitK": 0,
+      "hit1": 0,
+      "rr": 0,
+      "ranks": [
+        null
+      ],
+      "top": [
+        [
+          "msk_amazon_msk_connect"
+        ]
+      ],
+      "medianMs": 2.533
+    },
+    {
+      "id": "abbr-ebs",
+      "scenario": "abbreviation",
+      "query": "ebs",
+      "k": 3,
+      "pass": false,
+      "reasons": [
+        "missing elastic_block_store (rank >20, k=3)"
+      ],
+      "groups": 1,
+      "hitK": 0,
+      "hit1": 0,
+      "rr": 0,
+      "ranks": [
+        null
+      ],
+      "top": [
+        [
+          "azure_folder_website",
+          "azure_website_power",
+          "azure_website_staging"
+        ]
+      ],
+      "medianMs": 2.728
+    },
+    {
+      "id": "abbr-efs",
+      "scenario": "abbreviation",
+      "query": "efs",
+      "k": 3,
+      "pass": false,
+      "reasons": [
+        "missing elastic_file_system (rank >20, k=3)"
+      ],
+      "groups": 1,
+      "hitK": 0,
+      "hit1": 0,
+      "rr": 0,
+      "ranks": [
+        null
+      ],
+      "top": [
+        [
+          "efs_infrequentaccess",
+          "efs_standard",
+          "lakefs",
+          "elastic_file_system_infrequent_access",
+          "elastic_file_system_one_zone_infrequent_access"
+        ]
+      ],
+      "medianMs": 2.71
+    },
+    {
+      "id": "abbr-sns",
+      "scenario": "abbreviation",
+      "query": "sns",
+      "k": 1,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "sns"
+        ]
+      ],
+      "medianMs": 2.616
+    },
+    {
+      "id": "abbr-ses",
+      "scenario": "abbreviation",
+      "query": "ses",
+      "k": 3,
+      "pass": false,
+      "reasons": [
+        "missing simple_email_service (rank >20, k=3)"
+      ],
+      "groups": 1,
+      "hitK": 0,
+      "hit1": 0,
+      "rr": 0,
+      "ranks": [
+        null
+      ],
+      "top": [
+        [
+          "file_cache_on_premises_nfs_linked_datasets",
+          "systems_manager_session_manager",
+          "azure_sql_data_warehouses",
+          "azure_azure_sql_server_stretch_databases",
+          "azure_entra_identity_licenses"
+        ]
+      ],
+      "medianMs": 2.61
+    },
+    {
+      "id": "abbr-waf",
+      "scenario": "abbreviation",
+      "query": "waf",
+      "k": 1,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "waf",
+          "waf_bad_bot",
+          "waf_bot",
+          "waf_bot_control",
+          "waf_labels"
+        ]
+      ],
+      "medianMs": 2.498
+    },
+    {
+      "id": "abbr-gcs",
+      "scenario": "abbreviation",
+      "query": "gcs",
+      "k": 3,
+      "pass": false,
+      "reasons": [
+        "missing gcp_cloud_storage (rank >20, k=3)"
+      ],
+      "groups": 1,
+      "hitK": 0,
+      "hit1": 0,
+      "rr": 0,
+      "ranks": [
+        null
+      ],
+      "top": [
+        []
+      ],
+      "medianMs": 2.535
+    },
+    {
+      "id": "abbr-vault",
+      "scenario": "abbreviation",
+      "query": "hashicorp",
+      "k": 3,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "vault_hashicorp"
+        ]
+      ],
+      "medianMs": 2.52
+    },
+    {
+      "id": "multi-comma-k8s-pg-es",
+      "scenario": "multi-keyword",
+      "query": "k8s, pg, es",
+      "k": 3,
+      "pass": true,
+      "reasons": [],
+      "groups": 3,
+      "hitK": 3,
+      "hit1": 3,
+      "rr": 3,
+      "ranks": [
+        1,
+        1,
+        1
+      ],
+      "top": [
+        [
+          "kubernetes",
+          "azure_kubernetes_services",
+          "azure_kubernetes_hub",
+          "azure_arc_kubernetes",
+          "azure_kubernetes_fleet_manager"
+        ],
+        [
+          "postgresql_instance",
+          "rds_postgresql_instance",
+          "rds_postgresql_instance_alt",
+          "rds_trusted_language_extensions_for_postgresql",
+          "azure_azure_database_postgresql_server_group"
+        ],
+        [
+          "elasticsearch",
+          "elasticsearch_service",
+          "opensearch"
+        ]
+      ],
+      "medianMs": 7.776,
+      "cliAgrees": true
+    },
+    {
+      "id": "multi-space-k8s-pg-es",
+      "scenario": "multi-keyword",
+      "query": "k8s pg es",
+      "k": 8,
+      "pass": false,
+      "reasons": [
+        "missing kubernetes (rank 14, k=8)"
+      ],
+      "groups": 3,
+      "hitK": 2,
+      "hit1": 2,
+      "rr": 1.4047619047619047,
+      "ranks": [
+        14,
+        3,
+        1
+      ],
+      "top": [
+        [
+          "elasticsearch_service",
+          "elasticsearch",
+          "postgresql_instance",
+          "rds_postgresql_instance",
+          "rds_postgresql_instance_alt"
+        ]
+      ],
+      "medianMs": 3.579,
+      "cliAgrees": true
+    },
+    {
+      "id": "multi-comma-aws-web",
+      "scenario": "multi-keyword",
+      "query": "alb, ec2, rds, s3",
+      "k": 3,
+      "pass": false,
+      "reasons": [
+        "missing application_load_balancer (rank >20, k=3)"
+      ],
+      "groups": 4,
+      "hitK": 3,
+      "hit1": 3,
+      "rr": 3,
+      "ranks": [
+        null,
+        1,
+        1,
+        1
+      ],
+      "top": [
+        [],
+        [
+          "ec2",
+          "ec2_aws_microservice_extractor_for_net",
+          "ec2_c6a_instance",
+          "ec2_c6gn_instance",
+          "ec2_c6i_instance"
+        ],
+        [
+          "rds",
+          "rds_blue_green_deployments",
+          "rds_instance",
+          "rds_instance_alt",
+          "rds_mariadb_instance"
+        ],
+        [
+          "s3",
+          "backup_aws_backup_support_for_amazon_s3",
+          "file_cache_s3_linked_datasets",
+          "s3_batch_operations",
+          "s3_express_one_zone"
+        ]
+      ],
+      "medianMs": 10.915,
+      "cliAgrees": true
+    },
+    {
+      "id": "multi-space-aws-web",
+      "scenario": "multi-keyword",
+      "query": "alb ec2 rds s3",
+      "k": 8,
+      "pass": false,
+      "reasons": [
+        "missing application_load_balancer (rank >20, k=8)",
+        "missing ec2 (rank 18, k=8)",
+        "missing rds (rank >20, k=8)"
+      ],
+      "groups": 4,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 0.38888888888888884,
+      "ranks": [
+        null,
+        18,
+        null,
+        3
+      ],
+      "top": [
+        [
+          "backup_aws_backup_support_for_amazon_s3",
+          "file_cache_s3_linked_datasets",
+          "s3",
+          "s3_batch_operations",
+          "s3_express_one_zone"
+        ]
+      ],
+      "medianMs": 4.456,
+      "cliAgrees": true
+    },
+    {
+      "id": "multi-comma-data",
+      "scenario": "multi-keyword",
+      "query": "kafka, spark, airflow, redis",
+      "k": 3,
+      "pass": true,
+      "reasons": [],
+      "groups": 4,
+      "hitK": 4,
+      "hit1": 4,
+      "rr": 4,
+      "ranks": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "top": [
+        [
+          "kafka",
+          "managed_streaming_for_kafka",
+          "debezium",
+          "redpanda"
+        ],
+        [
+          "spark",
+          "gamesparks"
+        ],
+        [
+          "airflow",
+          "managed_workflows_for_apache_airflow"
+        ],
+        [
+          "redis",
+          "elasticache_for_redis",
+          "memorydb_for_redis",
+          "azure_cache_redis",
+          "azure_azure_managed_redis"
+        ]
+      ],
+      "medianMs": 10.86,
+      "cliAgrees": true
+    },
+    {
+      "id": "multi-space-data",
+      "scenario": "multi-keyword",
+      "query": "kafka spark airflow redis",
+      "k": 8,
+      "pass": true,
+      "reasons": [],
+      "groups": 4,
+      "hitK": 4,
+      "hit1": 1,
+      "rr": 1.4345238095238095,
+      "ranks": [
+        6,
+        8,
+        7,
+        1
+      ],
+      "top": [
+        [
+          "elasticache_for_redis",
+          "memorydb_for_redis",
+          "azure_cache_redis",
+          "azure_azure_managed_redis",
+          "redis"
+        ]
+      ],
+      "medianMs": 4.218,
+      "cliAgrees": true
+    },
+    {
+      "id": "multi-comma-mixed",
+      "scenario": "multi-keyword",
+      "query": "mongo, rabbit, nginx",
+      "k": 3,
+      "pass": true,
+      "reasons": [],
+      "groups": 3,
+      "hitK": 3,
+      "hit1": 3,
+      "rr": 3,
+      "ranks": [
+        1,
+        1,
+        1
+      ],
+      "top": [
+        [
+          "mongodb",
+          "documentdb_with_mongodb_compatibility"
+        ],
+        [
+          "rabbitmq"
+        ],
+        [
+          "nginx",
+          "nginxpm"
+        ]
+      ],
+      "medianMs": 7.937,
+      "cliAgrees": true
+    },
+    {
+      "id": "multi-space-serverless",
+      "scenario": "multi-keyword",
+      "query": "lambda sqs dynamodb",
+      "k": 8,
+      "pass": false,
+      "reasons": [
+        "missing sqs (rank 10, k=8)"
+      ],
+      "groups": 3,
+      "hitK": 2,
+      "hit1": 1,
+      "rr": 1.2666666666666666,
+      "ranks": [
+        6,
+        10,
+        1
+      ],
+      "top": [
+        [
+          "dynamodb",
+          "dynamodb_dax",
+          "dynamodb_standard_access_table_class",
+          "dynamodb_standard_infrequent_access_table_class",
+          "dynamodb_stream"
+        ]
+      ],
+      "medianMs": 3.621,
+      "cliAgrees": true
+    },
+    {
+      "id": "multi-comma-abbr-aws",
+      "scenario": "multi-keyword",
+      "query": "apigw, ddb, kms",
+      "k": 3,
+      "pass": false,
+      "reasons": [
+        "missing api_gateway (rank >20, k=3)",
+        "missing dynamodb (rank >20, k=3)",
+        "missing key_management_service (rank >20, k=3)"
+      ],
+      "groups": 3,
+      "hitK": 0,
+      "hit1": 0,
+      "rr": 0,
+      "ranks": [
+        null,
+        null,
+        null
+      ],
+      "top": [
+        [],
+        [],
+        []
+      ],
+      "medianMs": 7.9,
+      "cliAgrees": true
+    },
+    {
+      "id": "typo-kubernets",
+      "scenario": "typo",
+      "query": "kubernets",
+      "k": 3,
+      "pass": false,
+      "reasons": [
+        "missing kubernetes (rank >20, k=3)"
+      ],
+      "groups": 1,
+      "hitK": 0,
+      "hit1": 0,
+      "rr": 0,
+      "ranks": [
+        null
+      ],
+      "top": [
+        []
+      ],
+      "medianMs": 2.545
+    },
+    {
+      "id": "typo-postgress",
+      "scenario": "typo",
+      "query": "postgress",
+      "k": 3,
+      "pass": false,
+      "reasons": [
+        "missing postgres|… (rank >20, k=3)"
+      ],
+      "groups": 1,
+      "hitK": 0,
+      "hit1": 0,
+      "rr": 0,
+      "ranks": [
+        null
+      ],
+      "top": [
+        []
+      ],
+      "medianMs": 2.557
+    },
+    {
+      "id": "typo-lamda",
+      "scenario": "typo",
+      "query": "lamda",
+      "k": 3,
+      "pass": false,
+      "reasons": [
+        "missing lambda|… (rank >20, k=3)"
+      ],
+      "groups": 1,
+      "hitK": 0,
+      "hit1": 0,
+      "rr": 0,
+      "ranks": [
+        null
+      ],
+      "top": [
+        []
+      ],
+      "medianMs": 2.618
+    },
+    {
+      "id": "typo-elasticsearh",
+      "scenario": "typo",
+      "query": "elasticsearh",
+      "k": 3,
+      "pass": false,
+      "reasons": [
+        "missing elasticsearch|… (rank >20, k=3)"
+      ],
+      "groups": 1,
+      "hitK": 0,
+      "hit1": 0,
+      "rr": 0,
+      "ranks": [
+        null
+      ],
+      "top": [
+        []
+      ],
+      "medianMs": 2.724
+    },
+    {
+      "id": "typo-dynamo-db",
+      "scenario": "typo",
+      "query": "dynamo db",
+      "k": 3,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "dynamodb",
+          "db_instance",
+          "db_instance_read_replica",
+          "db_instance_standby",
+          "db_on_instance"
+        ]
+      ],
+      "medianMs": 3.102
+    },
+    {
+      "id": "typo-cloudfrnt",
+      "scenario": "typo",
+      "query": "cloudfrnt",
+      "k": 3,
+      "pass": false,
+      "reasons": [
+        "missing cloudfront (rank >20, k=3)"
+      ],
+      "groups": 1,
+      "hitK": 0,
+      "hit1": 0,
+      "rr": 0,
+      "ranks": [
+        null
+      ],
+      "top": [
+        []
+      ],
+      "medianMs": 2.592
+    },
+    {
+      "id": "typo-kafak",
+      "scenario": "typo",
+      "query": "kafak",
+      "k": 3,
+      "pass": false,
+      "reasons": [
+        "missing kafka|… (rank >20, k=3)"
+      ],
+      "groups": 1,
+      "hitK": 0,
+      "hit1": 0,
+      "rr": 0,
+      "ranks": [
+        null
+      ],
+      "top": [
+        []
+      ],
+      "medianMs": 2.521
+    },
+    {
+      "id": "typo-redshfit",
+      "scenario": "typo",
+      "query": "redshfit",
+      "k": 3,
+      "pass": false,
+      "reasons": [
+        "missing redshift (rank >20, k=3)"
+      ],
+      "groups": 1,
+      "hitK": 0,
+      "hit1": 0,
+      "rr": 0,
+      "ranks": [
+        null
+      ],
+      "top": [
+        []
+      ],
+      "medianMs": 2.594
+    },
+    {
+      "id": "typo-mongdb",
+      "scenario": "typo",
+      "query": "mongdb",
+      "k": 3,
+      "pass": false,
+      "reasons": [
+        "missing mongodb (rank >20, k=3)"
+      ],
+      "groups": 1,
+      "hitK": 0,
+      "hit1": 0,
+      "rr": 0,
+      "ranks": [
+        null
+      ],
+      "top": [
+        []
+      ],
+      "medianMs": 2.508
+    },
+    {
+      "id": "syn-object-storage",
+      "scenario": "synonym",
+      "query": "object storage",
+      "k": 3,
+      "pass": false,
+      "reasons": [
+        "missing s3|… (rank 14, k=3)"
+      ],
+      "groups": 1,
+      "hitK": 0,
+      "hit1": 0,
+      "rr": 0.07142857142857142,
+      "ranks": [
+        14
+      ],
+      "top": [
+        [
+          "dbx_object_storage",
+          "backup_storage",
+          "cold_storage",
+          "dense_storage_node",
+          "infrequent_access_storage_class"
+        ]
+      ],
+      "medianMs": 3.277
+    },
+    {
+      "id": "syn-message-queue",
+      "scenario": "synonym",
+      "query": "message queue",
+      "k": 3,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "queue",
+          "azure_storage_queue",
+          "message",
+          "bpmn_start_message",
+          "bpmn_intermediate_message"
+        ]
+      ],
+      "medianMs": 3.096
+    },
+    {
+      "id": "syn-container-registry",
+      "scenario": "synonym",
+      "query": "container registry",
+      "k": 3,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 0,
+      "rr": 0.5,
+      "ranks": [
+        2
+      ],
+      "top": [
+        [
+          "container_registry_image",
+          "gcp_container_registry",
+          "eventbridge_schema_registry",
+          "registry",
+          "gcp_artifact_registry"
+        ]
+      ],
+      "medianMs": 3.274
+    },
+    {
+      "id": "syn-data-warehouse",
+      "scenario": "synonym",
+      "query": "data warehouse",
+      "k": 3,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "dbx_data_warehouse",
+          "azure_sql_data_warehouses",
+          "athena_data_source_connectors",
+          "aws_glue_data_quality",
+          "b2b_data_interchange"
+        ]
+      ],
+      "medianMs": 3.077
+    },
+    {
+      "id": "syn-load-balancer",
+      "scenario": "synonym",
+      "query": "load balancer",
+      "k": 3,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "application_load_balancer",
+          "classic_load_balancer",
+          "gateway_load_balancer",
+          "network_load_balancer",
+          "azure_load_balancer_hub"
+        ]
+      ],
+      "medianMs": 3.129
+    },
+    {
+      "id": "syn-serverless-function",
+      "scenario": "synonym",
+      "query": "serverless function",
+      "k": 3,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "lambda_function",
+          "azure_function_apps",
+          "azure_azure_network_function_manager_functions",
+          "azure_azure_network_function_manager",
+          "serverless"
+        ]
+      ],
+      "medianMs": 3.135
+    },
+    {
+      "id": "syn-cache",
+      "scenario": "synonym",
+      "query": "in-memory cache",
+      "k": 3,
+      "pass": false,
+      "reasons": [
+        "missing elasticache|… (rank 7, k=3)"
+      ],
+      "groups": 1,
+      "hitK": 0,
+      "hit1": 0,
+      "rr": 0.14285714285714285,
+      "ranks": [
+        7
+      ],
+      "top": [
+        [
+          "file_cache_hybrid_nfs_linked_datasets",
+          "file_cache_on_premises_nfs_linked_datasets",
+          "file_cache_s3_linked_datasets",
+          "azure_connected_cache",
+          "cache_node"
+        ]
+      ],
+      "medianMs": 3.665
+    },
+    {
+      "id": "syn-secrets",
+      "scenario": "synonym",
+      "query": "secret store",
+      "k": 3,
+      "pass": false,
+      "reasons": [
+        "missing secrets_manager|… (rank 11, k=3)"
+      ],
+      "groups": 1,
+      "hitK": 0,
+      "hit1": 0,
+      "rr": 0.09090909090909091,
+      "ranks": [
+        11
+      ],
+      "top": [
+        [
+          "elastic_block_store",
+          "elastic_block_store_amazon_data_lifecycle_manager",
+          "elastic_block_store_volume_gp3",
+          "iot_analytics_data_store",
+          "key_management_service_external_key_store"
+        ]
+      ],
+      "medianMs": 3.349
+    },
+    {
+      "id": "syn-dns",
+      "scenario": "synonym",
+      "query": "dns",
+      "k": 3,
+      "pass": false,
+      "reasons": [
+        "missing route_53|… (rank 5, k=3)"
+      ],
+      "groups": 1,
+      "hitK": 0,
+      "hit1": 0,
+      "rr": 0.2,
+      "ranks": [
+        5
+      ],
+      "top": [
+        [
+          "route_53_resolver_dns_firewall",
+          "azure_dns_private_resolver",
+          "azure_dns_security_policy",
+          "azure_dns_multistack",
+          "azure_dns_zones"
+        ]
+      ],
+      "medianMs": 2.542
+    },
+    {
+      "id": "syn-search-engine",
+      "scenario": "synonym",
+      "query": "full text search",
+      "k": 3,
+      "pass": false,
+      "reasons": [
+        "missing elasticsearch|… (rank 9, k=3)"
+      ],
+      "groups": 1,
+      "hitK": 0,
+      "hit1": 0,
+      "rr": 0.1111111111111111,
+      "ranks": [
+        9
+      ],
+      "top": [
+        [
+          "search_documents",
+          "azure_serverless_search",
+          "azure_cognitive_search",
+          "azure_search",
+          "azure_search_grid"
+        ]
+      ],
+      "medianMs": 3.666
+    },
+    {
+      "id": "syn-event-bus",
+      "scenario": "synonym",
+      "query": "event bus",
+      "k": 3,
+      "pass": false,
+      "reasons": [
+        "missing eventbridge|… (rank 4, k=3)"
+      ],
+      "groups": 1,
+      "hitK": 0,
+      "hit1": 0,
+      "rr": 0.25,
+      "ranks": [
+        4
+      ],
+      "top": [
+        [
+          "eventbridge_custom_event_bus_resource",
+          "eventbridge_default_event_bus_resource",
+          "eventbridge_saas_partner_event_bus_resource",
+          "azure_azure_service_bus",
+          "event"
+        ]
+      ],
+      "medianMs": 3.341
+    },
+    {
+      "id": "vendor-azure-sql",
+      "scenario": "vendor-scoped",
+      "query": "azure sql",
+      "k": 3,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 0,
+      "rr": 0.5,
+      "ranks": [
+        2
+      ],
+      "top": [
+        [
+          "azure_sql_data_warehouses",
+          "azure_azure_sql",
+          "azure_azure_sql_edge",
+          "azure_azure_sql_vm",
+          "azure_sql_database"
+        ]
+      ],
+      "medianMs": 3.309
+    },
+    {
+      "id": "vendor-gcp-bigquery",
+      "scenario": "vendor-scoped",
+      "query": "gcp bigquery",
+      "k": 1,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "gcp_bigquery",
+          "bigquery",
+          "gcp_access_context_manager",
+          "gcp_administration",
+          "gcp_advanced_agent_modeling"
+        ]
+      ],
+      "medianMs": 3.098
+    },
+    {
+      "id": "vendor-aws-aurora-pg",
+      "scenario": "vendor-scoped",
+      "query": "aws aurora postgres",
+      "k": 3,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 0,
+      "rr": 0.5,
+      "ranks": [
+        2
+      ],
+      "top": [
+        [
+          "postgres",
+          "aurora",
+          "aurora_instance",
+          "aurora_instance_alt",
+          "amplify_aws_amplify_studio"
+        ]
+      ],
+      "medianMs": 3.773
+    },
+    {
+      "id": "vendor-azure-k8s",
+      "scenario": "vendor-scoped",
+      "query": "azure kubernetes",
+      "k": 1,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "azure_kubernetes_services",
+          "azure_kubernetes_hub",
+          "azure_arc_kubernetes",
+          "azure_kubernetes_fleet_manager",
+          "kubernetes"
+        ]
+      ],
+      "medianMs": 3.195
+    },
+    {
+      "id": "vendor-gcp-k8s",
+      "scenario": "vendor-scoped",
+      "query": "google kubernetes",
+      "k": 1,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "gcp_google_kubernetes_engine",
+          "azure_kubernetes_services",
+          "azure_kubernetes_hub",
+          "azure_arc_kubernetes",
+          "azure_kubernetes_fleet_manager"
+        ]
+      ],
+      "medianMs": 3.043
+    },
+    {
+      "id": "vendor-aws-k8s",
+      "scenario": "vendor-scoped",
+      "query": "aws kubernetes",
+      "k": 1,
+      "pass": false,
+      "reasons": [
+        "missing eks (rank >20, k=1)"
+      ],
+      "groups": 1,
+      "hitK": 0,
+      "hit1": 0,
+      "rr": 0,
+      "ranks": [
+        null
+      ],
+      "top": [
+        [
+          "azure_kubernetes_services",
+          "azure_kubernetes_hub",
+          "azure_arc_kubernetes",
+          "azure_kubernetes_fleet_manager",
+          "kubernetes"
+        ]
+      ],
+      "medianMs": 3.158
+    },
+    {
+      "id": "vendor-azure-vm",
+      "scenario": "vendor-scoped",
+      "query": "azure vm",
+      "k": 1,
+      "pass": false,
+      "reasons": [
+        "missing azure_virtual_machine (rank >20, k=1)"
+      ],
+      "groups": 1,
+      "hitK": 0,
+      "hit1": 0,
+      "rr": 0,
+      "ranks": [
+        null
+      ],
+      "top": [
+        [
+          "azure_automanaged_vm",
+          "azure_vm_scale_sets",
+          "azure_vm_images_classic",
+          "azure_azure_sql_vm",
+          "azure_spot_vm"
+        ]
+      ],
+      "medianMs": 3.149
+    },
+    {
+      "id": "vendor-gcp-storage",
+      "scenario": "vendor-scoped",
+      "query": "gcp storage",
+      "k": 1,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "gcp_cloud_storage",
+          "backup_storage",
+          "cold_storage",
+          "dense_storage_node",
+          "infrequent_access_storage_class"
+        ]
+      ],
+      "medianMs": 3.165
+    },
+    {
+      "id": "vendor-azure-redis",
+      "scenario": "vendor-scoped",
+      "query": "azure redis",
+      "k": 1,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "azure_cache_redis",
+          "azure_azure_managed_redis",
+          "elasticache_for_redis",
+          "memorydb_for_redis",
+          "redis"
+        ]
+      ],
+      "medianMs": 3.348
+    },
+    {
+      "id": "vendor-aws-redis",
+      "scenario": "vendor-scoped",
+      "query": "aws redis",
+      "k": 3,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "elasticache_for_redis",
+          "memorydb_for_redis",
+          "azure_cache_redis",
+          "azure_azure_managed_redis",
+          "redis"
+        ]
+      ],
+      "medianMs": 3.347
+    },
+    {
+      "id": "exact-s3",
+      "scenario": "exact",
+      "query": "s3",
+      "k": 1,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "s3",
+          "backup_aws_backup_support_for_amazon_s3",
+          "file_cache_s3_linked_datasets",
+          "s3_batch_operations",
+          "s3_express_one_zone"
+        ]
+      ],
+      "medianMs": 2.628
+    },
+    {
+      "id": "exact-lambda",
+      "scenario": "exact",
+      "query": "lambda",
+      "k": 1,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "lambda",
+          "lambda_function",
+          "s3_object_lambda",
+          "s3_object_lambda_access_points"
+        ]
+      ],
+      "medianMs": 2.568
+    },
+    {
+      "id": "exact-kubernetes",
+      "scenario": "exact",
+      "query": "kubernetes",
+      "k": 1,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "kubernetes",
+          "azure_kubernetes_services",
+          "azure_kubernetes_hub",
+          "azure_arc_kubernetes",
+          "azure_kubernetes_fleet_manager"
+        ]
+      ],
+      "medianMs": 2.499
+    },
+    {
+      "id": "exact-postgres",
+      "scenario": "exact",
+      "query": "postgres",
+      "k": 1,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "postgres",
+          "postgresql_instance",
+          "rds_postgresql_instance",
+          "rds_postgresql_instance_alt",
+          "rds_trusted_language_extensions_for_postgresql"
+        ]
+      ],
+      "medianMs": 2.547
+    },
+    {
+      "id": "exact-cloudfront",
+      "scenario": "exact",
+      "query": "cloudfront",
+      "k": 1,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "cloudfront",
+          "cloudfront_functions"
+        ]
+      ],
+      "medianMs": 2.546
+    },
+    {
+      "id": "exact-api-gateway",
+      "scenario": "exact",
+      "query": "api_gateway",
+      "k": 1,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "api_gateway",
+          "gcp_cloud_api_gateway",
+          "backup_gateway",
+          "cloud_wan_transit_gateway_route_table_attachment",
+          "customer_gateway"
+        ]
+      ],
+      "medianMs": 3.279
+    },
+    {
+      "id": "exact-nat-gateway",
+      "scenario": "exact",
+      "query": "nat gateway",
+      "k": 1,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "nat_gateway",
+          "api_gateway",
+          "backup_gateway",
+          "cloud_wan_transit_gateway_route_table_attachment",
+          "customer_gateway"
+        ]
+      ],
+      "medianMs": 3.193
+    },
+    {
+      "id": "exact-alb-words",
+      "scenario": "exact",
+      "query": "application load balancer",
+      "k": 1,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "application_load_balancer",
+          "classic_load_balancer",
+          "gateway_load_balancer",
+          "network_load_balancer",
+          "azure_load_balancer_hub"
+        ]
+      ],
+      "medianMs": 3.649
+    },
+    {
+      "id": "exact-step-functions",
+      "scenario": "exact",
+      "query": "step functions",
+      "k": 1,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "step_functions",
+          "group_aws_step_functions_workflow",
+          "cloudfront_functions",
+          "azure_azure_network_function_manager_functions",
+          "azure_storage_functions"
+        ]
+      ],
+      "medianMs": 3.121
+    },
+    {
+      "id": "exact-firehose",
+      "scenario": "exact",
+      "query": "kinesis data firehose",
+      "k": 1,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "kinesis_data_firehose",
+          "kinesis_data_analytics",
+          "kinesis_data_streams",
+          "athena_data_source_connectors",
+          "aws_glue_data_quality"
+        ]
+      ],
+      "medianMs": 3.363
+    },
+    {
+      "id": "exact-secrets-manager",
+      "scenario": "exact",
+      "query": "secrets manager",
+      "k": 1,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "secrets_manager",
+          "audit_manager",
+          "backup_audit_manager",
+          "certificate_manager",
+          "certificate_manager_2"
+        ]
+      ],
+      "medianMs": 3.195
+    },
+    {
+      "id": "exact-route-53",
+      "scenario": "exact",
+      "query": "route 53",
+      "k": 1,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "route_53",
+          "route_53_application_recovery_controller",
+          "route_53_readiness_checks",
+          "route_53_resolver",
+          "route_53_resolver_dns_firewall"
+        ]
+      ],
+      "medianMs": 3.093
+    },
+    {
+      "id": "exact-azure-aks-name",
+      "scenario": "exact",
+      "query": "azure_kubernetes_services",
+      "k": 1,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "azure_kubernetes_services",
+          "azure_machine_learning_studio_classic_web_services",
+          "azure_speech_services",
+          "azure_azure_applied_ai_services",
+          "azure_cognitive_services_decisions"
+        ]
+      ],
+      "medianMs": 3.612
+    },
+    {
+      "id": "exact-gcp-bigquery-name",
+      "scenario": "exact",
+      "query": "gcp_bigquery",
+      "k": 1,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "gcp_bigquery",
+          "bigquery",
+          "gcp_access_context_manager",
+          "gcp_administration",
+          "gcp_advanced_agent_modeling"
+        ]
+      ],
+      "medianMs": 3.093
+    },
+    {
+      "id": "exact-vpc",
+      "scenario": "exact",
+      "query": "vpc",
+      "k": 1,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "vpc",
+          "vpc_access_points",
+          "vpc_carrier_gateway",
+          "vpc_lattice",
+          "vpc_network_access_analyzer"
+        ]
+      ],
+      "medianMs": 2.499
+    },
+    {
+      "id": "exact-dynamodb",
+      "scenario": "exact",
+      "query": "dynamodb",
+      "k": 1,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "dynamodb",
+          "dynamodb_dax",
+          "dynamodb_standard_access_table_class",
+          "dynamodb_standard_infrequent_access_table_class",
+          "dynamodb_stream"
+        ]
+      ],
+      "medianMs": 2.528
+    },
+    {
+      "id": "exact-elasticsearch",
+      "scenario": "exact",
+      "query": "elasticsearch",
+      "k": 1,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "elasticsearch",
+          "elasticsearch_service",
+          "opensearch"
+        ]
+      ],
+      "medianMs": 2.658
+    },
+    {
+      "id": "noise-a",
+      "scenario": "negative",
+      "query": "a",
+      "k": 8,
+      "pass": false,
+      "reasons": [
+        "8 results > maxResults 0"
+      ],
+      "groups": 0,
+      "hitK": 0,
+      "hit1": 0,
+      "rr": 0,
+      "ranks": [],
+      "top": [
+        [
+          "azure_verification_as_a_service",
+          "azure_software_as_a_service",
+          "azure_azure_a",
+          "a1_instance",
+          "access_analyzer"
+        ]
+      ],
+      "medianMs": 2.505
+    },
+    {
+      "id": "noise-the",
+      "scenario": "negative",
+      "query": "the",
+      "k": 8,
+      "pass": false,
+      "reasons": [
+        "8 results > maxResults 0"
+      ],
+      "groups": 0,
+      "hitK": 0,
+      "hit1": 0,
+      "rr": 0,
+      "ranks": [],
+      "top": [
+        [
+          "iot_over_the_air_update",
+          "athena",
+          "athena_data_source_connectors",
+          "authenticated_user",
+          "cloudwatch_synthetics"
+        ]
+      ],
+      "medianMs": 2.621
+    },
+    {
+      "id": "noise-x",
+      "scenario": "negative",
+      "query": "x",
+      "k": 8,
+      "pass": false,
+      "reasons": [
+        "8 results > maxResults 0"
+      ],
+      "groups": 0,
+      "hitK": 0,
+      "hit1": 0,
+      "rr": 0,
+      "ranks": [],
+      "top": [
+        [
+          "alexa_enabled_device",
+          "alexa_for_business",
+          "alexa_skill",
+          "alexa_smart_home_skill",
+          "alexa_voice_service"
+        ]
+      ],
+      "medianMs": 2.441
+    },
+    {
+      "id": "noise-gibberish",
+      "scenario": "negative",
+      "query": "qzxwvplm",
+      "k": 8,
+      "pass": true,
+      "reasons": [],
+      "groups": 0,
+      "hitK": 0,
+      "hit1": 0,
+      "rr": 0,
+      "ranks": [],
+      "top": [
+        []
+      ],
+      "medianMs": 2.484
+    },
+    {
+      "id": "noise-db",
+      "scenario": "negative",
+      "query": "db",
+      "k": 3,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "db_instance",
+          "db_instance_read_replica",
+          "db_instance_standby",
+          "db_on_instance",
+          "db_on_instance2"
+        ]
+      ],
+      "medianMs": 2.541
+    },
+    {
+      "id": "noise-es-not-ebs",
+      "scenario": "negative",
+      "query": "es",
+      "k": 3,
+      "pass": true,
+      "reasons": [],
+      "groups": 0,
+      "hitK": 0,
+      "hit1": 0,
+      "rr": 0,
+      "ranks": [],
+      "top": [
+        [
+          "elasticsearch",
+          "elasticsearch_service",
+          "opensearch"
+        ]
+      ],
+      "medianMs": 2.712
+    },
+    {
+      "id": "case-S3-upper",
+      "scenario": "case-punct",
+      "query": "S3",
+      "k": 1,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "s3",
+          "backup_aws_backup_support_for_amazon_s3",
+          "file_cache_s3_linked_datasets",
+          "s3_batch_operations",
+          "s3_express_one_zone"
+        ]
+      ],
+      "medianMs": 2.641
+    },
+    {
+      "id": "case-lambda-noise",
+      "scenario": "case-punct",
+      "query": "  Lambda!! ",
+      "k": 1,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "lambda",
+          "lambda_function",
+          "s3_object_lambda",
+          "s3_object_lambda_access_points"
+        ]
+      ],
+      "medianMs": 2.588
+    },
+    {
+      "id": "case-api-gateway-dash",
+      "scenario": "case-punct",
+      "query": "API-Gateway",
+      "k": 1,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "api_gateway",
+          "gcp_cloud_api_gateway",
+          "backup_gateway",
+          "cloud_wan_transit_gateway_route_table_attachment",
+          "customer_gateway"
+        ]
+      ],
+      "medianMs": 3.284
+    },
+    {
+      "id": "case-nat-mixed",
+      "scenario": "case-punct",
+      "query": "Nat_Gateway",
+      "k": 1,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "nat_gateway",
+          "api_gateway",
+          "backup_gateway",
+          "cloud_wan_transit_gateway_route_table_attachment",
+          "customer_gateway"
+        ]
+      ],
+      "medianMs": 3.229
+    },
+    {
+      "id": "case-K8S-upper",
+      "scenario": "case-punct",
+      "query": "K8S",
+      "k": 3,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "kubernetes",
+          "azure_kubernetes_services",
+          "azure_kubernetes_hub",
+          "azure_arc_kubernetes",
+          "azure_kubernetes_fleet_manager"
+        ]
+      ],
+      "medianMs": 2.494
+    },
+    {
+      "id": "case-route53-joined",
+      "scenario": "case-punct",
+      "query": "Route53",
+      "k": 1,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "route_53"
+        ]
+      ],
+      "medianMs": 2.665
+    },
+    {
+      "id": "case-dynamodb-camel",
+      "scenario": "case-punct",
+      "query": "DynamoDB",
+      "k": 1,
+      "pass": true,
+      "reasons": [],
+      "groups": 1,
+      "hitK": 1,
+      "hit1": 1,
+      "rr": 1,
+      "ranks": [
+        1
+      ],
+      "top": [
+        [
+          "dynamodb",
+          "dynamodb_dax",
+          "dynamodb_standard_access_table_class",
+          "dynamodb_standard_infrequent_access_table_class",
+          "dynamodb_stream"
+        ]
+      ],
+      "medianMs": 2.555
+    }
+  ]
+}

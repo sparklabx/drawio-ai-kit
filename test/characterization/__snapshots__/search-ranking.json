@@ -1,0 +1,503 @@
+{
+  "alias:cdn": [
+    "azure_cdn_profiles",
+    "azure_front_door_and_cdn_profiles",
+    "gcp_cloud_cdn"
+  ],
+  "alias:db": [
+    "db_instance",
+    "db_instance_read_replica",
+    "db_instance_standby",
+    "db_on_instance",
+    "db_on_instance2",
+    "mysql_db_instance",
+    "mysql_db_instance_alternate",
+    "oracle_db_instance"
+  ],
+  "alias:dns": [
+    "route_53_resolver_dns_firewall",
+    "azure_dns_private_resolver",
+    "azure_dns_security_policy",
+    "azure_dns_multistack",
+    "azure_dns_zones",
+    "gcp_cloud_dns"
+  ],
+  "alias:es": [
+    "elasticsearch",
+    "elasticsearch_service",
+    "opensearch"
+  ],
+  "alias:iam": [
+    "identity_access_management_iam_roles_anywhere",
+    "victoriametrics",
+    "access_analyzer",
+    "keycloak"
+  ],
+  "alias:k8s": [
+    "kubernetes",
+    "azure_kubernetes_services",
+    "azure_kubernetes_hub",
+    "azure_arc_kubernetes",
+    "azure_kubernetes_fleet_manager",
+    "gcp_google_kubernetes_engine",
+    "eks",
+    "kubeflow"
+  ],
+  "alias:lb": [
+    "iot_sailboat",
+    "lightbulb",
+    "azure_toolbox"
+  ],
+  "alias:ml": [
+    "neuron_ml_sdk",
+    "redshift_ml",
+    "sagemaker_geospatial_ml",
+    "dbx_ai_ml",
+    "saml_token",
+    "streamlit",
+    "mlflow",
+    "gcp_automl"
+  ],
+  "alias:mq": [
+    "mq",
+    "mq_broker",
+    "mqtt_protocol",
+    "rabbitmq"
+  ],
+  "alias:pg": [
+    "postgresql_instance",
+    "rds_postgresql_instance",
+    "rds_postgresql_instance_alt",
+    "rds_trusted_language_extensions_for_postgresql",
+    "azure_azure_database_postgresql_server_group",
+    "azure_azure_database_postgresql_server",
+    "azure_arc_postgresql",
+    "postgres"
+  ],
+  "batch:alb, ecs, rds, elasticache": {
+    "alb": [],
+    "ecs": [
+      "ecs",
+      "ecs_anywhere",
+      "ecs_copilot_cli",
+      "ecs_service",
+      "ecs_service_connect",
+      "ecs_task",
+      "azure_template_specs"
+    ],
+    "rds": [
+      "rds",
+      "rds_blue_green_deployments",
+      "rds_instance",
+      "rds_instance_alt",
+      "rds_mariadb_instance",
+      "rds_mariadb_instance_alt",
+      "rds_multi_az",
+      "rds_multi_az_db_cluster"
+    ],
+    "elasticache": [
+      "elasticache",
+      "elasticache_for_memcached",
+      "elasticache_for_redis",
+      "elasticache_for_valkey"
+    ]
+  },
+  "batch:k8s, pg, es": {
+    "k8s": [
+      "kubernetes",
+      "azure_kubernetes_services",
+      "azure_kubernetes_hub",
+      "azure_arc_kubernetes",
+      "azure_kubernetes_fleet_manager",
+      "gcp_google_kubernetes_engine",
+      "eks",
+      "kubeflow"
+    ],
+    "pg": [
+      "postgresql_instance",
+      "rds_postgresql_instance",
+      "rds_postgresql_instance_alt",
+      "rds_trusted_language_extensions_for_postgresql",
+      "azure_azure_database_postgresql_server_group",
+      "azure_azure_database_postgresql_server",
+      "azure_arc_postgresql",
+      "postgres"
+    ],
+    "es": [
+      "elasticsearch",
+      "elasticsearch_service",
+      "opensearch"
+    ]
+  },
+  "batch:s3, lambda, nat gateway": {
+    "s3": [
+      "s3",
+      "backup_aws_backup_support_for_amazon_s3",
+      "file_cache_s3_linked_datasets",
+      "s3_batch_operations",
+      "s3_express_one_zone",
+      "s3_file_gateway",
+      "s3_multi_region_access_points",
+      "s3_object_lambda"
+    ],
+    "lambda": [
+      "lambda",
+      "lambda_function",
+      "s3_object_lambda",
+      "s3_object_lambda_access_points"
+    ],
+    "nat gateway": [
+      "nat_gateway",
+      "api_gateway",
+      "backup_gateway",
+      "cloud_wan_transit_gateway_route_table_attachment",
+      "customer_gateway",
+      "file_gateway",
+      "fsx_file_gateway",
+      "gateway"
+    ]
+  },
+  "flags:lambda --category Compute": [
+    {
+      "name": "lambda",
+      "label": "Lambda",
+      "category": "Compute",
+      "kind": "icon",
+      "color": "#ED7100"
+    }
+  ],
+  "flags:s3 --full --limit 2": [
+    {
+      "name": "s3",
+      "fqn": "mxgraph.aws4.s3",
+      "label": "Simple Storage Service (S3)",
+      "category": "Storage",
+      "kind": "icon",
+      "color": "#7AA116",
+      "aliases": [],
+      "style": "sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;fillColor=#7AA116;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.s3;",
+      "width": 78,
+      "height": 78,
+      "score": 191
+    },
+    {
+      "name": "backup_aws_backup_support_for_amazon_s3",
+      "fqn": "mxgraph.aws4.backup_aws_backup_support_for_amazon_s3",
+      "label": "Backup AWS Backup Support for Amazon S3",
+      "category": "Storage",
+      "kind": "icon",
+      "color": "#7AA116",
+      "aliases": [],
+      "style": "sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#7AA116;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.backup_aws_backup_support_for_amazon_s3;",
+      "width": 78,
+      "height": 78,
+      "score": 31
+    }
+  ],
+  "flags:storage --limit 20": [
+    {
+      "name": "storage",
+      "label": "Storage",
+      "category": "Storage",
+      "kind": "icon",
+      "color": "#7AA116"
+    },
+    {
+      "name": "backup_storage",
+      "label": "Backup Storage",
+      "category": "Storage",
+      "kind": "icon",
+      "color": "#7AA116"
+    },
+    {
+      "name": "cold_storage",
+      "label": "Cold Storage",
+      "category": "General",
+      "kind": "icon",
+      "color": "#232F3D"
+    },
+    {
+      "name": "dense_storage_node",
+      "label": "Dense Storage Node",
+      "category": "General",
+      "kind": "icon",
+      "color": "#ffffff"
+    },
+    {
+      "name": "infrequent_access_storage_class",
+      "label": "Infrequent Access Storage Class",
+      "category": "Storage",
+      "kind": "icon",
+      "color": "#7AA116"
+    },
+    {
+      "name": "s3_on_outposts_storage",
+      "label": "S3 on Outposts",
+      "category": "Storage",
+      "kind": "icon",
+      "color": "#7AA116"
+    },
+    {
+      "name": "s3_storage_lens",
+      "label": "S3 Storage Lens",
+      "category": "Storage",
+      "kind": "icon",
+      "color": "#7AA116"
+    },
+    {
+      "name": "simple_storage_service_directory_bucket",
+      "label": "S3 Directory Bucket",
+      "category": "Storage",
+      "kind": "icon",
+      "color": "#7AA116"
+    },
+    {
+      "name": "simple_storage_service_s3_glacier_instant_retrieval",
+      "label": "Glacier Instant Retrieval",
+      "category": "Storage",
+      "kind": "icon",
+      "color": "#7AA116"
+    },
+    {
+      "name": "storage_gateway",
+      "label": "Storage Gateway",
+      "category": "Storage",
+      "kind": "icon",
+      "color": "#7AA116"
+    },
+    {
+      "name": "tape_storage",
+      "label": "Tape Storage",
+      "category": "General",
+      "kind": "icon",
+      "color": "#ffffff"
+    },
+    {
+      "name": "azure_storage_actions",
+      "label": "Storage Actions",
+      "category": "Storage",
+      "kind": "icon",
+      "color": "#5A6B7B"
+    },
+    {
+      "name": "azure_storage_accounts",
+      "label": "Storage Accounts",
+      "category": "Storage",
+      "kind": "icon",
+      "color": "#5A6B7B"
+    },
+    {
+      "name": "azure_storage_accounts_classic",
+      "label": "Storage Accounts (Classic)",
+      "category": "Storage",
+      "kind": "icon",
+      "color": "#5A6B7B"
+    },
+    {
+      "name": "azure_data_lake_storage_gen1",
+      "label": "Data Lake Storage Gen1",
+      "category": "Storage",
+      "kind": "icon",
+      "color": "#5A6B7B"
+    },
+    {
+      "name": "azure_storage_explorer",
+      "label": "Storage Explorer",
+      "category": "Storage",
+      "kind": "icon",
+      "color": "#5A6B7B"
+    },
+    {
+      "name": "azure_storage_sync_services",
+      "label": "Storage Sync Services",
+      "category": "Storage",
+      "kind": "icon",
+      "color": "#5A6B7B"
+    },
+    {
+      "name": "azure_storage_azure_files",
+      "label": "Storage Azure Files",
+      "category": "General",
+      "kind": "icon",
+      "color": "#5A6B7B"
+    },
+    {
+      "name": "azure_storage_container",
+      "label": "Storage Container",
+      "category": "General",
+      "kind": "icon",
+      "color": "#5A6B7B"
+    },
+    {
+      "name": "azure_storage_queue",
+      "label": "Storage Queue",
+      "category": "General",
+      "kind": "icon",
+      "color": "#5A6B7B"
+    }
+  ],
+  "flags:subnet --kind icon": [
+    {
+      "name": "azure_subnet",
+      "label": "Subnet",
+      "category": "Networking",
+      "kind": "icon",
+      "color": "#5A6B7B"
+    }
+  ],
+  "flags:vpc --kind group": [
+    {
+      "name": "group_vpc",
+      "label": "VPC",
+      "category": "Group",
+      "kind": "group",
+      "color": "none"
+    },
+    {
+      "name": "group_vpc2",
+      "label": "VPC",
+      "category": "Group",
+      "kind": "group",
+      "color": "none"
+    }
+  ],
+  "single:api gateway": [
+    "api_gateway",
+    "gcp_cloud_api_gateway",
+    "backup_gateway",
+    "cloud_wan_transit_gateway_route_table_attachment",
+    "customer_gateway",
+    "file_gateway",
+    "fsx_file_gateway",
+    "gateway"
+  ],
+  "single:bigquery": [
+    "bigquery",
+    "gcp_bigquery"
+  ],
+  "single:cloudfront": [
+    "cloudfront",
+    "cloudfront_functions"
+  ],
+  "single:cosmos db": [
+    "cosmosdb",
+    "azure_azure_cosmos_db",
+    "db_instance",
+    "db_instance_read_replica",
+    "db_instance_standby",
+    "db_on_instance",
+    "db_on_instance2",
+    "mysql_db_instance"
+  ],
+  "single:delta lake": [
+    "cloudtrail_cloudtrail_lake",
+    "data_lake_resource_icon",
+    "lake_formation",
+    "security_lake",
+    "azure_data_lake_analytics",
+    "azure_data_lake_store_gen1",
+    "azure_data_lake_storage_gen1",
+    "delta"
+  ],
+  "single:ec2": [
+    "ec2",
+    "ec2_aws_microservice_extractor_for_net",
+    "ec2_c6a_instance",
+    "ec2_c6gn_instance",
+    "ec2_c6i_instance",
+    "ec2_c6in_instance",
+    "ec2_c7g_instance",
+    "ec2_c7gn_instance"
+  ],
+  "single:kafka": [
+    "kafka",
+    "managed_streaming_for_kafka",
+    "debezium",
+    "redpanda"
+  ],
+  "single:kubernetes": [
+    "kubernetes",
+    "azure_kubernetes_services",
+    "azure_kubernetes_hub",
+    "azure_arc_kubernetes",
+    "azure_kubernetes_fleet_manager",
+    "gcp_google_kubernetes_engine",
+    "eks",
+    "kubeflow"
+  ],
+  "single:lambda": [
+    "lambda",
+    "lambda_function",
+    "s3_object_lambda",
+    "s3_object_lambda_access_points"
+  ],
+  "single:load balancer": [
+    "application_load_balancer",
+    "classic_load_balancer",
+    "gateway_load_balancer",
+    "network_load_balancer",
+    "azure_load_balancer_hub",
+    "azure_load_balancers",
+    "elastic_load_balancing",
+    "azure_load_testing"
+  ],
+  "single:nat gateway": [
+    "nat_gateway",
+    "api_gateway",
+    "backup_gateway",
+    "cloud_wan_transit_gateway_route_table_attachment",
+    "customer_gateway",
+    "file_gateway",
+    "fsx_file_gateway",
+    "gateway"
+  ],
+  "single:postgres": [
+    "postgres",
+    "postgresql_instance",
+    "rds_postgresql_instance",
+    "rds_postgresql_instance_alt",
+    "rds_trusted_language_extensions_for_postgresql",
+    "azure_azure_database_postgresql_server_group",
+    "azure_azure_database_postgresql_server",
+    "azure_arc_postgresql"
+  ],
+  "single:redis": [
+    "redis",
+    "elasticache_for_redis",
+    "memorydb_for_redis",
+    "azure_cache_redis",
+    "azure_azure_managed_redis",
+    "valkey",
+    "keydb"
+  ],
+  "single:s3": [
+    "s3",
+    "backup_aws_backup_support_for_amazon_s3",
+    "file_cache_s3_linked_datasets",
+    "s3_batch_operations",
+    "s3_express_one_zone",
+    "s3_file_gateway",
+    "s3_multi_region_access_points",
+    "s3_object_lambda"
+  ],
+  "single:user task": [
+    "bpmn_task_user",
+    "ecs_task",
+    "bpmn_task_service",
+    "bpmn_task_manual",
+    "bpmn_task_script",
+    "bpmn_task_business_rule",
+    "authenticated_user",
+    "end_user_messaging"
+  ],
+  "single:vpc": [
+    "vpc",
+    "vpc_access_points",
+    "vpc_carrier_gateway",
+    "vpc_lattice",
+    "vpc_network_access_analyzer",
+    "vpc_privatelink",
+    "vpc_reachability_analyzer",
+    "vpc_traffic_mirroring"
+  ]
+}

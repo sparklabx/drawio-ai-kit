@@ -1,0 +1,804 @@
+{
+  "audit.bad": {
+    "status": 0,
+    "stdout": {
+      "advice": [],
+      "metrics": {
+        "fontSizes": [],
+        "fillColors": 0,
+        "edges": 1,
+        "fanOutSources": 0
+      }
+    },
+    "stderr": ""
+  },
+  "audit.good": {
+    "status": 0,
+    "stdout": {
+      "advice": [],
+      "metrics": {
+        "fontSizes": [
+          11,
+          12,
+          14
+        ],
+        "fillColors": 3,
+        "edges": 7,
+        "fanOutSources": 0
+      }
+    },
+    "stderr": ""
+  },
+  "categories": {
+    "status": 0,
+    "stdout": [
+      {
+        "category": "AI / ML",
+        "count": 26
+      },
+      {
+        "category": "AI + Machine Learning",
+        "count": 33
+      },
+      {
+        "category": "Analytics",
+        "count": 17
+      },
+      {
+        "category": "App Services",
+        "count": 7
+      },
+      {
+        "category": "Application Integration",
+        "count": 1
+      },
+      {
+        "category": "Azure Ecosystem",
+        "count": 3
+      },
+      {
+        "category": "Azure Stack",
+        "count": 7
+      },
+      {
+        "category": "Big Data",
+        "count": 54
+      },
+      {
+        "category": "Blockchain",
+        "count": 6
+      },
+      {
+        "category": "BPMN",
+        "count": 19
+      },
+      {
+        "category": "CI/CD",
+        "count": 42
+      },
+      {
+        "category": "Compute",
+        "count": 217
+      },
+      {
+        "category": "Containers",
+        "count": 2
+      },
+      {
+        "category": "Containers & Kubernetes",
+        "count": 26
+      },
+      {
+        "category": "Database",
+        "count": 139
+      },
+      {
+        "category": "Databases",
+        "count": 23
+      },
+      {
+        "category": "Databricks",
+        "count": 49
+      },
+      {
+        "category": "DevOps",
+        "count": 14
+      },
+      {
+        "category": "General",
+        "count": 319
+      },
+      {
+        "category": "Google Cloud",
+        "count": 216
+      },
+      {
+        "category": "Group",
+        "count": 19
+      },
+      {
+        "category": "Hybrid + Multicloud",
+        "count": 6
+      },
+      {
+        "category": "Identity",
+        "count": 32
+      },
+      {
+        "category": "Identity & Access",
+        "count": 1
+      },
+      {
+        "category": "Integration",
+        "count": 23
+      },
+      {
+        "category": "Intune",
+        "count": 17
+      },
+      {
+        "category": "IoT",
+        "count": 17
+      },
+      {
+        "category": "Management",
+        "count": 84
+      },
+      {
+        "category": "Management + Governance",
+        "count": 31
+      },
+      {
+        "category": "Menu",
+        "count": 1
+      },
+      {
+        "category": "Migrate",
+        "count": 2
+      },
+      {
+        "category": "Migration/ML",
+        "count": 95
+      },
+      {
+        "category": "Mixed Reality",
+        "count": 2
+      },
+      {
+        "category": "Monitor",
+        "count": 3
+      },
+      {
+        "category": "Network & Gateway",
+        "count": 15
+      },
+      {
+        "category": "Networking",
+        "count": 48
+      },
+      {
+        "category": "Networking/Analytics",
+        "count": 108
+      },
+      {
+        "category": "New Icons",
+        "count": 38
+      },
+      {
+        "category": "Observability",
+        "count": 26
+      },
+      {
+        "category": "Other",
+        "count": 129
+      },
+      {
+        "category": "Security",
+        "count": 89
+      },
+      {
+        "category": "Storage",
+        "count": 156
+      },
+      {
+        "category": "Web",
+        "count": 6
+      }
+    ],
+    "stderr": ""
+  },
+  "logo.openai": {
+    "status": 0,
+    "stdout": [
+      {
+        "brand": "openai",
+        "file": "openai",
+        "w": 48,
+        "h": 48,
+        "style": "shape=image;html=1;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;image=https://unpkg.com/@lobehub/icons-static-svg@1.91.0/icons/openai.svg"
+      }
+    ],
+    "stderr": ""
+  },
+  "logo.openai.mono": {
+    "status": 0,
+    "stdout": [
+      {
+        "brand": "openai",
+        "file": "openai",
+        "w": 48,
+        "h": 48,
+        "style": "shape=image;html=1;imageAspect=0;aspect=fixed;verticalLabelPosition=bottom;verticalAlign=top;image=https://unpkg.com/@lobehub/icons-static-svg@1.91.0/icons/openai.svg"
+      }
+    ],
+    "stderr": ""
+  },
+  "missing-arg.audit": {
+    "status": 1,
+    "stdout": "",
+    "stderr": "A file is required. Example: drawio-ai audit diagram.drawio\n"
+  },
+  "missing-arg.logo": {
+    "status": 1,
+    "stdout": "",
+    "stderr": "A brand is required. Example: drawio-ai logo openai\n"
+  },
+  "missing-arg.render": {
+    "status": 1,
+    "stdout": "",
+    "stderr": "A file is required. Example: drawio-ai render diagram.drawio\n"
+  },
+  "missing-arg.search": {
+    "status": 1,
+    "stdout": "",
+    "stderr": "A query is required. Example: drawio-ai search s3  (batch: drawio-ai search \"s3, lambda, nat gateway\")\n"
+  },
+  "missing-arg.suggest": {
+    "status": 1,
+    "stdout": "",
+    "stderr": "A .drawio/.xml file is required. Example: drawio-ai suggest-layout diagram.drawio\n"
+  },
+  "missing-arg.suggest-layout": {
+    "status": 1,
+    "stdout": "",
+    "stderr": "A .drawio/.xml file is required. Example: drawio-ai suggest-layout diagram.drawio\n"
+  },
+  "missing-arg.validate": {
+    "status": 1,
+    "stdout": "",
+    "stderr": "A file is required. Example: drawio-ai validate diagram.drawio\n"
+  },
+  "principles.aws.categories": "AI / ML: 26 · Application Integration: 1 · Big Data: 54 · CI/CD: 42 · Compute: 180 · Containers & Kubernetes: 26 · Database: 139 · General: 224 · Group: 19 · Identity & Access: 1 · Management: 84 · Migration/ML: 95 · Network & Gateway: 15 · Networking/Analytics: 108 · Observability: 26 · Security: 76 · Storage: 142",
+  "principles.azure.categories": "AI / ML: 26 · AI + Machine Learning: 33 · Analytics: 17 · App Services: 7 · Azure Ecosystem: 3 · Azure Stack: 7 · Big Data: 54 · Blockchain: 6 · CI/CD: 42 · Compute: 37 · Containers: 2 · Containers & Kubernetes: 26 · Database: 66 · Databases: 23 · DevOps: 14 · General: 95 · Hybrid + Multicloud: 6 · Identity: 32 · Identity & Access: 1 · Integration: 23 · Intune: 17 · IoT: 17 · Management + Governance: 31 · Menu: 1 · Migrate: 2 · Mixed Reality: 2 · Monitor: 3 · Network & Gateway: 15 · Networking: 48 · New Icons: 38 · Observability: 26 · Other: 129 · Security: 13 · Storage: 14 · Web: 6",
+  "principles.bad-mode": {
+    "status": 1,
+    "stdout": "",
+    "stderr": "Unknown --mode \"xx\". Valid modes: aws, azure, gcp, databricks, bpmn.\n"
+  },
+  "principles.bpmn.categories": "AI / ML: 26 · Big Data: 54 · BPMN: 19 · CI/CD: 42 · Containers & Kubernetes: 26 · Database: 66 · Identity & Access: 1 · Network & Gateway: 15 · Observability: 26",
+  "principles.databricks.categories": "AI / ML: 26 · Big Data: 54 · CI/CD: 42 · Containers & Kubernetes: 26 · Database: 66 · Databricks: 49 · Identity & Access: 1 · Network & Gateway: 15 · Observability: 26",
+  "principles.gcp.categories": "AI / ML: 26 · Big Data: 54 · CI/CD: 42 · Containers & Kubernetes: 26 · Database: 66 · Google Cloud: 216 · Identity & Access: 1 · Network & Gateway: 15 · Observability: 26",
+  "render.check": {
+    "status": 0,
+    "stdout": {
+      "ok": true,
+      "path": "<TMP>/out.png",
+      "issues": []
+    },
+    "stderr": ""
+  },
+  "render.check.argv": [
+    "-x",
+    "-f",
+    "png",
+    "-s",
+    "0.9298393913778529",
+    "-p",
+    "1",
+    "--no-sandbox",
+    "-o",
+    "<TMP>/out.png",
+    "<TMP>/good.drawio",
+    ""
+  ],
+  "render.check.bad": {
+    "status": 0,
+    "stdout": {
+      "ok": true,
+      "path": "<TMP>/out.png",
+      "issues": [
+        "Stencil not found in catalog: mxgraph.aws4.nonexistent_thing (at shape) — suggestions: iot_thing_freertos_device, iot_thing_humidity_sensor, iot_thing_industrial_pc",
+        "Duplicate cell id: \"a\" — draw.io silently drops one of the cells, causing missing icons or broken edges.",
+        "Edge references a non-existent id: \"zzz\""
+      ]
+    },
+    "stderr": ""
+  },
+  "render.default": {
+    "status": 0,
+    "stdout": {
+      "ok": true,
+      "path": "<TMP>/out.png"
+    },
+    "stderr": ""
+  },
+  "render.default.argv": [
+    "-x",
+    "-f",
+    "png",
+    "-s",
+    "1",
+    "-p",
+    "1",
+    "--no-sandbox",
+    "-o",
+    "<TMP>/out.png",
+    "<TMP>/good.drawio",
+    ""
+  ],
+  "render.implicit-out": {
+    "status": 0,
+    "stdout": {
+      "ok": true,
+      "path": "<TMP>/good.png"
+    },
+    "stderr": ""
+  },
+  "render.scale-page": {
+    "status": 0,
+    "stdout": {
+      "ok": true,
+      "path": "<TMP>/out.png"
+    },
+    "stderr": ""
+  },
+  "render.scale-page.argv": [
+    "-x",
+    "-f",
+    "png",
+    "-s",
+    "2",
+    "-p",
+    "3",
+    "--no-sandbox",
+    "-o",
+    "<TMP>/out.png",
+    "<TMP>/good.drawio",
+    ""
+  ],
+  "root": {
+    "status": 0,
+    "stdout": "<ROOT>\n",
+    "stderr": ""
+  },
+  "scaffold.default-out": {
+    "status": 0,
+    "stdout": {
+      "ok": true,
+      "path": "<TMP>/cwd/build_gcp_vpc.mjs",
+      "drawio": "<TMP>/cwd/gcp_vpc_kit.drawio",
+      "run": "node <TMP>/cwd/build_gcp_vpc.mjs",
+      "note": "script builds + validates + renders --check + prints issues in ONE run; .drawio/.png land next to it"
+    },
+    "stderr": ""
+  },
+  "scaffold.list": {
+    "status": 0,
+    "lines": [
+      "aws/build_datalake_analytics.mjs — Data lake + analytics on AWS — type \"pipeline\". NO hardcoded coords.",
+      "aws/build_eventdriven.mjs — Serverless event-driven — type \"hubspoke\". Layout engine: NO hardcoded coordinates.",
+      "aws/build_hybrid.mjs — Hybrid / DR (on-prem ↔ cloud) — type \"hybrid\". Built with the layout engine: NO hardcoded coords.",
+      "aws/build_iam_accounts.mjs — Multi-account IAM / cross-account access — type \"hierarchy\". Layout engine: NO hardcoded coords.",
+      "aws/build_landingzone.mjs — AWS Landing Zone — type \"hierarchy\". Layout engine: NO hardcoded coordinates.",
+      "aws/build_landingzone_hubspoke_template.mjs — ============================================================================",
+      "aws/build_mesh.mjs — VPC Lattice multi-account service mesh — type \"mesh\".",
+      "aws/build_microservices_ecs.mjs — Microservices on ECS/Fargate behind an ALB in a VPC — type \"network\". NO hardcoded coords.",
+      "aws/build_multiaz_template.mjs — ============================================================================",
+      "aws/build_pipeline.mjs — Layered data analytics pipeline — type \"pipeline\". GENERIC template.",
+      "aws/build_serverless.mjs — Serverless web app with a numbered request walkthrough — type \"sequence\".",
+      "aws/build_vpc.mjs — VPC Multi-AZ 3-tier — type \"network\". Layout engine: NO hardcoded coords.",
+      "aws/build_vpc_efs.mjs — VPC with Amazon EFS — type \"network\". Layout engine: NO hardcoded coords.",
+      "aws/build_vpc_eks.mjs — VPC with EKS / Bastion / NAT — type \"network\". Layout engine: NO hardcoded coords.",
+      "aws/build_vpc_routing.mjs — VPC subnet & routing detail — type \"network\". Layout engine: NO hardcoded coords.",
+      "aws/build_web3tier.mjs — 3-tier web application — type \"network\". Layout engine: NO hardcoded coords.",
+      "azure/build_azure_hub_spoke_lz.mjs — Azure hub-spoke landing zone (CAF) — GENERIC template. THE canonical Azure topology. Exercises:",
+      "azure/build_azure_hybrid_dr.mjs — Azure hybrid + DR (active-passive failover) — GENERIC template. On-prem connects via ExpressRoute into a",
+      "azure/build_azure_multiregion_ha.mjs — Azure multi-region HA (active-active) — GENERIC template. THE canonical Azure HA topology:",
+      "azure/build_azure_vnet.mjs — Azure N-tier in a VNet — GENERIC template. Containment: Subscription → Resource Group → VNet → Subnet tiers.",
+      "bpmn/build_bpmn.mjs — BPMN swimlane process — type \"bpmn\". GENERIC template.",
+      "databricks/build_data_intelligence_platform.mjs — Databricks Data Intelligence Platform — reproduction of the official reference diagram.",
+      "databricks/build_data_platform.mjs — Enterprise data platform — a dense, grid-packed lakehouse platform in the \"reference-diagram\" style:",
+      "databricks/build_lakehouse.mjs — Databricks Lakehouse (medallion) — GENERIC template, in the Databricks house style: a coral platform",
+      "databricks/build_mlops.mjs — Databricks MLOps reference — GENERIC template (the \"Big Book of MLOps\" layout): a Git provider band,",
+      "databricks/build_platform.mjs — Databricks platform DEPLOYMENT topology — GENERIC template, in the Databricks house style (coral/navy",
+      "gcp/build_gcp_hybrid_dr.mjs — GCP hybrid + DR (active-passive) — GENERIC template. On-prem reaches GCP via Dedicated Interconnect + a",
+      "gcp/build_gcp_multiregion_ha.mjs — GCP multi-region HA (active-active) — GENERIC template. A GLOBAL HTTP(S) Load Balancer (single anycast IP)",
+      "gcp/build_gcp_shared_vpc_landing_zone.mjs — GCP Shared VPC landing zone (production) — GENERIC template. Google's default enterprise foundation.",
+      "gcp/build_gcp_vpc.mjs — GCP global VPC across two regions — GENERIC template. KEY GCP fact: a VPC is GLOBAL, so it WRAPS",
+      "multicloud/build_multicloud.mjs — Multi-cloud / hybrid — GENERIC template. THE composition rule: each cloud (and on-prem) is its OWN"
+    ]
+  },
+  "scaffold.no-arg-equals-list": true,
+  "scaffold.not-found.bare": {
+    "status": 1,
+    "stdout": "",
+    "stderr": "Template \"build_nope.mjs\" not found. Run: drawio-ai scaffold --list\n"
+  },
+  "scaffold.not-found.path": {
+    "status": 1,
+    "stdout": "",
+    "stderr": "Template \"aws/build_nope.mjs\" not found. Run: drawio-ai scaffold --list\n"
+  },
+  "scaffold.serverless.result": {
+    "status": 0,
+    "stdout": {
+      "ok": true,
+      "path": "<TMP>/sc/build_serverless.mjs",
+      "drawio": "<TMP>/sc/serverless_kit.drawio",
+      "run": "node <TMP>/sc/build_serverless.mjs",
+      "note": "script builds + validates + renders --check + prints issues in ONE run; .drawio/.png land next to it"
+    },
+    "stderr": ""
+  },
+  "scaffold.serverless.source.sha256": "3c8c045abe4f5079d86f8702f8ea4ac1c93a97b85eb4c5af4734bd2a504db2ae",
+  "scaffold.serverless.structure": {
+    "kitImports": [
+      "node:fs",
+      "<KIT>",
+      "<KIT>",
+      "node:child_process"
+    ],
+    "hasSelfCheckTail": true,
+    "hasValidateTail": false,
+    "writes": [
+      "./serverless_kit.drawio",
+      "./serverless_kit.drawio"
+    ]
+  },
+  "scaffold.vpc.named.result": {
+    "status": 0,
+    "stdout": {
+      "ok": true,
+      "path": "<TMP>/sc2/x.mjs",
+      "drawio": "<TMP>/sc2/shop.drawio",
+      "run": "node <TMP>/sc2/x.mjs",
+      "note": "script builds + validates + renders --check + prints issues in ONE run; .drawio/.png land next to it"
+    },
+    "stderr": ""
+  },
+  "scaffold.vpc.named.writes": [
+    "./shop.drawio",
+    "./shop.drawio"
+  ],
+  "skill.no-install": {
+    "status": 1,
+    "stdout": "",
+    "stderr": "usage: drawio-ai skill install [skills-cli add flags…]\n"
+  },
+  "style.group_vpc": {
+    "status": 0,
+    "stdout": {
+      "name": "group_vpc",
+      "fqn": "mxgraph.aws4.group_vpc",
+      "label": "VPC",
+      "category": "Group",
+      "kind": "group",
+      "color": "none",
+      "aliases": [],
+      "style": "sketch=0;outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=12;fontStyle=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_vpc;strokeColor=#879196;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;fontColor=#879196;dashed=0;",
+      "width": 130,
+      "height": 130
+    },
+    "stderr": ""
+  },
+  "style.missing": {
+    "status": 1,
+    "stdout": "",
+    "stderr": "Stencil \"nope_not_here\" not found in catalog.\n"
+  },
+  "style.s3": {
+    "status": 0,
+    "stdout": {
+      "name": "s3",
+      "fqn": "mxgraph.aws4.s3",
+      "label": "Simple Storage Service (S3)",
+      "category": "Storage",
+      "kind": "icon",
+      "color": "#7AA116",
+      "aliases": [],
+      "style": "sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;fillColor=#7AA116;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.s3;",
+      "width": 78,
+      "height": 78
+    },
+    "stderr": ""
+  },
+  "suggest-layout.good": {
+    "status": 0,
+    "stdout": {
+      "recommended": "network",
+      "family": "nested-topology",
+      "reason": "topology boundaries (VPC/region/subnet/zone/account…)",
+      "signals": {
+        "hubScore": 0.43,
+        "containmentRatio": 1,
+        "topologyBoundary": true,
+        "feedbackRatio": 0.29,
+        "nodeCount": 12,
+        "maxIconsPerGroup": 3
+      },
+      "warnings": [],
+      "metrics": {
+        "nodeCount": 12,
+        "edgeCount": 7,
+        "boundaryCount": 13,
+        "nestingDepth": 5,
+        "containmentRatio": 1,
+        "topologyBoundary": true,
+        "maxDegree": 3,
+        "hubId": "alb",
+        "hubScore": 0.43,
+        "backEdges": 2,
+        "maxIconsPerGroup": 3,
+        "singleIconFrames": 7,
+        "emptyBand": 58,
+        "emptyBandId": "reg_svc",
+        "emptyBandSide": "bottom",
+        "portrait": false,
+        "aspect": 1.09
+      }
+    },
+    "stderr": ""
+  },
+  "suggest.bad": {
+    "status": 0,
+    "stdout": {
+      "recommended": "pipeline",
+      "family": "compact-pipeline",
+      "reason": "small linear story (2 nodes, low branching)",
+      "signals": {
+        "hubScore": 1,
+        "containmentRatio": 1,
+        "topologyBoundary": false,
+        "feedbackRatio": 0,
+        "nodeCount": 2,
+        "maxIconsPerGroup": 2
+      },
+      "warnings": [],
+      "metrics": {
+        "nodeCount": 2,
+        "edgeCount": 1,
+        "boundaryCount": 2,
+        "nestingDepth": 1,
+        "containmentRatio": 1,
+        "topologyBoundary": false,
+        "maxDegree": 1,
+        "hubId": "a",
+        "hubScore": 1,
+        "backEdges": 0,
+        "maxIconsPerGroup": 2,
+        "singleIconFrames": 0,
+        "emptyBand": 0,
+        "emptyBandId": null,
+        "emptyBandSide": null,
+        "portrait": false,
+        "aspect": 1
+      }
+    },
+    "stderr": ""
+  },
+  "types": {
+    "status": 0,
+    "stdout": [
+      {
+        "key": "pipeline",
+        "label": "Layered pipeline (data / request flow)",
+        "orientation": "LR",
+        "edgeCorner": "rounded",
+        "laneStrategy": "corridor",
+        "grouping": "columns-by-tier",
+        "notes": "Spine on the same row → straight horizontal edges; offset edges use 2 waypoints through the middle of the gap."
+      },
+      {
+        "key": "hierarchy",
+        "label": "Hierarchy / org tree (Landing Zone, org structure)",
+        "orientation": "TB",
+        "edgeCorner": "sharp",
+        "laneStrategy": "shared-bus",
+        "grouping": "nested-ou",
+        "notes": "Fan from one parent through a shared lane right below the parent → looks like a branching bus."
+      },
+      {
+        "key": "network",
+        "label": "VPC network topology (Multi-AZ)",
+        "orientation": "LR",
+        "edgeCorner": "rounded",
+        "laneStrategy": "corridor",
+        "grouping": "nested-region-az-subnet",
+        "mirrorAZ": true,
+        "notes": "STANDARD VPC LAYOUT: each Availability Zone is a VERTICAL COLUMN, the AZs sit side by side, and the VPC is the horizontal box that wraps them (Region → VPC → AZ columns → subnets). Inside an AZ, subnets are tiers stacked top→bottom (e.g. Public, then Private/App, then Data); keep the SAME tier aligned horizontally across AZs (public-a level with public-b). A shared LB/NAT/bus spans HORIZONTALLY across the AZ columns; replication/DR between mirrored AZs uses dashed edges."
+      },
+      {
+        "key": "hubspoke",
+        "label": "Hub-and-spoke / event bus",
+        "orientation": "radial",
+        "edgeCorner": "rounded",
+        "laneStrategy": "hub-center",
+        "grouping": "center-hub",
+        "notes": "Place the hub (bus/TGW/EventBridge) at the middle of the row; spokes connect horizontally on both sides (exitX=1 / exitX=0) → no crossing."
+      },
+      {
+        "key": "hybrid",
+        "label": "Hybrid / DR (on-prem ↔ cloud)",
+        "orientation": "LR",
+        "edgeCorner": "rounded",
+        "laneStrategy": "site-link",
+        "grouping": "two-sites",
+        "notes": "Two sites as separate blocks; connect via a Direct Connect/VPN node; mirror the components on both sides; bidirectional link uses dashed edges."
+      },
+      {
+        "key": "mesh",
+        "label": "Multi-account connectivity / service mesh (VPC Lattice · TGW · peering · RAM)",
+        "orientation": "free",
+        "edgeCorner": "rounded",
+        "laneStrategy": "association",
+        "grouping": "peer-accounts",
+        "notes": "Accounts are peer containers; one shared/network account at the center, the other accounts 'associate' to it (service network / TGW / RAM share). Association/sharing edges are clearly labeled; prefer hub-and-spoke through the shared account over a many-to-many mesh (Well-Architected REL02-BP04)."
+      },
+      {
+        "key": "sequence",
+        "label": "Sequence / interaction (numbered request walkthrough)",
+        "orientation": "steps",
+        "edgeCorner": "rounded",
+        "laneStrategy": "numbered-steps",
+        "grouping": "components",
+        "notes": "Number the steps along the request flow (1→N) on the architecture diagram; each arrow carries a sequence number; read by number, edges need not all point the same way."
+      },
+      {
+        "key": "bpmn",
+        "label": "BPMN swimlane process (roles × phases)",
+        "orientation": "LR",
+        "edgeCorner": "rounded",
+        "laneStrategy": "swimlane",
+        "grouping": "pool-lane-phase",
+        "notes": "Horizontal swimlanes: lanes = roles stacked vertically, phases = vertical milestone bands with a header row. Sequence flow stays within a pool (solid); message flow connects pools (dashed). One start event top-left, end events on the right; gateways where paths split/merge."
+      }
+    ],
+    "stderr": ""
+  },
+  "usage.none": {
+    "status": 0,
+    "stdout": "",
+    "stderr": "drawio-ai-kit CLI\n  search <query>[, <query>…] [--category C] [--limit N] [--kind icon|group] [--full]\n  style <name>\n  validate <file> [--strict]\n  audit <file>\n  suggest-layout <file>                           recommend a layout archetype + sparsity/hub warnings from graph metrics\n  logo <brand> [--embed] [--variant color|mono|text]\n  categories\n  types\n  principles [--mode aws|azure|gcp|databricks|bpmn]\n  scaffold <template.mjs> [-o out.mjs] [--name x.drawio] | --list   copy a template as a standalone build script\n  root\n  render <file> [-o out.png] [--scale N] [--page N] [--check]\n  workflow\n  skill install [-g] [-a <agent>] [-y]              register the bundled skill with your agents (no repo clone)\n  [--catalog <path>]  override the default catalog (catalog/aws.json)\n"
+  },
+  "usage.unknown": {
+    "status": 1,
+    "stdout": "",
+    "stderr": "drawio-ai-kit CLI\n  search <query>[, <query>…] [--category C] [--limit N] [--kind icon|group] [--full]\n  style <name>\n  validate <file> [--strict]\n  audit <file>\n  suggest-layout <file>                           recommend a layout archetype + sparsity/hub warnings from graph metrics\n  logo <brand> [--embed] [--variant color|mono|text]\n  categories\n  types\n  principles [--mode aws|azure|gcp|databricks|bpmn]\n  scaffold <template.mjs> [-o out.mjs] [--name x.drawio] | --list   copy a template as a standalone build script\n  root\n  render <file> [-o out.png] [--scale N] [--page N] [--check]\n  workflow\n  skill install [-g] [-a <agent>] [-y]              register the bundled skill with your agents (no repo clone)\n  [--catalog <path>]  override the default catalog (catalog/aws.json)\n"
+  },
+  "validate.bad": {
+    "status": 2,
+    "stdout": {
+      "ok": false,
+      "errors": [
+        "Stencil not found in catalog: mxgraph.aws4.nonexistent_thing (at shape) — suggestions: iot_thing_freertos_device, iot_thing_humidity_sensor, iot_thing_industrial_pc",
+        "Duplicate cell id: \"a\" — draw.io silently drops one of the cells, causing missing icons or broken edges."
+      ],
+      "warnings": [
+        "Edge references a non-existent id: \"zzz\""
+      ],
+      "audit": {
+        "advice": [],
+        "metrics": {
+          "fontSizes": [],
+          "fillColors": 0,
+          "edges": 1,
+          "fanOutSources": 0
+        }
+      },
+      "stats": {
+        "resIcons": 0,
+        "grIcons": 0,
+        "shapes": 1,
+        "uniqueStencils": 1,
+        "cellIds": 5
+      }
+    },
+    "stderr": ""
+  },
+  "validate.bad.strict": {
+    "status": 2,
+    "stdout": {
+      "ok": false,
+      "errors": [
+        "Stencil not found in catalog: mxgraph.aws4.nonexistent_thing (at shape) — suggestions: iot_thing_freertos_device, iot_thing_humidity_sensor, iot_thing_industrial_pc",
+        "Duplicate cell id: \"a\" — draw.io silently drops one of the cells, causing missing icons or broken edges."
+      ],
+      "warnings": [
+        "Edge references a non-existent id: \"zzz\""
+      ],
+      "audit": {
+        "advice": [],
+        "metrics": {
+          "fontSizes": [],
+          "fillColors": 0,
+          "edges": 1,
+          "fanOutSources": 0
+        }
+      },
+      "stats": {
+        "resIcons": 0,
+        "grIcons": 0,
+        "shapes": 1,
+        "uniqueStencils": 1,
+        "cellIds": 5
+      }
+    },
+    "stderr": ""
+  },
+  "validate.good": {
+    "status": 0,
+    "stdout": {
+      "ok": true,
+      "errors": [],
+      "warnings": [],
+      "advice": []
+    },
+    "stderr": ""
+  },
+  "validate.good.strict": {
+    "status": 0,
+    "stdout": {
+      "ok": true,
+      "errors": [],
+      "warnings": [],
+      "advice": []
+    },
+    "stderr": ""
+  },
+  "validate.good.verbose": {
+    "status": 0,
+    "stdout": {
+      "ok": true,
+      "errors": [],
+      "warnings": [],
+      "audit": {
+        "advice": [],
+        "metrics": {
+          "fontSizes": [
+            11,
+            12,
+            14
+          ],
+          "fillColors": 3,
+          "edges": 7,
+          "fanOutSources": 0
+        }
+      },
+      "stats": {
+        "resIcons": 10,
+        "grIcons": 10,
+        "shapes": 1,
+        "uniqueStencils": 12,
+        "cellIds": 34
+      }
+    },
+    "stderr": ""
+  },
+  "validate.multi": {
+    "status": 2,
+    "stdout": {
+      "ok": false,
+      "errors": [
+        "[Bad] Stencil not found in catalog: mxgraph.aws4.nonexistent_thing (at shape) — suggestions: iot_thing_freertos_device, iot_thing_humidity_sensor, iot_thing_industrial_pc",
+        "[Bad] Duplicate cell id: \"a\" — draw.io silently drops one of the cells, causing missing icons or broken edges."
+      ],
+      "warnings": [
+        "[Bad] Edge references a non-existent id: \"zzz\""
+      ],
+      "audit": {
+        "advice": []
+      }
+    },
+    "stderr": ""
+  }
+}
