@@ -7,7 +7,7 @@ export declare function loadCatalog(path?: string): Catalog;
 export declare function buildCatalogIndex(dir?: string): Record<string, Pack>;
 /** Packs whose full JSON has been parsed so far (for tests). */
 export declare const _loadedPacks: () => string[];
-/** Search for an icon/group by keyword. */
+/** Search for an icon/group by keyword (minisearch: aliases, typo tolerance, vendor scope, multi-keyword). */
 export declare function searchIcon(catalog: Catalog, query: string, { category, limit, kind, full }?: SearchOptions): SearchHit[];
 /** Full draw.io style for an AWS resource icon (verbatim from the index if available). */
 export declare function styleForIcon(catalog: Catalog, name: string, { width, height }?: {

@@ -307,7 +307,7 @@
       "ok": true,
       "path": "<TMP>/out.png",
       "issues": [
-        "Stencil not found in catalog: mxgraph.aws4.nonexistent_thing (at shape) — suggestions: iot_thing_freertos_device, iot_thing_humidity_sensor, iot_thing_industrial_pc",
+        "Stencil not found in catalog: mxgraph.aws4.nonexistent_thing (at shape) — suggestions: internet_of_things, iot_thing_plc, iot_thing_relay",
         "Duplicate cell id: \"a\" — draw.io silently drops one of the cells, causing missing icons or broken edges.",
         "Edge references a non-existent id: \"zzz\""
       ]
@@ -680,7 +680,7 @@
     "stdout": {
       "ok": false,
       "errors": [
-        "Stencil not found in catalog: mxgraph.aws4.nonexistent_thing (at shape) — suggestions: iot_thing_freertos_device, iot_thing_humidity_sensor, iot_thing_industrial_pc",
+        "Stencil not found in catalog: mxgraph.aws4.nonexistent_thing (at shape) — suggestions: internet_of_things, iot_thing_plc, iot_thing_relay",
         "Duplicate cell id: \"a\" — draw.io silently drops one of the cells, causing missing icons or broken edges."
       ],
       "warnings": [
@@ -710,7 +710,7 @@
     "stdout": {
       "ok": false,
       "errors": [
-        "Stencil not found in catalog: mxgraph.aws4.nonexistent_thing (at shape) — suggestions: iot_thing_freertos_device, iot_thing_humidity_sensor, iot_thing_industrial_pc",
+        "Stencil not found in catalog: mxgraph.aws4.nonexistent_thing (at shape) — suggestions: internet_of_things, iot_thing_plc, iot_thing_relay",
         "Duplicate cell id: \"a\" — draw.io silently drops one of the cells, causing missing icons or broken edges."
       ],
       "warnings": [
@@ -789,7 +789,7 @@
     "stdout": {
       "ok": false,
       "errors": [
-        "[Bad] Stencil not found in catalog: mxgraph.aws4.nonexistent_thing (at shape) — suggestions: iot_thing_freertos_device, iot_thing_humidity_sensor, iot_thing_industrial_pc",
+        "[Bad] Stencil not found in catalog: mxgraph.aws4.nonexistent_thing (at shape) — suggestions: internet_of_things, iot_thing_plc, iot_thing_relay",
         "[Bad] Duplicate cell id: \"a\" — draw.io silently drops one of the cells, causing missing icons or broken edges."
       ],
       "warnings": [

@@ -39,15 +39,20 @@ test("search quality does not drop below bench/search/baseline.json (and CLI agr
 });
 
 test("--compare fails when a baseline-passing query regresses", () => {
+  const dir = mkdtempSync(join(tmpdir(), "bench-search-"));
   const base = JSON.parse(readFileSync(BASELINE, "utf8"));
-  const failing = base.queries.find((q: any) => !q.pass);
-  failing.pass = true; // pretend it used to pass
+  const q = JSON.parse(readFileSync(join(import.meta.dirname, "queries.json"), "utf8"));
+  const victim = q.queries[0]; // k8s never returns mongodb: fails now, but is marked as passing in the baseline
+  victim.expect = [["mongodb"]];
+  base.queries.find((x: any) => x.id === victim.id).pass = true;
   base.overall.passRate = 1;
-  const file = join(mkdtempSync(join(tmpdir(), "bench-search-")), "baseline.json");
+  const queries = join(dir, "queries.json");
+  const file = join(dir, "baseline.json");
+  writeFileSync(queries, JSON.stringify(q));
   writeFileSync(file, JSON.stringify(base));
-  const r = runBench("--compare", file, "--json", "--no-cli");
+  const r = runBench("--compare", file, "--queries", queries, "--json", "--no-cli");
   assert.equal(r.status, 1);
   const { compare } = JSON.parse(r.stdout);
-  assert.ok(compare.regressions.some((g: any) => g.id === failing.id));
+  assert.ok(compare.regressions.some((g: any) => g.id === victim.id));
   assert.ok(compare.drops.some((d: any) => d.startsWith("overall.passRate")));
 });

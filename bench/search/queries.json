@@ -39,7 +39,6 @@
     {"id": "abbr-waf", "scenario": "abbreviation", "query": "waf", "k": 1, "expect": [["waf"]]},
     {"id": "abbr-gcs", "scenario": "abbreviation", "query": "gcs", "k": 3, "expect": [["gcp_cloud_storage"]]},
     {"id": "abbr-vault", "scenario": "abbreviation", "query": "hashicorp", "k": 3, "expect": [["vault_hashicorp"]]},
-
     {"id": "multi-comma-k8s-pg-es", "scenario": "multi-keyword", "query": "k8s, pg, es", "k": 3, "cli": true, "expect": [["kubernetes"], ["postgres", "postgresql_instance", "rds_postgresql_instance"], ["elasticsearch", "elasticsearch_service", "opensearch"]]},
     {"id": "multi-space-k8s-pg-es", "scenario": "multi-keyword", "query": "k8s pg es", "k": 8, "cli": true, "expect": [["kubernetes"], ["postgres", "postgresql_instance", "rds_postgresql_instance"], ["elasticsearch", "elasticsearch_service", "opensearch"]]},
     {"id": "multi-comma-aws-web", "scenario": "multi-keyword", "query": "alb, ec2, rds, s3", "k": 3, "cli": true, "expect": [["application_load_balancer"], ["ec2"], ["rds"], ["s3"]]},
@@ -49,7 +48,6 @@
     {"id": "multi-comma-mixed", "scenario": "multi-keyword", "query": "mongo, rabbit, nginx", "k": 3, "cli": true, "expect": [["mongodb"], ["rabbitmq"], ["nginx"]]},
     {"id": "multi-space-serverless", "scenario": "multi-keyword", "query": "lambda sqs dynamodb", "k": 8, "cli": true, "expect": [["lambda", "lambda_function"], ["sqs"], ["dynamodb"]]},
     {"id": "multi-comma-abbr-aws", "scenario": "multi-keyword", "query": "apigw, ddb, kms", "k": 3, "cli": true, "expect": [["api_gateway"], ["dynamodb"], ["key_management_service"]]},
-
     {"id": "typo-kubernets", "scenario": "typo", "query": "kubernets", "k": 3, "expect": [["kubernetes"]]},
     {"id": "typo-postgress", "scenario": "typo", "query": "postgress", "k": 3, "expect": [["postgres", "postgresql_instance", "rds_postgresql_instance"]]},
     {"id": "typo-lamda", "scenario": "typo", "query": "lamda", "k": 3, "expect": [["lambda", "lambda_function"]]},
@@ -59,7 +57,6 @@
     {"id": "typo-kafak", "scenario": "typo", "query": "kafak", "k": 3, "expect": [["kafka", "managed_streaming_for_kafka"]]},
     {"id": "typo-redshfit", "scenario": "typo", "query": "redshfit", "k": 3, "expect": [["redshift"]]},
     {"id": "typo-mongdb", "scenario": "typo", "query": "mongdb", "k": 3, "expect": [["mongodb"]]},
-
     {"id": "syn-object-storage", "scenario": "synonym", "query": "object storage", "k": 3, "expect": [["s3", "gcp_cloud_storage", "azure_storage_accounts", "azure_blob_block"]]},
     {"id": "syn-message-queue", "scenario": "synonym", "query": "message queue", "k": 3, "expect": [["sqs", "mq", "rabbitmq", "azure_storage_queue", "queue"]]},
     {"id": "syn-container-registry", "scenario": "synonym", "query": "container registry", "k": 3, "expect": [["ecr", "gcp_container_registry", "azure_container_registries", "gcp_artifact_registry"]]},
@@ -71,7 +68,6 @@
     {"id": "syn-dns", "scenario": "synonym", "query": "dns", "k": 3, "expect": [["route_53", "gcp_cloud_dns", "azure_dns_zones"]]},
     {"id": "syn-search-engine", "scenario": "synonym", "query": "full text search", "k": 3, "expect": [["elasticsearch", "opensearch", "elasticsearch_service"]]},
     {"id": "syn-event-bus", "scenario": "synonym", "query": "event bus", "k": 3, "expect": [["eventbridge", "azure_event_hubs", "azure_azure_service_bus", "gcp_pubsub"]]},
-
     {"id": "vendor-azure-sql", "scenario": "vendor-scoped", "query": "azure sql", "k": 3, "expect": [["azure_sql_database", "azure_azure_sql", "azure_sql_server"]]},
     {"id": "vendor-gcp-bigquery", "scenario": "vendor-scoped", "query": "gcp bigquery", "k": 1, "expect": [["gcp_bigquery"]]},
     {"id": "vendor-aws-aurora-pg", "scenario": "vendor-scoped", "query": "aws aurora postgres", "k": 3, "expect": [["aurora", "aurora_instance"]]},
@@ -82,7 +78,6 @@
     {"id": "vendor-gcp-storage", "scenario": "vendor-scoped", "query": "gcp storage", "k": 1, "expect": [["gcp_cloud_storage"]]},
     {"id": "vendor-azure-redis", "scenario": "vendor-scoped", "query": "azure redis", "k": 1, "expect": [["azure_cache_redis"]]},
     {"id": "vendor-aws-redis", "scenario": "vendor-scoped", "query": "aws redis", "k": 3, "expect": [["elasticache_for_redis", "memorydb_for_redis"]]},
-
     {"id": "exact-s3", "scenario": "exact", "query": "s3", "k": 1, "expect": [["s3"]]},
     {"id": "exact-lambda", "scenario": "exact", "query": "lambda", "k": 1, "expect": [["lambda"]]},
     {"id": "exact-kubernetes", "scenario": "exact", "query": "kubernetes", "k": 1, "expect": [["kubernetes"]]},
@@ -100,7 +95,6 @@
     {"id": "exact-vpc", "scenario": "exact", "query": "vpc", "k": 1, "expect": [["vpc"]]},
     {"id": "exact-dynamodb", "scenario": "exact", "query": "dynamodb", "k": 1, "expect": [["dynamodb"]]},
     {"id": "exact-elasticsearch", "scenario": "exact", "query": "elasticsearch", "k": 1, "expect": [["elasticsearch"]]},
-
     {"id": "noise-a", "scenario": "negative", "query": "a", "k": 8, "maxResults": 0, "expect": []},
     {"id": "noise-the", "scenario": "negative", "query": "the", "k": 8, "maxResults": 0, "expect": []},
     {"id": "noise-x", "scenario": "negative", "query": "x", "k": 8, "maxResults": 0, "expect": []},
@@ -113,6 +107,18 @@
     {"id": "case-nat-mixed", "scenario": "case-punct", "query": "Nat_Gateway", "k": 1, "expect": [["nat_gateway"]]},
     {"id": "case-K8S-upper", "scenario": "case-punct", "query": "K8S", "k": 3, "expect": [["kubernetes"]]},
     {"id": "case-route53-joined", "scenario": "case-punct", "query": "Route53", "k": 1, "expect": [["route_53"]]},
-    {"id": "case-dynamodb-camel", "scenario": "case-punct", "query": "DynamoDB", "k": 1, "expect": [["dynamodb"]]}
+    {"id": "case-dynamodb-camel", "scenario": "case-punct", "query": "DynamoDB", "k": 1, "expect": [["dynamodb"]]},
+    {"id": "mixed-vendor-azure-gcp", "scenario": "vendor-batch", "query": "azure sql, gcp bigquery, aws s3", "k": 3, "expect": [["azure_sql_database", "azure_azure_sql", "azure_sql_server"], ["gcp_bigquery"], ["s3"]], "cli": true},
+    {"id": "mixed-vendor-k8s", "scenario": "vendor-batch", "query": "aks, gke, eks", "k": 3, "expect": [["azure_kubernetes_services"], ["gcp_google_kubernetes_engine"], ["eks"]], "cli": true},
+    {"id": "mixed-vendor-cache", "scenario": "vendor-batch", "query": "azure redis, aws redis, gcp storage", "k": 3, "expect": [["azure_cache_redis"], ["elasticache_for_redis", "memorydb_for_redis"], ["gcp_cloud_storage"]], "cli": true},
+    {"id": "phrase-relational", "scenario": "natural-phrase", "query": "managed relational database", "k": 5, "expect": [["rds", "azure_sql_database", "postgres", "mysql"]]},
+    {"id": "phrase-cdn", "scenario": "natural-phrase", "query": "content delivery network", "k": 3, "expect": [["cloudfront", "azure_cdn_profiles", "gcp_cloud_cdn", "azure_front_door_and_cdn_profiles"]]},
+    {"id": "phrase-kafka-stream", "scenario": "natural-phrase", "query": "streaming platform kafka", "k": 3, "expect": [["kafka", "managed_streaming_for_kafka"]]},
+    {"id": "phrase-docker", "scenario": "natural-phrase", "query": "docker container service", "k": 5, "expect": [["ecs", "fargate", "azure_container_registries", "containers"]]},
+    {"id": "plural-queues", "scenario": "plural-singular", "query": "queues", "k": 3, "expect": [["sqs", "queue", "mq"]]},
+    {"id": "plural-buckets", "scenario": "plural-singular", "query": "buckets", "k": 3, "expect": [["s3", "gcp_cloud_storage"]]},
+    {"id": "plural-load-balancers", "scenario": "plural-singular", "query": "load balancers", "k": 3, "expect": [["elastic_load_balancing", "application_load_balancer", "network_load_balancer", "azure_load_balancers", "gcp_cloud_load_balancing"]]},
+    {"id": "plural-lambdas", "scenario": "plural-singular", "query": "lambdas", "k": 3, "expect": [["lambda", "lambda_function"]]},
+    {"id": "plural-databases", "scenario": "plural-singular", "query": "databases", "k": 8, "expect": [["rds", "dynamodb", "postgres", "mysql", "mongodb", "aurora"]]}
   ]
 }
