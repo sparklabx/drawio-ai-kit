@@ -116,7 +116,7 @@ function decorate(catalog, entry, score, { lean = false, compact = false } = {})
     };
   }
   const styleObj = entry.kind === "group" ? styleForGroup(catalog, entry.name) : styleForIcon(catalog, entry.name);
-  // ponytail: OSS icons embed a base64 PNG (~15-25KB) in the style. In search results (lean) don't
+  // ponytail: pack icons embed a base64 SVG/PNG (up to 16KB) in the style. In search results (lean) don't
   // dump it into context — the model only needs the name; builder.icon(name) resolves the style
   // server-side, and get_icon_style(name) (not lean) returns it verbatim if raw XML is needed.
   const style = lean && /image=data:/.test(styleObj.style || "")
