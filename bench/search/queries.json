@@ -4,7 +4,7 @@
     "Each query has expect: an array of GROUPS. A group is an array of acceptable icon names (any one hit counts).",
     "A group's rank = best 1-based rank of any of its names. recall@K = share of groups with rank <= k. MRR = mean of 1/rank (0 if missing).",
     "recall@1: single-group queries need rank 1. Multi-group queries (G groups) need every group within the top G (the ideal ordering).",
-    "Comma queries follow the CLI batch contract (src/cli.mjs): split on ',', one searchIcon per part. A group's rank is its best rank in ANY part's list.",
+    "Comma queries follow the CLI batch contract (src/cli.ts): split on ',', one searchIcon per part. A group's rank is its best rank in ANY part's list.",
     "Space-separated multi-keyword queries are ONE searchIcon call: every group must appear in that single list within top k.",
     "Negatives: maxResults caps the result count (with limit 8); forbid lists names that must NOT be in the top k.",
     "cli: true also runs the query through 'node dist/cli.mjs search' and checks the CLI agrees with the library."

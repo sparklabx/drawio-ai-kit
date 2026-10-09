@@ -6,7 +6,7 @@ This document describes the codebase structure, architecture, development comman
 
 | Layer | Stack | Notes |
 |-------|-------|-------|
-| Runtime (CLI) | Node.js ≥18 (ESM, `.nvmrc` = 22) | `"type": "module"`; zero default exports anywhere; **zero runtime dependencies** |
+| Runtime (CLI) | Node.js ≥20 (ESM, `.nvmrc` = 22) | `"type": "module"`; zero default exports anywhere; **zero runtime dependencies** (devDependencies: typescript, @types/node) |
 | Runtime (data cook) | Python 3.11, stdlib only | regenerates `catalog/*.json`; not run by CI |
 | Dev tooling | **Bun 1.4+** (`bun test`, `bun run build`) | maintainers only; users run the bundle on plain Node |
 | Package manager | **npm** (`package-lock.json`, lockfile v3) for users | zero deps, so `bun install` writes no `bun.lock`; `npm ci`/`npm audit` stay in CI |
@@ -32,9 +32,9 @@ cli.mjs ──▶ core.mjs
   │
   └──▶ cli-lib.mjs   (packageRoot, findDrawioCli, buildRenderArgs, workflowText)
              ▲
-builder.mjs ─┼─▶ core.mjs, layout.mjs, types.mjs, theme.mjs
+builder.mjs ─┼─▶ core.mjs, layout.ts, types.mjs, theme.mjs
              ▲
-layout-engine.mjs ──▶ theme.mjs  (feeds builder)
+layout-engine.ts ──▶ theme.mjs  (feeds builder)
 ```
 
 ### Request → diagram XML
@@ -60,9 +60,9 @@ const file = d.mxfile('My Diagram'); // <mxfile host="app.diagrams.net">
 const report = d.validate({ strict: true }); // { ok, errors, warnings, audit, stats }
 ```
 
-`renderTree` runs `measure` (bottom-up, assign w/h) → `place` (top-down, assign x/y) → `emit` (call `d.icon/box/group` per node). Edges build lazily in `d.toXML()` → `_buildEdges()` detects fan-out (1→N) / fan-in (N→1) bundles, assigns shared lanes, then routes each edge through `layout.mjs` (`routeLR`/`routeTB`/`routeLRFan`/…).
+`renderTree` runs `measure` (bottom-up, assign w/h) → `place` (top-down, assign x/y) → `emit` (call `d.icon/box/group` per node). Edges build lazily in `d.toXML()` → `_buildEdges()` detects fan-out (1→N) / fan-in (N→1) bundles, assigns shared lanes, then routes each edge through `layout.ts` (`routeLR`/`routeTB`/`routeLRFan`/…).
 
-**CLI invocation** → `cli.mjs` `switch (cmd)` dispatches to `core.mjs`/`cli-lib.mjs`/vendor fn → prints JSON (`out()`) for data commands, raw markdown for `principles`/`workflow`/`root`, or `{ ok, path }` for `render`. Exits non-zero (`1` usage/missing-CLI, `2` validate failure) with a clear stderr message.
+**CLI invocation** → `cli.mjs` `switch (cmd)` dispatches to `core.mjs`/`cli-lib.ts`/vendor fn → prints JSON (`out()`) for data commands, raw markdown for `principles`/`workflow`/`root`, or `{ ok, path }` for `render`. Exits non-zero (`1` usage/missing-CLI, `2` validate failure) with a clear stderr message.
 
 ## Key Directories (codemap)
 
@@ -79,7 +79,7 @@ const report = d.validate({ strict: true }); // { ok, errors, warnings, audit, s
 | `scripts/*.py` | Catalog regenerators (Python 3.11, stdlib only). |
 | `scripts/build.mjs` | Bun-only maintainer build (`Bun.build`): writes `dist/` + a size report; `--check` verifies dist is fresh, `--analyze` writes a metafile + module-graph markdown to `$TMPDIR`. |
 | `vendor/*.py` | Runtime helpers (third-party/MIT): autolayout, encode URL, repair PNG, aiicons. |
-| `test/` | `core.test.mjs` (engine), `edges.test.mjs` (edge audits), `save-guard.test.mjs` (kit-is-read-only), `cli.test.mjs` (`cli-lib.mjs` pure fns). |
+| `test/` | `core.test.ts` (engine), `edges.test.ts` (edge audits), `save-guard.test.ts` (kit-is-read-only), `cli.test.ts` (`cli-lib.ts` pure fns). |
 
 ## Important Files
 
@@ -96,7 +96,7 @@ const report = d.validate({ strict: true }); // { ok, errors, warnings, audit, s
 ## Development Commands
 
 ```bash
-bun test                 # runs test/*.test.mjs (node:test suites) under Bun
+bun test                 # runs test/*.test.ts (node:test suites) under Bun
 bun test --watch         # re-run on change (also: bun run test:watch)
 bun run coverage         # bun test --coverage (report only, no gate)
 npm test                 # node --test — the Node compatibility check; must also pass
@@ -123,25 +123,25 @@ Icons are embedded as `data:image/svg+xml,<base64>` (vector, small). Keep each i
 
 ## Runtime / Tooling Preferences
 
-- **Node ≥18**, dev version **22** (`.nvmrc`); CI pins 20. `src/` must stay Node-compatible: no `Bun.*` APIs there.
+- **Node ≥20** for users (CI smoke-tests dist/ on 20); dev **≥22.18** or Bun (`.nvmrc` = 22; CI tests on 24). `src/` must stay Node-compatible: no `Bun.*` APIs there.
 - **Bun 1.4+** for dev commands (tests, build); CI pins 1.4.2. **npm** stays the user install path — respect `package-lock.json` (not pnpm/yarn).
 - **Python 3.11** for `scripts/` and `vendor/aiicons.py`; stdlib only, no `requirements.txt`.
 - **Zero runtime dependencies.** `npm audit --omit=dev --audit-level=high` runs in CI and **fails on high/critical** — keep it dep-free.
-- **No transpiler, no TypeScript.** Plain `.mjs`. Edit files directly; Node runs `src/` as-is. The only bundling step is `bun run build` for the shipped `dist/`.
+- **Erasable-syntax TypeScript** (`.ts`; no transpiler needed: Node ≥22.18 and Bun run `src/` as-is; `npm run typecheck` gates types). The only bundling step is `bun run build` for the shipped `dist/`.
 - Env overrides: `DRAWIO_CLI` (draw.io desktop CLI for `render`), `DRAWIO_CATALOG` (catalog path), CLI flag `--catalog PATH`.
 - Optional externals: draw.io desktop CLI (PNG export via `render`), Graphviz `dot` (autolayout for >15 nodes). Both absent → `vendor/encode_drawio_url.py` browser-URL fallback (no upload).
 
 ## Code Conventions & Common Patterns
 
-- **ESM, named exports only** — zero `export default`. `cli.mjs` is a top-level script (no exports); `cli-lib.mjs` exports the pure helpers.
+- **ESM, named exports only** — zero `export default`. `cli.mjs` is a top-level script (no exports); `cli-lib.ts` exports the pure helpers.
 - **Error handling is split by concern:**
   - `throw new Error(...)` for builder/catalog failures (e.g. `icon()` not found, `link()` bad id).
   - `return null` for not-found lookups (`getIcon`, `styleForIcon`, `clusterBox`).
   - Structured `Result` object `{ ok, errors, warnings, audit, stats }` for validation.
   - CLI → `process.exit(0|1|2)` with a clear stderr message (never throw out of a command).
 - **Catalog is injected**, not global. `loadCatalog()` returns the merged catalog; every `core.mjs` fn takes `catalog` as first arg; `builder.mjs` keeps it as `this.c`; `cli.mjs` loads once and dispatches.
-- **Declarative layout > coordinates.** Build node trees with `layout-engine.mjs` factories → `renderTree()` → `Diagram`. Hardcoding x/y defeats the kit.
-- **Pure helpers at the function seam.** `cli-lib.mjs` functions take injectable deps (`findDrawioCli(env, deps)`) so they are tested without spawning subprocesses.
+- **Declarative layout > coordinates.** Build node trees with `layout-engine.ts` factories → `renderTree()` → `Diagram`. Hardcoding x/y defeats the kit.
+- **Pure helpers at the function seam.** `cli-lib.ts` functions take injectable deps (`findDrawioCli(env, deps)`) so they are tested without spawning subprocesses.
 - **Builder/fluent:** `Diagram.link()` and `Diagram.title()` return `this`. Node factories return plain object literals (not class instances).
 - **Largely synchronous.** Only async: `await import('./types.ts')` in `cli.mjs` `types` subcommand. No async in core/builder/layout-engine/layout/cli-lib.
 - **Color = identity.** Never recolor icons away from their category color (`colorFor`: entry.color → `categoryColors[category]` → `#232F3E`). Group nesting order enforced by `GROUP_LEVEL`: Cloud/Account/Region=0 → VPC=2 → AZ=3 → Subnet=4 → SG=5.
@@ -158,7 +158,7 @@ Icons are embedded as `data:image/svg+xml,<base64>` (vector, small). Keep each i
 
 ## Testing & QA
 
-- Framework: **`node:test`** (built-in). `core.test.mjs` (engine), `edges.test.mjs` (edge audits), `save-guard.test.mjs` (save refuses to write inside the kit), `cli.test.mjs` (`cli-lib.mjs` pure functions).
-- Covered: `core.mjs` (`loadCatalog`, `searchIcon`, `getIcon`, `styleForIcon`, `validateDiagram` + all 5 audits), `layout.mjs` (`routeLR`, `routeTB`, `centerInGapX`), `layout-engine.mjs` + `builder.mjs` (`Diagram`, `renderTree`, `group`, `icon`), `cli-lib.mjs` (`packageRoot`, `findDrawioCli` all branches, `buildRenderArgs`, `workflowText`). No fixtures, no subprocess spawns.
+- Framework: **`node:test`** (built-in). `core.test.ts` (engine), `edges.test.ts` (edge audits), `save-guard.test.ts` (save refuses to write inside the kit), `cli.test.ts` (`cli-lib.ts` pure functions).
+- Covered: `core.mjs` (`loadCatalog`, `searchIcon`, `getIcon`, `styleForIcon`, `validateDiagram` + all 5 audits), `layout.ts` (`routeLR`, `routeTB`, `centerInGapX`), `layout-engine.ts` + `builder.mjs` (`Diagram`, `renderTree`, `group`, `icon`), `cli-lib.ts` (`packageRoot`, `findDrawioCli` all branches, `buildRenderArgs`, `workflowText`). No fixtures, no subprocess spawns.
 - Run: `bun test` (fast) and `npm test` (Node). CI runs both on push/PR to `main`: the `test` job on Node 20, the `bun` job on Bun 1.4.2 (with `--coverage`).
 - No coverage gate (`bun run coverage` prints a report); no Python script tests (data builders, validated by the Node catalog tests that consume their output).

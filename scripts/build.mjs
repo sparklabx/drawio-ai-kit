@@ -6,13 +6,14 @@
 //   bun run build            rebuild dist/ (+ dist/types/) + data/catalog-index.json and print a size report
 //   bun run build:check      rebuild into a temp dir; fail if dist/ differs (stale or non-deterministic)
 //   bun run build:analyze    also write a module-graph report (metafile JSON + markdown) to $TMPDIR
-import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { buildCatalogIndex, CATALOG_INDEX } from "../src/core.ts";
 import { tmpdir } from "node:os";
 import { join, relative, resolve } from "node:path";
 
 const ROOT = resolve(import.meta.dir, "..");
 const TSC = join(ROOT, "node_modules", ".bin", "tsc");
+if (!existsSync(TSC)) { console.error("typescript is not installed — run `npm ci` first"); process.exit(1); }
 const DIST = join(ROOT, "dist");
 const args = new Set(process.argv.slice(2));
 const check = args.has("--check");

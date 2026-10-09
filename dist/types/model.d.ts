@@ -39,7 +39,7 @@ export interface BoxNode extends LayoutBase, Omit<BoxOpts, "w" | "h"> {
     w: number;
     h: number;
 }
-export type Dir = "row" | "col";
+type Dir = "row" | "col";
 export interface ContainerOpts {
     dir?: Dir;
     gap?: number;
@@ -195,7 +195,6 @@ export interface EdgeSpec {
     label: string;
     opts: EdgeOptions;
 }
-export {};
 /** `--key value` -> string, bare `--key` -> true. */
 export type Flags = Record<string, string | true>;
 export interface ParsedArgs {
@@ -205,7 +204,7 @@ export interface ParsedArgs {
 /** Injectable probes for findDrawioCli / findDot (tests run without real binaries). */
 export interface FindDeps {
     existsSync?: (path: string) => boolean;
-    locateOnPath?: (env: NodeJS.ProcessEnv) => string;
+    locateOnPath?: (env: Record<string, string | undefined>) => string;
 }
 export interface RenderArgs {
     file: string;
@@ -343,3 +342,4 @@ export interface DiagramTypePreset {
     notes: string;
     mirrorAZ?: boolean;
 }
+export {};

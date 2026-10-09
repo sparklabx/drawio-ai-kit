@@ -61,6 +61,13 @@ test("spanV centres between two nodes and spans from..to", () => {
   assert.ok(r.x > 180 && r.x + r.w < 400);
 });
 
+test("spanV: unknown `to` falls back to `from`", () => {
+  const d = two();
+  const r = d.spanV("bus", { w: 20 }, { between: ["a", "b"], from: "a", to: "nope" });
+  assert.equal(r.y, 84);
+  assert.equal(r.h, 92);
+});
+
 test("invalid contract throws", () => {
   assert.throws(() => new Diagram("pipeline", { contract: "nope" as never }), /Invalid contract/);
 });

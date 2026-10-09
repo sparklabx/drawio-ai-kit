@@ -4,8 +4,6 @@ import type { DiagramTypePreset } from "./model.ts";
 // Each type declares a layout + a matching edge-routing strategy, so the generator/router
 // picks the right corner & lane style per diagram type instead of forcing one approach on all.
 
-export type DiagramTypeName = keyof typeof DIAGRAM_TYPES;
-export type EdgeRole = "tree" | "fanout" | "flow";
 
 export const DIAGRAM_TYPES = {
   pipeline: {
@@ -83,7 +81,7 @@ export function typePreset(name: string): DiagramTypePreset {
  * rounded=0/1 for an edge based on type + role.
  * role: "tree"/"fanout" → always sharp corners; "flow"/default → follows the type's edgeCorner.
  */
-export function edgeRounded(typeOrPreset: string | DiagramTypePreset, role?: EdgeRole | string): 0 | 1 {
+export function edgeRounded(typeOrPreset: string | DiagramTypePreset, role?: string): 0 | 1 {
   const p = typeof typeOrPreset === "string" ? typePreset(typeOrPreset) : typeOrPreset;
   if (role === "tree" || role === "fanout") return 0;
   return p.edgeCorner === "sharp" ? 0 : 1;

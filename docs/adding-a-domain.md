@@ -20,7 +20,7 @@ template names. Add the domain words to the frontmatter `description` so the ski
 
 ## 3. (Optional) `drawio-ai principles --mode <domain>`
 
-Only for hosts that can't read the skill folder. In `src/cli.mjs`, add the file to the `cloudMap`
+Only for hosts that can't read the skill folder. In `src/cli.ts`, add the file to the `cloudMap`
 in the `principles` case (cloud-like domains get `principles.md`, `diagram-types.md` and
 `style-guide.md` appended), add the mode to `MODES`, then `bun run build`.
 

@@ -1,6 +1,4 @@
 import type { DiagramTypePreset } from "./model.ts";
-export type DiagramTypeName = keyof typeof DIAGRAM_TYPES;
-export type EdgeRole = "tree" | "fanout" | "flow";
 export declare const DIAGRAM_TYPES: {
     pipeline: {
         label: string;
@@ -73,7 +71,7 @@ export declare function typePreset(name: string): DiagramTypePreset;
  * rounded=0/1 for an edge based on type + role.
  * role: "tree"/"fanout" → always sharp corners; "flow"/default → follows the type's edgeCorner.
  */
-export declare function edgeRounded(typeOrPreset: string | DiagramTypePreset, role?: EdgeRole | string): 0 | 1;
+export declare function edgeRounded(typeOrPreset: string | DiagramTypePreset, role?: string): 0 | 1;
 export declare function listTypes(): ({
     label: string;
     orientation: string;

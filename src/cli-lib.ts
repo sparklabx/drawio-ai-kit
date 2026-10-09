@@ -11,17 +11,6 @@ const KNOWN_LOCATIONS = [
   "/Applications/draw.io.app/Contents/MacOS/draw.io",
 ];
 
-function defaultLocateOnPath() {
-  try {
-    return execFileSync("/bin/sh", ["-c", "command -v drawio"], {
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "pipe"],
-    }).trim();
-  } catch {
-    return "";
-  }
-}
-
 // Graphviz (`dot`) probe — same `command -v` pattern, parameterised by binary name.
 const locateBin = (bin: string) => () => {
   try {
@@ -33,6 +22,7 @@ const locateBin = (bin: string) => () => {
     return "";
   }
 };
+const defaultLocateOnPath = locateBin("drawio");
 const defaultLocateOnPathDot = locateBin("dot");
 
 /**

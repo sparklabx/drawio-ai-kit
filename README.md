@@ -8,7 +8,7 @@
   <img src="https://img.shields.io/badge/version-2.0.0-22D3EE?style=flat-square" alt="Version 2.0.0">
   <img src="https://img.shields.io/badge/dependencies-0-2BB3A3?style=flat-square" alt="Dependencies: 0">
   <img src="https://img.shields.io/badge/skill-1%20(all%20domains)-5AA9FF?style=flat-square" alt="1 skill, all domains">
-  <img src="https://img.shields.io/badge/node-%E2%89%A518-B98CF0?style=flat-square" alt="Node ≥18">
+  <img src="https://img.shields.io/badge/node-%E2%89%A520-B98CF0?style=flat-square" alt="Node ≥20">
   <img src="https://img.shields.io/badge/built%20with-Bun-F9F1E1?style=flat-square" alt="Built with Bun">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-F59E0B?style=flat-square" alt="License: MIT"></a>
   <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-welcome-ff69b4?style=flat-square" alt="PRs welcome"></a>
@@ -51,7 +51,7 @@ Restart your agent, then try: *"draw an AWS 3-tier web app"*.
 
 The first command puts the `drawio-ai` binary on PATH (see [INSTALL.md](INSTALL.md) to pin a version,
 install from GitHub, or install from a clone). The CLI ships as a **Bun-minified production bundle** (`dist/`, ~76 KB of JS)
-that runs on plain Node ≥18, so you only need Bun if you choose to install with it (Node must still be on PATH). The second command registers the
+that runs on plain Node ≥20, so you only need Bun if you choose to install with it (Node must still be on PATH). The second command registers the
 single `drawio` skill with your agent (it runs the `skills` CLI, which auto-detects Claude Code, Codex, Gemini CLI, …) —
 without it the agent never picks the kit up on its own.
 
@@ -117,7 +117,7 @@ At **2.0.0** the 5 domain skills (`drawio-aws`, `drawio-azure`, `drawio-gcp`, `d
 
 - **Skills:** `npx skills remove drawio-aws drawio-azure drawio-gcp drawio-databricks drawio-bpmn`, then `drawio-ai skill install`.
 - **CLI:** `npm i -g drawio-ai-kit` (now on the npm registry; the bin points at `dist/cli.mjs`).
-- **Your build scripts:** import everything from `<ROOT>/dist/kit.mjs` (the package no longer ships `src/`). Re-scaffold, or replace `<ROOT>/src/builder.mjs` / `layout-engine.mjs` / `bpmn.mjs` imports with that one path.
+- **Your build scripts:** import everything from `<ROOT>/dist/kit.mjs` (the package no longer ships `src/`). Re-scaffold, or replace `<ROOT>/src/builder.ts` / `layout-engine.ts` / `bpmn.ts` imports with that one path.
 - `drawio-ai principles --mode …` and `drawio-ai workflow` still work; they now print the skill's `references/` and `workflows/build.md`.
 
 ## Migration (from <1.0)
@@ -166,7 +166,7 @@ Each file builds one common architecture via the layout engine (zero hardcoded c
 | `bpmn/build_bpmn.mjs` | bpmn | BPMN swimlane process (pool → lanes × phases) |
 
 ## Runtime architecture
-- **Node 18+** (`.nvmrc` pins the current LTS) — orchestration and validation layer: CLI and validator (`src/`). Supported runtimes include Node 20, 22 (LTS), or 24.
+- **Node 20+** (`.nvmrc` pins the current LTS) — orchestration and validation layer: CLI and validator (`src/`). Supported runtimes include Node 20, 22 (LTS), or 24.
 - **Bun 1.4+** — maintainers only: `bun test` runs the suites, `bun run build` bundles `src/` into the minified `dist/` that ships (`--production --splitting --target=node`). Users never need Bun.
 - **Python 3.11** (`.python-version`) — data ingestion and compilation pipeline: catalog generator + icon-pack builder (`scripts/build_pack.py`, stdlib only).
 

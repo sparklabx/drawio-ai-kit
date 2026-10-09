@@ -2,20 +2,6 @@
 // Types only (`export type` / `export interface`), so this module erases to nothing at runtime
 // and never reaches dist/*.mjs. A type used by a single module stays in that module.
 // Import with `import type { ... } from "./model.ts";` (verbatimModuleSyntax requires `import type`).
-//
-// Ownership (who adds/edits each section; others import, and ask the owner before changing a shape):
-//   core.ts           Catalog, CatalogEntry (icon/group), CatalogPack/CatalogIndex, SearchOptions/SearchHit,
-//                     ValidationResult ({ ok, errors, warnings, audit, stats }) + audit issue shapes, Graph (graphFromXml)
-//   layout-engine.ts  the layout Node tree: LayoutNode = IconNode | BoxNode | GroupNode | GridNode | PoolNode | PhantomNode
-//                     (union on `kind`; frame() is a GroupNode with a null gname), option bags, measured size / placement
-//   builder.ts        Diagram-facing shapes: Rect ({ x, y, w, h }) for `this.R`, EdgeSpec / LinkOptions, cell ids
-//   layout.ts         Point / route waypoints (pure math; may reuse Rect from here)
-//   types.ts          DiagramTypeName, DiagramTypePreset (DIAGRAM_TYPES entries), EdgeRole
-//   theme.ts          Theme (shape of THEME) only if another module needs it; else keep it local
-//   bpmn.ts, cli.ts, cli-lib.ts  consume; add here only if a type crosses modules
-//
-// The public API (src/kit.ts → dist/types/) should re-export these with `export type * from "./model.ts";`
-// once they exist.
 
 // ── layout ──
 // The layout Node tree built by layout-engine.ts factories (icon/box/group/frame/phantom/grid/pool).
@@ -36,7 +22,7 @@ export interface BoxOpts {
   fs?: number; style?: string; lane?: number; col?: number;
 }
 export interface BoxNode extends LayoutBase, Omit<BoxOpts, "w" | "h"> { kind: "box"; w: number; h: number }
-export type Dir = "row" | "col";
+type Dir = "row" | "col";
 export interface ContainerOpts {
   dir?: Dir; gap?: number; pad?: number; header?: number; align?: "center" | "top" | "left";
   fill?: string; stroke?: string; cornerIcon?: string | null; routeGap?: number; stack?: number;
@@ -85,9 +71,7 @@ export interface EdgeOptions {
 }
 /** An edge recorded by link(), built later by toXML() so fan-outs can be bundled. */
 export interface EdgeSpec { src: string; tgt: string; label: string; opts: EdgeOptions }
-// ── end builder ──
 
-export {};
 
 // ── cli ──
 /** `--key value` -> string, bare `--key` -> true. */
@@ -96,13 +80,12 @@ export interface ParsedArgs { flags: Flags; positional: string[] }
 /** Injectable probes for findDrawioCli / findDot (tests run without real binaries). */
 export interface FindDeps {
   existsSync?: (path: string) => boolean;
-  locateOnPath?: (env: NodeJS.ProcessEnv) => string;
+  locateOnPath?: (env: Record<string, string | undefined>) => string;
 }
 export interface RenderArgs { file: string; out: string; scale?: number; page?: number }
 export type RouterName = "graphviz" | "kit";
-// kit.ts re-exports every section of this file: `export type * from "./model.ts"`.
 
-// ── core ── (owner: core.ts; re-read before editing)
+// ── core ──
 
 export type EntryKind = "icon" | "group";
 
@@ -198,7 +181,7 @@ export interface LayoutSuggestion {
   warnings: string[];
 }
 
-// ── types (diagram-type registry; owner: types.ts) ──
+// ── types ──
 
 export interface DiagramTypePreset {
   label: string;

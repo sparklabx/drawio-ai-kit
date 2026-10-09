@@ -12,15 +12,10 @@
     "erasableSyntaxOnly": true,
     "verbatimModuleSyntax": true,
     "allowImportingTsExtensions": true,
-    "rewriteRelativeImportExtensions": true,
-    "resolveJsonModule": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    // scripts/*.mjs are part of the program (so .ts files importing them resolve) but not type-checked yet:
-    // scripts/build.mjs uses Bun.* and there are no Bun types installed. Opt a script in with `// @ts-check`.
-    "allowJs": true,
-    "checkJs": false
+    // bench/search/bench-search.test.ts imports dist/kit.mjs: allowJs lets it resolve (else TS7016).
+    "allowJs": true
   },
-  "include": ["src/**/*.ts", "test/**/*.ts", "bench/**/*.ts", "scripts/**/*.mjs"],
+  "include": ["src/**/*.ts", "test/**/*.ts", "bench/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

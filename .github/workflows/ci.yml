@@ -19,9 +19,8 @@ jobs:
         with:
           node-version: 24
       - run: npm ci
-      - name: Typecheck (error count tracked until the typing phase lands)
+      - name: Typecheck
         run: npm run typecheck
-        continue-on-error: true
       - name: Audit dependencies (fail on high/critical)
         run: npm audit --omit=dev --audit-level=high
       - name: Tests (node --test)
@@ -68,6 +67,7 @@ jobs:
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: 1.4.2
+      - run: npm ci   # tsc (declarations) is a devDependency
       - name: Tests (bun test, with coverage report)
         run: bun test --coverage
       - name: dist/ is the fresh bundle of src/

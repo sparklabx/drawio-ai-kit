@@ -11,15 +11,14 @@ npm test           # the same suites on plain Node (node --test): the compatibil
 bun run build      # rebuild dist/ (commit it; CI fails if it is stale)
 ```
 
-Dev tooling is [Bun](https://bun.sh) 1.4+ plus Node ≥18 (`.nvmrc` = 22). There are no dependencies, so
-there is nothing to install. The code is plain ESM `.mjs` (no transpiler, no TypeScript) and must stay
+Dev tooling is [Bun](https://bun.sh) 1.4+ plus Node ≥20 (`.nvmrc` = 22). Run `npm ci` first (typescript is a devDependency). The code is erasable-syntax TypeScript (`.ts`) and must stay
 runnable on Node: no `Bun.*` APIs in `src/`. Bun APIs are fine in `scripts/` and CI.
 
 ## Ground rules
 
 - **Zero runtime dependencies.** Don't add any — it's the project's core promise. If a few lines of code can do it, write the few lines.
 - **Named exports only**, no default exports.
-- **Declarative layout, never hardcoded coordinates** — build node trees with `layout-engine.mjs` factories and let `renderTree` compute geometry.
+- **Declarative layout, never hardcoded coordinates** — build node trees with `layout-engine.ts` factories and let `renderTree` compute geometry.
 - **The kit is read-only infrastructure**: generated `.drawio`/`.xml` output belongs in the user's cwd, never in this repo.
 - New catalog entries / colors / nesting rules must pass the structural validator (`bun run cli validate <file>`).
 

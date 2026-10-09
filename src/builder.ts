@@ -867,7 +867,7 @@ export class Diagram {
    */
   spanV(id: string, { icon, label = "", w, pad = 16, fill = "#FFFFFF", stroke = "#5A6B7B" }: { icon?: string; label?: string; w: number; pad?: number; fill?: string; stroke?: string },
     { lane, between, from, to }: { lane?: string; between?: [string, string]; from: string; to?: string }): Vertex {
-    const F = this.R[from], T = to ? this.R[to] : F;
+    const F = this.R[from], T = (to ? this.R[to] : undefined) ?? F;
     const x = lane ? Math.round(this.R[lane].x + (this.R[lane].w - w) / 2)
                    : centerInGapX(this.R[between![0]], this.R[between![1]], w);
     const y = Math.round(F.y - pad), h = Math.round(T.y + T.h - F.y + pad * 2);
