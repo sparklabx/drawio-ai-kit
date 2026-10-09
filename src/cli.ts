@@ -233,8 +233,12 @@ switch (cmd) {
     // CLI still does the per-agent detection; extra args pass through (-g, -a claude-code, -y, --copy).
     if (positional[0] !== "install") { console.error("usage: drawio-ai skill install [skills-cli add flags…]"); process.exit(1); }
     try {
-      execFileSync("npx", ["-y", "skills", "add", skillDir(), ...rest.slice(1)], { stdio: "inherit", shell: process.platform === "win32" });
-    } catch (e) { process.exit((e as { status?: number }).status ?? 1); }
+      const [cmd, pre] = process.versions.bun ? ["bunx", []] : ["npx", ["-y"]];
+      execFileSync(cmd, [...pre, "skills", "add", skillDir(), ...rest.slice(1)], { stdio: "inherit", shell: process.platform === "win32" });
+    } catch (e) {
+      if ((e as { code?: string }).code === "ENOENT") console.error(errMsg(e));
+      process.exit((e as { status?: number }).status ?? 1);
+    }
     break;
   }
   case "render": {

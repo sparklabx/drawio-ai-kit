@@ -77,3 +77,23 @@ test("run reports a script killed by a signal", () => {
   const r = sh("node", [CLI, "run", "b.mjs"], dir);
   assert.equal(r.signal, "SIGTERM");
 });
+
+if (have("bun")) {
+  const bunBin = spawnSync("sh", ["-c", "command -v bun"], { encoding: "utf8" }).stdout.trim();
+  const fakeBin = (name?: string) => {
+    const d = tmp();
+    if (name) { writeFileSync(join(d, name), `#!/bin/sh\necho "${name} $*" > "${d}/called"\n`, { mode: 0o755 }); }
+    return d;
+  };
+  test("bun: skill install uses bunx (no npx on PATH)", () => {
+    const d = fakeBin("bunx");
+    const r = spawnSync(bunBin, [CLI, "skill", "install", "-g", "-y"], { encoding: "utf8", env: { HOME: process.env.HOME, PATH: d } });
+    assert.equal(r.status, 0, r.stderr);
+    assert.match(readFileSync(join(d, "called"), "utf8"), /^bunx skills add .*skills\/drawio|^bunx skills add .* -g -y/);
+  });
+  test("bun: skill install reports a missing bunx instead of exiting silently", () => {
+    const r = spawnSync(bunBin, [CLI, "skill", "install"], { encoding: "utf8", env: { HOME: process.env.HOME, PATH: fakeBin() } });
+    assert.equal(r.status, 1);
+    assert.match(r.stderr, /ENOENT|bunx/);
+  });
+}
