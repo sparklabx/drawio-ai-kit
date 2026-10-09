@@ -3,7 +3,8 @@
     "cloudfront",
     "azure_cdn_profiles",
     "gcp_cloud_cdn",
-    "azure_front_door_and_cdn_profiles"
+    "azure_front_door_and_cdn_profiles",
+    "cloudfront_functions"
   ],
   "alias:db": [
     "db_instance",
@@ -18,12 +19,22 @@
   "alias:dns": [
     "route_53",
     "gcp_cloud_dns",
-    "azure_dns_zones"
+    "azure_dns_zones",
+    "route_53_application_recovery_controller",
+    "route_53_readiness_checks",
+    "route_53_resolver",
+    "route_53_resolver_dns_firewall",
+    "route_53_resolver_query_logging"
   ],
   "alias:es": [
     "elasticsearch",
     "elasticsearch_service",
-    "opensearch"
+    "opensearch",
+    "opensearch_dashboards",
+    "opensearch_ingestion",
+    "opensearch_observability",
+    "opensearch_service_cluster_administrator_node",
+    "opensearch_service_data_node"
   ],
   "alias:iam": [
     "identity_and_access_management"
@@ -32,7 +43,11 @@
     "kubernetes",
     "eks",
     "azure_kubernetes_services",
-    "gcp_google_kubernetes_engine"
+    "gcp_google_kubernetes_engine",
+    "eks_anywhere",
+    "eks_cloud",
+    "eks_distro",
+    "eks_on_outposts"
   ],
   "alias:lb": [
     "azure_load_balancers"
@@ -45,26 +60,44 @@
     "comet"
   ],
   "alias:mq": [
-    "mq"
+    "mq",
+    "mq_broker"
   ],
   "alias:pg": [
     "postgres",
     "postgresql_instance",
     "rds_postgresql_instance",
-    "azure_azure_database_postgresql_server"
+    "azure_azure_database_postgresql_server",
+    "rds_postgresql_instance_alt",
+    "azure_azure_database_postgresql_server_group"
   ],
   "batch:alb, ecs, rds, elasticache": {
     "alb": [
       "application_load_balancer"
     ],
     "ecs": [
-      "ecs"
+      "ecs",
+      "ecs_anywhere",
+      "ecs_copilot_cli",
+      "ecs_service",
+      "ecs_service_connect",
+      "ecs_task"
     ],
     "rds": [
-      "rds"
+      "rds",
+      "rds_blue_green_deployments",
+      "rds_instance",
+      "rds_instance_alt",
+      "rds_mariadb_instance",
+      "rds_mariadb_instance_alt",
+      "rds_multi_az",
+      "rds_multi_az_db_cluster"
     ],
     "elasticache": [
-      "elasticache"
+      "elasticache",
+      "elasticache_for_memcached",
+      "elasticache_for_redis",
+      "elasticache_for_valkey"
     ]
   },
   "batch:k8s, pg, es": {
@@ -72,29 +105,55 @@
       "kubernetes",
       "eks",
       "azure_kubernetes_services",
-      "gcp_google_kubernetes_engine"
+      "gcp_google_kubernetes_engine",
+      "eks_anywhere",
+      "eks_cloud",
+      "eks_distro",
+      "eks_on_outposts"
     ],
     "pg": [
       "postgres",
       "postgresql_instance",
       "rds_postgresql_instance",
-      "azure_azure_database_postgresql_server"
+      "azure_azure_database_postgresql_server",
+      "rds_postgresql_instance_alt",
+      "azure_azure_database_postgresql_server_group"
     ],
     "es": [
       "elasticsearch",
       "elasticsearch_service",
-      "opensearch"
+      "opensearch",
+      "opensearch_dashboards",
+      "opensearch_ingestion",
+      "opensearch_observability",
+      "opensearch_service_cluster_administrator_node",
+      "opensearch_service_data_node"
     ]
   },
   "batch:s3, lambda, nat gateway": {
     "s3": [
-      "s3"
+      "s3",
+      "s3_batch_operations",
+      "s3_express_one_zone",
+      "s3_file_gateway",
+      "s3_multi_region_access_points",
+      "s3_object_lambda",
+      "s3_object_lambda_access_points",
+      "s3_object_lock"
     ],
     "lambda": [
-      "lambda"
+      "lambda",
+      "lambda_function"
     ],
     "nat gateway": [
-      "nat_gateway"
+      "nat_gateway",
+      "gateway",
+      "api_gateway",
+      "nats",
+      "backup_gateway",
+      "azure_nat",
+      "customer_gateway",
+      "gcp_cloud_nat"
     ]
   },
   "flags:lambda --category Compute": [
@@ -118,12 +177,31 @@
       "style": "sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;fillColor=#7AA116;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.s3;",
       "width": 78,
       "height": 78
+    },
+    {
+      "name": "s3_batch_operations",
+      "fqn": "mxgraph.aws4.s3_batch_operations",
+      "label": "S3 Batch Operations",
+      "category": "Storage",
+      "kind": "icon",
+      "color": "#7AA116",
+      "aliases": [],
+      "style": "sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#7AA116;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.s3_batch_operations;",
+      "width": 78,
+      "height": 78
     }
   ],
   "flags:storage --limit 20": [
     {
       "name": "storage",
       "label": "Storage",
+      "category": "Storage",
+      "kind": "icon",
+      "color": "#7AA116"
+    },
+    {
+      "name": "storage_gateway",
+      "label": "Storage Gateway",
       "category": "Storage",
       "kind": "icon",
       "color": "#7AA116"
@@ -155,16 +233,31 @@
     }
   ],
   "single:api gateway": [
-    "api_gateway"
+    "api_gateway",
+    "gateway",
+    "gcp_cloud_api_gateway",
+    "gcp_apigee_api_platform",
+    "endpoint",
+    "backup_gateway",
+    "gcp_api",
+    "customer_gateway"
   ],
   "single:bigquery": [
     "bigquery"
   ],
   "single:cloudfront": [
-    "cloudfront"
+    "cloudfront",
+    "cloudfront_functions"
   ],
   "single:cosmos db": [
-    "cosmosdb"
+    "cosmosdb",
+    "db_instance",
+    "azure_azure_cosmos_db",
+    "db_on_instance2",
+    "db_instance_standby",
+    "checklist_cost",
+    "db_on_instance",
+    "cost_explorer"
   ],
   "single:delta lake": [
     "delta",
@@ -177,7 +270,14 @@
     "azure_sql_data_warehouses"
   ],
   "single:ec2": [
-    "ec2"
+    "ec2",
+    "ec2_aws_microservice_extractor_for_net",
+    "ec2_c6a_instance",
+    "ec2_c6gn_instance",
+    "ec2_c6i_instance",
+    "ec2_c6in_instance",
+    "ec2_c7g_instance",
+    "ec2_c7gn_instance"
   ],
   "single:kafka": [
     "kafka",
@@ -187,10 +287,15 @@
     "kubernetes",
     "eks",
     "azure_kubernetes_services",
-    "gcp_google_kubernetes_engine"
+    "gcp_google_kubernetes_engine",
+    "eks_anywhere",
+    "eks_cloud",
+    "eks_distro",
+    "eks_on_outposts"
   ],
   "single:lambda": [
-    "lambda"
+    "lambda",
+    "lambda_function"
   ],
   "single:load balancer": [
     "application_load_balancer",
@@ -198,22 +303,40 @@
     "elastic_load_balancing",
     "classic_load_balancer",
     "azure_load_balancers",
-    "gcp_cloud_load_balancing"
+    "gcp_cloud_load_balancing",
+    "gateway_load_balancer",
+    "azure_load_balancer_hub"
   ],
   "single:nat gateway": [
-    "nat_gateway"
+    "nat_gateway",
+    "gateway",
+    "api_gateway",
+    "nats",
+    "backup_gateway",
+    "azure_nat",
+    "customer_gateway",
+    "gcp_cloud_nat"
   ],
   "single:postgres": [
     "postgres",
     "postgresql_instance",
     "rds_postgresql_instance",
-    "azure_azure_database_postgresql_server"
+    "azure_azure_database_postgresql_server",
+    "rds_postgresql_instance_alt",
+    "azure_azure_database_postgresql_server_group"
   ],
   "single:redis": [
     "redis"
   ],
   "single:s3": [
-    "s3"
+    "s3",
+    "s3_batch_operations",
+    "s3_express_one_zone",
+    "s3_file_gateway",
+    "s3_multi_region_access_points",
+    "s3_object_lambda",
+    "s3_object_lambda_access_points",
+    "s3_object_lock"
   ],
   "single:user task": [
     "bpmn_task_user",
@@ -226,6 +349,13 @@
     "authenticated_user"
   ],
   "single:vpc": [
-    "vpc"
+    "vpc",
+    "vpc_access_points",
+    "vpc_carrier_gateway",
+    "vpc_lattice",
+    "vpc_network_access_analyzer",
+    "vpc_privatelink",
+    "vpc_reachability_analyzer",
+    "vpc_traffic_mirroring"
   ]
 }

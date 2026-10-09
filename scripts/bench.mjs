@@ -22,6 +22,9 @@ const SELF = fileURLToPath(import.meta.url);
 // Representative examples (aws, azure, bpmn). Their imports are rewritten to dist/kit.mjs at bench time.
 const EXAMPLES = ["examples/aws/build_serverless.mjs", "examples/azure/build_azure_vnet.mjs", "examples/bpmn/build_bpmn.mjs"];
 const CLI_CASES = { root: ["root"], search_lambda: ["search", "lambda"], search_multi: ["search", "k8s, pg, es"] };
+// Honest-cost probes, NOT in bench/baseline.json (they regress vs v2 by design: the index is built; see ADR 0008).
+const NONEXACT = "kubernets cluster"; // typo + multi-keyword: never an exact name/alias hit
+const EXTRA_CLI_CASES = { search_nonexact: ["search", NONEXACT] };
 const WARM_SEARCH_ITERS = 200;
 
 function parseArgs(argv) {
@@ -52,6 +55,15 @@ function stats(xs) {
 const now = () => Number(process.hrtime.bigint()) / 1e6; // ms
 
 // ---------- child mode: one fresh process, in-process measurements ----------
+// Fresh process whose FIRST search is non-exact: pays the whole index build (the cost exact hits skip).
+async function childColdNonexact() {
+  const kit = await import(pathToFileURL(KIT).href);
+  const catalog = kit.loadCatalog();
+  const t = now();
+  kit.searchIcon(catalog, NONEXACT);
+  process.stdout.write(JSON.stringify({ search_cold_nonexact_ms: now() - t }));
+}
+
 async function childInproc() {
   const t0 = now();
   const kit = await import(pathToFileURL(KIT).href);
@@ -172,6 +184,16 @@ function inproc(bin, { runs, warmup }) {
   return out;
 }
 
+function coldNonexact(bin, { runs, warmup }) {
+  const xs = [];
+  for (let i = 0; i < warmup + runs; i++) {
+    const r = spawnSync(bin, [SELF, "--child", "cold-nonexact"], { encoding: "utf8", cwd: ROOT });
+    if (r.status !== 0) throw new Error(`${bin} cold-nonexact child failed: ${r.stderr}`);
+    if (i >= warmup) xs.push(JSON.parse(r.stdout).search_cold_nonexact_ms);
+  }
+  return { search_cold_nonexact_ms: stats(xs) };
+}
+
 function dirBytes(d) {
   let n = 0;
   for (const f of readdirSync(d)) { const p = join(d, f), s = statSync(p); n += s.isDirectory() ? dirBytes(p) : s.size; }
@@ -238,6 +260,7 @@ function compare(cur, base, o) {
 async function main() {
   const o = parseArgs(process.argv.slice(2));
   if (o.child === "inproc") return childInproc();
+  if (o.child === "cold-nonexact") return childColdNonexact();
 
   const rts = o.runtime === "both" ? ["node", "bun"] : [o.runtime];
   const bins = {};
@@ -250,9 +273,9 @@ async function main() {
   for (const [rt, bin] of Object.entries(bins)) {
     console.error(`[bench] ${rt}: cli cold start ...`);
     const cli = {};
-    for (const [name, args] of Object.entries(CLI_CASES)) cli[name] = coldStart(bin, args, o);
+    for (const [name, args] of Object.entries({ ...CLI_CASES, ...EXTRA_CLI_CASES })) cli[name] = coldStart(bin, args, o);
     console.error(`[bench] ${rt}: in-process ...`);
-    results[rt] = { cli, inproc: inproc(bin, o) };
+    results[rt] = { cli, inproc: { ...inproc(bin, o), ...coldNonexact(bin, o) } };
   }
   const report = { machine: machine(bins), config: { runs: o.runs, warmup: o.warmup, warm_search_iters: WARM_SEARCH_ITERS, examples: EXAMPLES, rss_source: TIME ? "/usr/bin/time" : null }, results };
   const json = JSON.stringify(report, null, 2);

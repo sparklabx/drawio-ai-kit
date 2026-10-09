@@ -234,7 +234,8 @@ switch (cmd) {
     if (positional[0] !== "install") { console.error("usage: drawio-ai skill install [skills-cli add flags…]"); process.exit(1); }
     try {
       const [cmd, pre] = process.versions.bun ? ["bunx", []] : ["npx", ["-y"]];
-      execFileSync(cmd, [...pre, "skills", "add", skillDir(), ...rest.slice(1)], { stdio: "inherit", shell: process.platform === "win32" });
+      const win = process.platform === "win32"; // npx/bunx are .cmd shims there: need a shell, so quote the path
+      execFileSync(cmd, [...pre, "skills", "add", win ? `"${skillDir()}"` : skillDir(), ...rest.slice(1)], { stdio: "inherit", shell: win });
     } catch (e) {
       if ((e as { code?: string }).code === "ENOENT") console.error(errMsg(e));
       process.exit((e as { status?: number }).status ?? 1);

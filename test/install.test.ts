@@ -47,6 +47,7 @@ test("bun present (and preferred over npm): bun add -g, skill install, verify (e
   const r = run([], { tools: ["bun", "npm", "node", "drawio-ai"] });
   assert.equal(r.status, 0, r.stderr);
   assert.deepEqual(r.calls.filter((c) => !c.startsWith("bun pm")), [
+    "node -v", // probed to decide whether the bun wrapper is needed
     "bun add -g drawio-ai-kit",
     "drawio-ai skill install -g -y",
     "drawio-ai root",
@@ -65,7 +66,7 @@ test("neither: clear error, nonzero exit, nothing run", () => {
   const r = run([], { tools: [] });
   assert.notEqual(r.status, 0);
   assert.match(r.stderr, /bun\.sh/);
-  assert.match(r.stderr, /Node >=20/);
+  assert.match(r.stderr, /Node >=20\.6/);
   assert.deepEqual(r.calls, []);
 });
 
@@ -160,4 +161,21 @@ test("bun with node: bin left alone (no wrapper)", () => {
 test("dist/cli.mjs keeps the Windows-safe node shebang", () => {
   const first = readFileSync(join(import.meta.dirname, "..", "dist", "cli.mjs"), "utf8").split("\n")[0];
   assert.equal(first, "#!/usr/bin/env node");
+});
+
+test("node v20.5.1 (below 20.6): npm path refuses with '>=20.6'", () => {
+  const r = run([], { tools: ["npm", "node"], node: "v20.5.1" });
+  assert.notEqual(r.status, 0);
+  assert.match(r.stderr, /Node >=20\.6 required \(found v20\.5\.1\)/);
+  assert.ok(!r.calls.some((c) => c.startsWith("npm i")));
+});
+
+test("node v20.6.0 passes the npm check", () => {
+  assert.equal(run([], { tools: ["npm", "node", "drawio-ai"], node: "v20.6.0" }).status, 0);
+});
+
+test("bun with node v20.5.1: wraps the global bin like the no-node case", () => {
+  const r = run([], { tools: ["bun", "node", "drawio-ai"], node: "v20.5.1", onPath: false });
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(readFileSync(join(r.root, "gbin", "drawio-ai"), "utf8"), /exec bun/);
 });

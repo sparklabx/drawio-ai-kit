@@ -125,6 +125,11 @@
     {"id": "plural-buckets", "scenario": "plural-singular", "query": "buckets", "k": 3, "expect": [["s3", "gcp_cloud_storage"]]},
     {"id": "plural-load-balancers", "scenario": "plural-singular", "query": "load balancers", "k": 3, "expect": [["elastic_load_balancing", "application_load_balancer", "network_load_balancer", "azure_load_balancers", "gcp_cloud_load_balancing"]]},
     {"id": "plural-lambdas", "scenario": "plural-singular", "query": "lambdas", "k": 3, "expect": [["lambda", "lambda_function"]]},
-    {"id": "plural-databases", "scenario": "plural-singular", "query": "databases", "k": 8, "expect": [["rds", "dynamodb", "postgres", "mysql", "mongodb", "aurora"]]}
+    {"id": "plural-databases", "scenario": "plural-singular", "query": "databases", "k": 8, "expect": [["rds", "dynamodb", "postgres", "mysql", "mongodb", "aurora"]]},
+    {"id": "nb-rds", "scenario": "neighbours", "query": "rds", "k": 8, "expect": [["rds"], ["rds_instance"], ["rds_multi_az"]]},
+    {"id": "nb-lambda", "scenario": "neighbours", "query": "lambda", "k": 8, "expect": [["lambda"], ["lambda_function"]]},
+    {"id": "nb-vpc", "scenario": "neighbours", "query": "vpc", "k": 8, "expect": [["vpc"], ["vpc_privatelink"]]},
+    {"id": "nb-s3", "scenario": "neighbours", "query": "s3", "k": 8, "expect": [["s3"], ["s3_object_lambda"]]},
+    {"id": "nb-dynamo", "scenario": "neighbours", "query": "dynamo", "k": 8, "expect": [["dynamodb"], ["dynamodb_dax"]]}
   ]
 }

@@ -18,7 +18,7 @@ bun add -g drawio-ai-kit
 
 This puts the `drawio-ai` binary on PATH. The npm package is about 2 MB, so the install takes seconds.
 Releases are published from CI with npm provenance, so each version traces back to its commit and workflow run.
-Pin a version with `drawio-ai-kit@2.0.0`.
+Pin a version with `drawio-ai-kit@3.0.0`.
 
 One-line alternative: `install.sh` in this repo installs the CLI (Bun or npm) and registers the skill. See the README Quick start; `sh install.sh --dry-run` prints what it would run.
 

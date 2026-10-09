@@ -61,6 +61,15 @@ Numbers from `bench/RESULTS.md` (node 22.20, Apple M4):
   index build (about 9 ms JIT-cold) is paid once per process. The +10% perf
   gate is **not met** for these cold paths and the trade-off is accepted:
   agents batch lookups into one call ("a, b, c"), where the new search wins.
+- **Honest cold non-exact cost (accepted)**: exact name/alias queries skip the
+  index, so the gated cold numbers flatter the engine. A non-exact first search
+  (`kubernets cluster`, node) is 4.9 ms in-process in v2 and 14.2 ms now (+9.3
+  ms); the one-shot CLI is 29.8 ms vs 39.7 ms (+~10 ms). It buys typo, synonym
+  and multi-keyword quality. `scripts/bench.mjs` records both probes
+  (`search_nonexact`, `search_cold_nonexact_ms`) but they are kept out of
+  `bench/baseline.json`'s gated comparison against v2 (they regress by design).
+- Exact/alias hits are padded with their name-prefix family (`rds` gives
+  `rds_instance`, `rds_multi_az`, ...) so related icons are not lost.
 - `dist/*.mjs` 77 KB to 98 KB; npm tarball 1.90 MB (budget 2.5 MB).
 - Result lists are shorter (irrelevant partial matches no longer pad them).
   `--full` hits carry no `score`. Characterization snapshots were

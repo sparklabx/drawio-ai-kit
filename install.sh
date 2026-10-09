@@ -49,14 +49,21 @@ esac
 
 [ -n "$runtime" ] || die "neither Bun nor Node.js found. Install one first (this script never installs a runtime):
   Bun:  https://bun.sh      (Linux/macOS/Windows)
-  Node: https://nodejs.org  (Node >=20)"
+  Node: https://nodejs.org  (Node >=20.6)"
+
+# Node >=20.6 (module.register). node_ok=0 when node is missing or older.
+node_ok=0
+if have node; then
+  nv=$(node -v); nv=${nv#v}   # e.g. v22.1.0
+  nmaj=${nv%%.*}; nmin=${nv#*.}; nmin=${nmin%%.*}
+  case $nmaj$nmin in ''|*[!0-9]*) nmaj=; esac
+  if [ -n "$nmaj" ] && { [ "$nmaj" -gt 20 ] || { [ "$nmaj" -eq 20 ] && [ "$nmin" -ge 6 ]; }; }; then node_ok=1; fi
+fi
 
 if [ "$runtime" = npm ]; then
-  have node || die "node not found. Install Node >=20 from https://nodejs.org"
-  nv=$(node -v)   # e.g. v22.1.0
-  nv=${nv#v}; nv=${nv%%.*}
-  case $nv in ''|*[!0-9]*) die "cannot parse node version" ;; esac
-  [ "$nv" -ge 20 ] || die "Node >=20 required (found v$nv). Upgrade Node, or install Bun: https://bun.sh"
+  have node || die "node not found. Install Node >=20.6 from https://nodejs.org"
+  [ -n "${nmaj:-}" ] || die "cannot parse node version"
+  [ "$node_ok" = 1 ] || die "Node >=20.6 required (found v$nv). Upgrade Node, or install Bun: https://bun.sh"
 fi
 
 pkg=drawio-ai-kit${version:+@$version}
@@ -72,8 +79,8 @@ skillcmd="skill install -g -y$agents"
 if [ "$runtime" = bun ]; then run bun add -g "$pkg"; else run npm i -g "$pkg"; fi
 
 # Bun-only machine: dist/cli.mjs has a `#!/usr/bin/env node` shebang (Windows-safe), so with no node the
-# bin Bun linked would fail. Replace it with a wrapper that runs the CLI under bun. Re-run after `bun update -g`.
-if [ "$runtime" = bun ] && ! have node; then
+# bin Bun linked would fail (same when node is older than 20.6). Replace it with a wrapper that runs the CLI under bun. Re-run after `bun update -g`.
+if [ "$runtime" = bun ] && [ "$node_ok" = 0 ]; then
   if [ "$dry" = 1 ]; then
     printf '+ write bun wrapper over the global drawio-ai bin\n'
   else
@@ -83,7 +90,7 @@ if [ "$runtime" = bun ] && ! have node; then
       rm -f "$gb/drawio-ai"
       printf '#!/bin/sh\nexec bun "%s" "$@"\n' "$cli_js" > "$gb/drawio-ai"
       chmod +x "$gb/drawio-ai"
-      printf 'No node found: wrapped %s to run under bun (re-run install.sh after "bun update -g").\n' "$gb/drawio-ai"
+      printf 'No node >=20.6 found: wrapped %s to run under bun (re-run install.sh after "bun update -g").\n' "$gb/drawio-ai"
     else
       printf 'warning: could not locate the global drawio-ai-kit package to wrap for bun\n' >&2
     fi

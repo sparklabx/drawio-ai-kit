@@ -51,3 +51,12 @@ test("a compound-name hit does not hide the other keywords", () => {
   has("kubernetes load balancer", "kubernetes");
   has("ec2 api gateway", "ec2", "api_gateway");
 });
+
+test("exact hit leads, then its family pads the list (no lone result)", () => {
+  for (const [q, first] of [["rds", "rds_instance"], ["lambda", "lambda_function"], ["vpc", "vpc"], ["s3", "s3_object_lambda"]] as const) {
+    const top = names(q);
+    assert.ok(top.length > 1, `${q}: ${top.join()}`);
+    assert.ok(top.some((n) => n.startsWith(first) || n === q), `${q}: ${top.join()}`);
+  }
+  assert.ok(names("rds").includes("rds_instance"));
+});

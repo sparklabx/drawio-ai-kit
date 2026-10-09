@@ -50,14 +50,14 @@ jobs:
           "$RUNNER_TEMP/inst/node_modules/.bin/drawio-ai" scaffold build_vpc.mjs -o build.mjs --name smoke
           PATH="$RUNNER_TEMP/inst/node_modules/.bin:$PATH" "$RUNNER_TEMP/inst/node_modules/.bin/drawio-ai" run build.mjs | grep -q '"ok":true'
 
-  # The user path: dist/ is plain ESM and must run on the oldest supported Node (>=20). No TypeScript, no tests.
+  # The user path: dist/ is plain ESM and must run on the oldest supported Node (20.6). No TypeScript, no tests.
   smoke-node20:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
-          node-version: 20
+          node-version: 20.6.0
       - name: Smoke-test the bundled CLI on Node 20
         run: |
           node dist/cli.mjs search "s3, lambda" >/dev/null

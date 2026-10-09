@@ -13,7 +13,7 @@ import { pool, start, end, gateway, userTask, serviceTask, task } from "drawio-a
 ```
 
 ## Finding icon names
-`drawio-ai search "a, b, c"` returns real catalog names. Comma or space separated; abbreviations (`k8s`, `pg`, `es`), plurals and small typos work; add `aws`/`azure`/`gcp` to scope. Pass the returned `name` to `icon(id, name, label)`.
+`drawio-ai search "a, b, c"` returns real catalog names. Comma or space separated (comma form returns an object keyed per keyword; space form returns one merged list); abbreviations (`k8s`, `pg`, `es`), plurals and small typos work; add `aws`/`azure`/`gcp` to scope. Pass the returned `name` to `icon(id, name, label)`.
 
 ## 2. Layout Elements
 Build node trees declaratively. **No hardcoded coordinates.**

@@ -83,17 +83,29 @@ export function searchEntries(
 
   // Whole query names one icon or alias: answer without building the index.
   const fast = exactOf(toks, pred);
-  if (fast.length) return fast.slice(0, limit);
+  if (fast.length) {
+    // ...then pad with its family ("rds" → rds_instance, rds_multi_az): a name prefix scan, still no index.
+    const prefixes = [flat(toks.join(" ")) + "_", ...fast.map((e) => e.name + "_")];
+    for (const e of catalog.byName.values())
+      if (fast.length >= limit) break;
+      else if (prefixes.some((p) => e.name.startsWith(p)) && pred(e) && !fast.includes(e)) fast.push(e);
+    // A single keyword with a short family stops here; a phrase ("api gateway") still searches for neighbours.
+    if (fast.length >= limit || toks.length === 1) return fast.slice(0, limit);
+    return [...new Set([...fast, ...general()])].slice(0, limit);
+  }
+  return general();
 
-  if (toks.length === 1) return one(toks).slice(0, limit);
-  // The head noun is last ("gateway vpc ENDPOINT"): the whole query, then ever shorter tails, is the first list...
-  let lead: CatalogEntry[] = [];
-  for (let i = 0; i < toks.length - 1 && !lead.length; i++) lead = one(toks.slice(i));
-  // ...but a compound icon ("s3_object_lambda") must not hide the other keywords: interleave it with one
-  // search per keyword, head noun first.
-  const lists = [lead, ...toks.map((t) => one([t])).reverse()];
-  const merged: CatalogEntry[] = [];
-  for (let i = 0; merged.length < limit && lists.some((l) => i < l.length); i++)
-    for (const l of lists) if (i < l.length && !merged.includes(l[i]!)) merged.push(l[i]!);
-  return merged.slice(0, limit);
+  function general(): CatalogEntry[] {
+    if (toks.length === 1) return one(toks).slice(0, limit);
+    // The head noun is last ("gateway vpc ENDPOINT"): the whole query, then ever shorter tails, is the first list...
+    let lead: CatalogEntry[] = [];
+    for (let i = 0; i < toks.length - 1 && !lead.length; i++) lead = one(toks.slice(i));
+    // ...but a compound icon ("s3_object_lambda") must not hide the other keywords: interleave it with one
+    // search per keyword, head noun first.
+    const lists = [lead, ...toks.map((t) => one([t])).reverse()];
+    const merged: CatalogEntry[] = [];
+    for (let i = 0; merged.length < limit && lists.some((l) => i < l.length); i++)
+      for (const l of lists) if (i < l.length && !merged.includes(l[i]!)) merged.push(l[i]!);
+    return merged.slice(0, limit);
+  }
 }

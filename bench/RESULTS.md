@@ -95,6 +95,15 @@ Latency and size (node 22.20, M4; `bun scripts/bench.mjs --runtime both --compar
 | npm pack | 1.89 MB | 1.91 MB (budget 2.5 MB) |
 | dist bytes (incl. d.ts) | 78 KB | 134 KB |
 
-The cold-CLI gate is met because the bench queries (`lambda`, `s3, lambda, ...`) are exact-name/alias hits and skip the index. A one-shot CLI search that is NOT an exact hit (e.g. `load balancer`, `kubernets`) still builds the index: about 9 ms (2168 docs, JIT-cold; 2.6 ms warm) and +14 MB RSS. That cost is intrinsic to indexing the whole catalog; a prebuilt index was measured and does not pay (see above). The bin is now a `/bin/sh` launcher (`node`, else `bun`) which adds no measurable wall time in the table above.
+The cold-CLI gate is met because the bench queries (`lambda`, `s3, lambda, ...`) are exact-name/alias hits and skip the index. A one-shot CLI search that is NOT an exact hit (e.g. `load balancer`, `kubernets`) still builds the index: about 9 ms (2168 docs, JIT-cold; 2.6 ms warm) and +14 MB RSS. That cost is intrinsic to indexing the whole catalog; a prebuilt index was measured and does not pay (see above). The bin is the bundle itself (`#!/usr/bin/env node` shebang, Windows-safe); on a Bun-only machine `install.sh` wraps it to run under `bun`.
+
+Cold non-exact probes (accepted tradeoff, not gated; `scripts/bench.mjs` records `search_nonexact` and `search_cold_nonexact_ms`, kept out of `bench/baseline.json`), query `kubernets cluster`, node, median of 15:
+
+| Probe | v2 | now |
+|---|---|---|
+| CLI `search` wall | 29.8 ms | 39.7 ms (+~10 ms) |
+| in-process cold first search | 4.9 ms | 14.2 ms (+9.3 ms) |
+
+This is the price of the index build, paid for typo, synonym and multi-keyword quality. Exact/alias hits are unchanged and padded with their name-prefix family (`rds` returns `rds_instance`, `rds_multi_az`, ...).
 
 Notable ranking changes (characterization snapshots regenerated on purpose): result lists are shorter because irrelevant partial matches no longer pad them (`nat gateway` returns only `nat_gateway`, was 8 hits led by `api_gateway`...); `dns`, `cdn`, `iam`, `lb`, `pg`, `k8s` now return the canonical services first (`route_53`, `cloudfront`, `identity_and_access_management`, `azure_load_balancers`, `postgres`, `kubernetes`); `alb` was `[]`; `--full` hits no longer carry `score` (dead field removed from `SearchHit`) (merged lists have no single score); validator "suggestions" for a made-up stencil changed (both old and new lists are unrelated IoT names).

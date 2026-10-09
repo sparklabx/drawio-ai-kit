@@ -1,6 +1,6 @@
-// drawio-ai-kit — core engine (Node >=18, target Node 26)
+// drawio-ai-kit — core engine (Node >=20.6 or Bun)
 // Provides: loadCatalog, searchIcon, styleForIcon, styleForGroup, validateDiagram.
-// No external libraries so the CLI always runs, even when the MCP SDK is not installed.
+// Search runs on minisearch, bundled into dist/; nothing is installed at runtime.
 
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
