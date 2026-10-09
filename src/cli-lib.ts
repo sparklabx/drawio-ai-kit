@@ -123,7 +123,7 @@ export function buildRenderArgs({ file, out, scale = 1, page = 1 }) {
  */
 export function scaffoldSource(src, root, lib = "dist/kit.mjs", name) {
   // every engine module is re-exported by the one library entry, so all kit imports collapse onto it
-  let s = src.replace(/"\.\.\/\.\.\/src\/[a-z-]+\.mjs"/g, `"${root}/${lib}"`);
+  let s = src.replace(/"\.\.\/\.\.\/src\/[a-z-]+\.(?:mjs|ts)"/g, `"${root}/${lib}"`);
   s = s.replace(/new URL\("\.\.\/\.\.\/out\//g, 'new URL("./');
   let m = s.match(/new URL\("\.\/([^"]+\.drawio)"/);
   // --name renames the output once here, so the write line and the self-check tail can't disagree

@@ -1,6 +1,6 @@
 // Characterization (golden) test helpers. Black-box only: everything goes through dist/kit.mjs
 // and dist/cli.mjs, so these snapshots keep proving behavior across a src/ refactor.
-// Regenerate snapshots: UPDATE_SNAPSHOTS=1 node --test test/characterization/*.test.mjs   (dir arg fails on Node 22; use the glob)
+// Regenerate snapshots: UPDATE_SNAPSHOTS=1 node --test test/characterization/*.test.ts   (dir arg fails on Node 22; use the glob)
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";

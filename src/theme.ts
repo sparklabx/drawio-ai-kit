@@ -1,7 +1,7 @@
 // drawio-ai-kit — THEME (design tokens / style system).
 // Distilled from the reference diagram the user liked. The whole look = a small, cohesive set of
 // PALE, theme-aware (light-dark) tints + AWS icons carrying the strong color + clean 2px edges with
-// animated main flow. Use the helpers below (or the themed creators in layout-engine.mjs) so every
+// animated main flow. Use the helpers below (or the themed creators in layout-engine.ts) so every
 // diagram inherits this style by default instead of hand-picking colors.
 
 export const THEME = {

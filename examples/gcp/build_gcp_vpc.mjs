@@ -3,8 +3,8 @@
 // Global LB / DNS / CDN and managed data services sit OUTSIDE the region blocks. Containers = frame().
 // Run: node examples/gcp/build_gcp_vpc.mjs
 import { writeFileSync } from "node:fs";
-import { Diagram } from "../../src/builder.mjs";
-import { frame, icon, box, renderTree } from "../../src/layout-engine.mjs";
+import { Diagram } from "../../src/builder.ts";
+import { frame, icon, box, renderTree } from "../../src/layout-engine.ts";
 
 const d = new Diagram("network");
 const GBLUE = "#4285F4";

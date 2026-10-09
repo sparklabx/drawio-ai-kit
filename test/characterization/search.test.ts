@@ -4,7 +4,7 @@
 //     search is reimplemented (e.g. minisearch); review the diff, then UPDATE_SNAPSHOTS=1.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { makeTmp, parseOut, runCli, snapshotFile } from "./_helpers.mjs";
+import { makeTmp, parseOut, runCli, snapshotFile } from "./_helpers.ts";
 
 const match = snapshotFile("search-ranking");
 const tmp = makeTmp("charac-search");

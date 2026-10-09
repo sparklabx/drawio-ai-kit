@@ -4,9 +4,9 @@ import {
   findDot,
   selectRouter,
   workflowText,
-} from "../src/cli-lib.mjs";
-import { Diagram } from "../src/builder.mjs";
-import { group, icon, renderTree } from "../src/layout-engine.mjs";
+} from "../src/cli-lib.ts";
+import { Diagram } from "../src/builder.ts";
+import { group, icon, renderTree } from "../src/layout-engine.ts";
 
 // --- selectRouter (the pure decision function) ---
 test("selectRouter: scaffold never consults graphviz, even when dot is present", () => {

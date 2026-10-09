@@ -1,0 +1,26 @@
+{
+  // Whole-project typecheck (`npm run typecheck`). Never emits: Bun bundles dist/*.mjs, tsconfig.build.json emits the .d.ts.
+  // Erasable syntax only, so Node's native type stripping runs src/ and test/ as-is (no enums/namespaces/parameter properties).
+  "compilerOptions": {
+    "target": "es2022",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "lib": ["es2023"],
+    "types": ["node"],
+    "strict": true,
+    "noEmit": true,
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    // scripts/*.mjs are part of the program (so .ts files importing them resolve) but not type-checked yet:
+    // scripts/build.mjs uses Bun.* and there are no Bun types installed. Opt a script in with `// @ts-check`.
+    "allowJs": true,
+    "checkJs": false
+  },
+  "include": ["src/**/*.ts", "test/**/*.ts", "bench/**/*.ts", "scripts/**/*.mjs"],
+  "exclude": ["node_modules", "dist"]
+}

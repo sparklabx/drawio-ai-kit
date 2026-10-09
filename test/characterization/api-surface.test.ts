@@ -1,6 +1,6 @@
 // Golden snapshot of the public library surface (dist/kit.mjs) + its data-only exports.
 import { test } from "node:test";
-import { KIT, normalize, sha256, snapshotFile } from "./_helpers.mjs";
+import { KIT, normalize, sha256, snapshotFile } from "./_helpers.ts";
 
 const kit = await import(KIT);
 const match = snapshotFile("api-surface");

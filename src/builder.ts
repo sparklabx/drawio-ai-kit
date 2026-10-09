@@ -4,10 +4,10 @@
 import { writeFileSync, realpathSync } from "node:fs";
 import { join, dirname, resolve, relative, isAbsolute } from "node:path";
 import { fileURLToPath } from "node:url";
-import { loadCatalog, styleForIcon, styleForGroup, validateDiagram } from "./core.mjs";
-import { centerInGapX, panelSize } from "./layout.mjs";
-import { typePreset } from "./types.mjs";
-import { THEME } from "./theme.mjs";
+import { loadCatalog, styleForIcon, styleForGroup, validateDiagram } from "./core.ts";
+import { centerInGapX, panelSize } from "./layout.ts";
+import { typePreset } from "./types.ts";
+import { THEME } from "./theme.ts";
 
 // \n → &#10; so multi-line labels survive XML attribute-value normalization (a bare newline in an
 // attribute is collapsed to a space by the XML spec; the char-ref renders as a real line break in draw.io).

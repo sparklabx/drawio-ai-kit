@@ -1,11 +1,11 @@
 // Golden snapshots of every CLI command (stdout JSON/text + exit code), run against dist/cli.mjs.
-// Search *ranking* lives in search.test.mjs (it is expected to move when search is reimplemented).
+// Search *ranking* lives in search.test.ts (it is expected to move when search is reimplemented).
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { ROOT, fakeDrawio, makeTmp, normalizeKitImport, parseOut, runCli, sha256, snapshotFile } from "./_helpers.mjs";
+import { ROOT, fakeDrawio, makeTmp, normalizeKitImport, parseOut, runCli, sha256, snapshotFile } from "./_helpers.ts";
 
 const match = snapshotFile("cli");
 const tmp = makeTmp("charac-cli");

@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { chmodSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { CLI, ROOT, makeTmp, normalize, runCli, sha256, snapshotFile } from "./_helpers.mjs";
+import { CLI, ROOT, makeTmp, normalize, runCli, sha256, snapshotFile } from "./_helpers.ts";
 
 const match = snapshotFile("examples");
 const tmp = makeTmp("charac-examples");

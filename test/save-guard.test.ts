@@ -4,7 +4,7 @@ import { existsSync, rmSync, mkdtempSync, realpathSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname, resolve, relative } from "node:path";
 import { fileURLToPath } from "node:url";
-import { Diagram } from "../src/builder.mjs";
+import { Diagram } from "../src/builder.ts";
 
 const KIT_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const tiny = () => { const d = new Diagram("pipeline"); d.icon("a", "ec2", [0, 0]); return d; };

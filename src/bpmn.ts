@@ -1,11 +1,11 @@
 // drawio-ai-kit — BPMN Tier-1 swimlane domain layer.
 // Thin creators over the generic layout engine: each returns a {kind:"box"} node carrying its
-// mxgraph.bpmn catalog style + { lane, col } cell tags. The pool() primitive (layout-engine.mjs)
+// mxgraph.bpmn catalog style + { lane, col } cell tags. The pool() primitive (layout-engine.ts)
 // places them in a sparse (lane × col) grid; `phases` is an optional milestone-label overlay.
 // Canonical monochrome; red accent for blocker events. Plain Task and collapsed Sub-process have
 // no stencil and are composed as rounded rects.
-import { loadCatalog, styleForIcon } from "./core.mjs";
-export { pool } from "./layout-engine.mjs";
+import { loadCatalog, styleForIcon } from "./core.ts";
+export { pool } from "./layout-engine.ts";
 
 // Style tokens — canonical BPMN look (white fill, neutral stroke), red for error/cancel/terminate.
 export const BPMN = {

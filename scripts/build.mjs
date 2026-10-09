@@ -1,16 +1,18 @@
 #!/usr/bin/env bun
-// Maintainer build: bundles src/cli.mjs + src/kit.mjs into the shipped dist/.
-// Runs on Bun only (Bun.build). The OUTPUT is plain Node >=18 ESM — users never need Bun.
+// Maintainer build: bundles src/cli.ts + src/kit.ts into the shipped dist/, plus the public API's
+// declarations (tsc -p tsconfig.build.json → dist/types/). Runs on Bun only (Bun.build).
+// The OUTPUT is plain Node >=20 ESM — users never need Bun or TypeScript.
 //
-//   bun run build            rebuild dist/ + data/catalog-index.json and print a size report
+//   bun run build            rebuild dist/ (+ dist/types/) + data/catalog-index.json and print a size report
 //   bun run build:check      rebuild into a temp dir; fail if dist/ differs (stale or non-deterministic)
 //   bun run build:analyze    also write a module-graph report (metafile JSON + markdown) to $TMPDIR
 import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { buildCatalogIndex, CATALOG_INDEX } from "../src/core.mjs";
+import { buildCatalogIndex, CATALOG_INDEX } from "../src/core.ts";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { join, relative, resolve } from "node:path";
 
 const ROOT = resolve(import.meta.dir, "..");
+const TSC = join(ROOT, "node_modules", ".bin", "tsc");
 const DIST = join(ROOT, "dist");
 const args = new Set(process.argv.slice(2));
 const check = args.has("--check");
@@ -19,7 +21,7 @@ const analyze = args.has("--analyze");
 async function bundle(outdir) {
   rmSync(outdir, { recursive: true, force: true });
   const r = await Bun.build({
-    entrypoints: [join(ROOT, "src/cli.mjs"), join(ROOT, "src/kit.mjs")],
+    entrypoints: [join(ROOT, "src/cli.ts"), join(ROOT, "src/kit.ts")],
     outdir,
     target: "node",
     format: "esm",
@@ -33,9 +35,20 @@ async function bundle(outdir) {
     for (const log of r.logs) console.error(log);
     process.exit(1);
   }
+  // d.ts only (noCheck: never gates on type errors — `npm run typecheck` does that)
+  const t = await Bun.$`${TSC} -p tsconfig.build.json --outDir ${join(outdir, "types")}`.cwd(ROOT).nothrow().quiet();
+  if (t.exitCode !== 0) {
+    console.error(t.stdout.toString() + t.stderr.toString());
+    process.exit(1);
+  }
 }
 
-const files = (dir) => readdirSync(dir).sort();
+// relative file paths under dir (recursive: dist/types/ is a subfolder)
+const files = (dir) =>
+  readdirSync(dir, { recursive: true, withFileTypes: true })
+    .filter((e) => e.isFile())
+    .map((e) => relative(dir, join(e.parentPath, e.name)))
+    .sort();
 const kb = (n) => `${(n / 1024).toFixed(1)} KB`;
 
 // Slim catalog index (pack metadata without embedded images) so the CLI loads a pack's images only on use.
@@ -80,7 +93,7 @@ if (analyze) {
   const out = mkdtempSync(join(tmpdir(), "drawio-analyze-"));
   const json = join(out, "metafile.json");
   const md = join(out, "bundle.md");
-  await Bun.$`bun build src/cli.mjs src/kit.mjs --target=node --format=esm --production --splitting --sourcemap=none --outdir=${join(out, "dist")} --metafile=${json} --metafile-md=${md}`
+  await Bun.$`bun build src/cli.ts src/kit.ts --target=node --format=esm --production --splitting --sourcemap=none --outdir=${join(out, "dist")} --metafile=${json} --metafile-md=${md}`
     .cwd(ROOT)
     .quiet();
   console.log(`\nmetafile: ${json}\nreport:   ${md}`);

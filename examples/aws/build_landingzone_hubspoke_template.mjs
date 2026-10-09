@@ -10,7 +10,7 @@
 //   • Centralized networking: Ingress (WAF+ALB) / Inspection (NGFW) / Egress (NAT) VPCs wired through a
 //     central TRANSIT GATEWAY; workload VPCs attach as spokes; on-prem via Direct Connect + VPN.
 //   • Edges follow hub-and-spoke — connect to the Transit Gateway / to a box border, not node-to-node spaghetti.
-//   • Real catalog icons only (search: `node src/cli.mjs search <name>`).
+//   • Real catalog icons only (search: `bun src/cli.ts search <name>`).
 //
 // Run:  node examples/aws/build_landingzone_hubspoke_template.mjs  → out/sa_landingzone_template.drawio
 //
@@ -23,8 +23,8 @@
 //   [ ] Edges go to the Transit Gateway (hub-and-spoke), not node-to-node spaghetti.
 // ============================================================================
 import { writeFileSync } from "node:fs";
-import { Diagram } from "../../src/builder.mjs";
-import { group, frame, icon, box, band, endpoint, onpremFrame, phantom, renderTree } from "../../src/layout-engine.mjs";
+import { Diagram } from "../../src/builder.ts";
+import { group, frame, icon, box, band, endpoint, onpremFrame, phantom, renderTree } from "../../src/layout-engine.ts";
 
 const REGION = "AWS Region · <primary>";
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");

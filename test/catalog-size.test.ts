@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { packageRoot } from "../src/cli-lib.mjs";
+import { packageRoot } from "../src/cli-lib.ts";
 
 // Size budget: the catalog is most of the install. Icons draw at 48 px, so a big embedded image is waste —
 // rebuild with scripts/build_pack.py (minified SVG, or a 96 px PNG when smaller). Raise only on purpose.

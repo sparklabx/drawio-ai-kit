@@ -1,7 +1,7 @@
 // AWS Landing Zone — type "hierarchy". Layout engine: NO hardcoded coordinates.
 import { writeFileSync } from "node:fs";
-import { Diagram } from "../../src/builder.mjs";
-import { group, frame, icon, stage, phantom, renderTree } from "../../src/layout-engine.mjs";
+import { Diagram } from "../../src/builder.ts";
+import { group, frame, icon, stage, phantom, renderTree } from "../../src/layout-engine.ts";
 
 const d = new Diagram("hierarchy");
 

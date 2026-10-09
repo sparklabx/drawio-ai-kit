@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { loadCatalog, buildCatalogIndex, CATALOG_INDEX, searchIcon, getIcon, styleForIcon, validateDiagram, auditAesthetics, auditGeometry, auditEdges, auditArchitecture, graphFromXml, suggestLayout } from "../src/core.mjs";
+import { loadCatalog, buildCatalogIndex, CATALOG_INDEX, searchIcon, getIcon, styleForIcon, validateDiagram, auditAesthetics, auditGeometry, auditEdges, auditArchitecture, graphFromXml, suggestLayout } from "../src/core.ts";
 
 const catalog = loadCatalog();
 
@@ -235,7 +235,7 @@ test("geometry: flags multiple edges entering one target at the same point", () 
   assert.ok(auditGeometry(xml).some((a) => /same point/.test(a)));
 });
 
-import { routeLR, routeTB } from "../src/layout.mjs";
+import { routeLR, routeTB } from "../src/layout.ts";
 
 test("routeLR: same vertical band → straight line (no waypoints)", () => {
   const r = routeLR({ x: 0, y: 100, w: 100, h: 50 }, { x: 300, y: 110, w: 100, h: 50 });
@@ -256,14 +256,14 @@ test("routeTB: same horizontal band → straight vertical line", () => {
   assert.match(r.pins, /exitY=1;.*entryY=0;/);
 });
 
-import { centerInGapX } from "../src/layout.mjs";
+import { centerInGapX } from "../src/layout.ts";
 test("centerInGapX: aligns a node into the center of the gap between 2 rects", () => {
   // the gap between [0..100] and [300..400] has center 200; a node 40 wide → x=180
   assert.equal(centerInGapX({ x: 0, w: 100 }, { x: 300, w: 100 }, 40), 180);
 });
 
-import { Diagram } from "../src/builder.mjs";
-import { group, icon, renderTree } from "../src/layout-engine.mjs";
+import { Diagram } from "../src/builder.ts";
+import { group, icon, renderTree } from "../src/layout-engine.ts";
 test("layout-engine: parent frame automatically wraps its children tightly (no hardcoded coordinates)", () => {
   const d = new Diagram("network");
   const tree = group("reg", "group_region", "Region", { dir: "row" }, [
@@ -347,8 +347,8 @@ test("geometry: in and out on DIFFERENT sides is not a relay", () => {
 // PREVENTION (engine): side-by-side frames are equalised in height only while the stretch stays modest.
 // A frame far shorter than its tallest sibling keeps its own height instead of gaining a dead white band.
 test("engine does not stretch a frame far shorter than its tallest sibling", async () => {
-  const { Diagram } = await import("../src/builder.mjs");
-  const { frame, icon, renderTree } = await import("../src/layout-engine.mjs");
+  const { Diagram } = await import("../src/builder.ts");
+  const { frame, icon, renderTree } = await import("../src/layout-engine.ts");
   const d = new Diagram("network");
   renderTree(d, frame("root", "", { dir: "row", gap: 40, header: 0 }, [
     frame("tall", "Tall", { dir: "col", gap: 20 }, ["a", "b", "c", "d", "e"].map((i) => icon(`t_${i}`, "s3", `T ${i}`))),

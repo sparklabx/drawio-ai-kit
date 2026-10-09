@@ -9,11 +9,11 @@ import {
   buildRenderArgs,
   workflowText,
   scaffoldSource,
-} from "../src/cli-lib.mjs";
+} from "../src/cli-lib.ts";
 
 // --- search (CLI-level: compact + batch contracts) ---
 const runCli = (...args) =>
-  execFileSync(process.execPath, [join(packageRoot(), "src", "cli.mjs"), ...args], { encoding: "utf8" });
+  execFileSync(process.execPath, [join(packageRoot(), "src", "cli.ts"), ...args], { encoding: "utf8" });
 
 test("cli search: single query returns a compact array (no style)", () => {
   const r = JSON.parse(runCli("search", "s3"));
@@ -117,7 +117,7 @@ test("workflowText mentions drawio-ai root for importing the engine", () => {
 
 // Drift-proof: every name the workflow's import snippet tells an agent to import must actually
 // be exported by that module. This is the bug class where the snippet said
-// `import { group } from "core.mjs"` while group lives in layout-engine.mjs — agents following
+// `import { group } from "core.ts"` while group lives in layout-engine.mjs — agents following
 // the "source of truth" workflow then crash on line 1.
 for (const [label, txt] of [
   ["workflow", workflowText()],
@@ -126,7 +126,7 @@ for (const [label, txt] of [
   test(`${label} import snippet names only real exports`, async () => {
     const imports = [...txt.matchAll(/import\s*\{([^}]+)\}\s*from\s*"<ROOT>\/dist\/kit\.mjs"/g)];
     assert.ok(imports.length >= 1, `${label} must show the engine import line`);
-    const mod = await import(join(packageRoot(), "src", "kit.mjs"));   // dist/kit.mjs is built from it
+    const mod = await import(join(packageRoot(), "src", "kit.ts"));   // dist/kit.mjs is built from it
     for (const [, names] of imports)
       for (const raw of names.split(",")) {
         const name = raw.trim().split(/\s+as\s+/)[0].trim();
@@ -137,7 +137,7 @@ for (const [label, txt] of [
 
 // --- scaffoldSource ---
 test("scaffoldSource rewrites kit imports to absolute and retargets output", () => {
-  const src = `import { Diagram } from "../../src/builder.mjs";\nwriteFileSync(new URL("../../out/x_kit.drawio", import.meta.url), d.mxfile("X"));\n`;
+  const src = `import { Diagram } from "../../src/builder.ts";\nwriteFileSync(new URL("../../out/x_kit.drawio", import.meta.url), d.mxfile("X"));\n`;
   const out = scaffoldSource(src, "/opt/kit");
   assert.match(out, /from "\/opt\/kit\/dist\/kit\.mjs"/);
   assert.match(out, /new URL\("\.\/x_kit\.drawio"/);
@@ -152,7 +152,7 @@ test("scaffoldSource --name renames the output in the write line AND the self-ch
 });
 
 test("scaffoldSource without a drawio write appends no self-check tail", () => {
-  const out = scaffoldSource(`import { a } from "../../src/core.mjs";\n`, "/opt/kit");
+  const out = scaffoldSource(`import { a } from "../../src/core.ts";\n`, "/opt/kit");
   assert.doesNotMatch(out, /--check/);
 });
 
@@ -163,6 +163,6 @@ test("scaffoldSource adds a VALIDATE line only when the template prints none", (
 });
 
 test("skill: anything but `install` prints usage and exits 1 (never shells out)", () => {
-  assert.throws(() => execFileSync(process.execPath, [join(packageRoot(), "src", "cli.mjs"), "skill"], { encoding: "utf8", stdio: "pipe" }),
+  assert.throws(() => execFileSync(process.execPath, [join(packageRoot(), "src", "cli.ts"), "skill"], { encoding: "utf8", stdio: "pipe" }),
     (e) => e.status === 1 && /skill install/.test(e.stderr));
 });

@@ -1,9 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { Diagram } from "../src/builder.mjs";
-import { group, icon, renderTree } from "../src/layout-engine.mjs";
+import { Diagram } from "../src/builder.ts";
+import { group, icon, renderTree } from "../src/layout-engine.ts";
 
-// 5-way fan-out (mirrors test/edges.test.mjs): several edges share the gap between hub and the
+// 5-way fan-out (mirrors test/edges.test.ts): several edges share the gap between hub and the
 // target column, so the router must produce waypoints to route them cleanly. This is the shape
 // that exercises the wpXml fork — a straight A→B link generates no waypoints in either contract.
 function fanOut(contract) {

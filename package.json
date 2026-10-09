@@ -28,11 +28,12 @@
     "drawio-ai": "dist/cli.mjs"
   },
   "scripts": {
-    "cli": "node src/cli.mjs",
+    "cli": "bun src/cli.ts",
     "build": "bun scripts/build.mjs",
     "build:check": "bun scripts/build.mjs --check",
     "build:analyze": "bun scripts/build.mjs --analyze",
-    "test": "node --test",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "node --test \"test/**/*.test.ts\" \"bench/**/*.test.ts\"",
     "test:bun": "bun test",
     "test:watch": "bun test --watch",
     "coverage": "bun test --coverage",
@@ -51,14 +52,21 @@
     "THIRD_PARTY_NOTICES.md"
   ],
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "license": "MIT",
   "exports": {
-    ".": "./dist/kit.mjs"
+    ".": {
+      "types": "./dist/types/kit.d.ts",
+      "default": "./dist/kit.mjs"
+    }
   },
   "publishConfig": {
     "access": "public",
     "provenance": true
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "typescript": "^7.0.2"
   }
 }

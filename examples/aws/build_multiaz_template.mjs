@@ -17,7 +17,7 @@
 //     (cloudLayer draws the boxes BEFORE the links so the ids are valid edge targets.)
 //   • Optional GitOps band (Terraform + ArgoCD) deploying into the cluster.
 //
-// Icons: always use real catalog names (search the kit: `node src/cli.mjs search <name>`).
+// Icons: always use real catalog names (search the kit: `bun src/cli.ts search <name>`).
 //        spark · dagster · starburst · trino · openmetadata · mongodb · redis · kafka · airflow ·
 //        prometheus · grafana · opensearch · mysql · s3 · redshift · datasync · eks · terraform · argocd …
 //
@@ -33,8 +33,8 @@
 //   [ ] Managed AWS services sit OUTSIDE the VPC; optional GitOps band (Terraform + ArgoCD).
 // ============================================================================
 import { writeFileSync } from "node:fs";
-import { Diagram } from "../../src/builder.mjs";
-import { group, frame, icon, box, band, endpoint, ossBox, onpremFrame, phantom, renderTree } from "../../src/layout-engine.mjs";
+import { Diagram } from "../../src/builder.ts";
+import { group, frame, icon, box, band, endpoint, ossBox, onpremFrame, phantom, renderTree } from "../../src/layout-engine.ts";
 
 // ---- knobs ----------------------------------------------------------------
 const REGION_CODE = "ap-southeast-1";                 // AZ labels become ap-southeast-1a/b/c

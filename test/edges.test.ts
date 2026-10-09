@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { Diagram } from "../src/builder.mjs";
-import { frame, grid, group, icon, renderTree } from "../src/layout-engine.mjs";
+import { Diagram } from "../src/builder.ts";
+import { frame, grid, group, icon, renderTree } from "../src/layout-engine.ts";
 
 const portOf = (xml, src, tgt) => {
   const e = xml.split("<mxCell").find((c) => new RegExp(`source="${src}"`).test(c) && new RegExp(`target="${tgt}"`).test(c));

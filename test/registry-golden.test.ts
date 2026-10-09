@@ -5,8 +5,8 @@
 // the OLD switch-based engine, frozen so any drift in the registry refactor fails here.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { icon, box, group, grid, pool, renderTree } from "../src/layout-engine.mjs";
-import { Diagram } from "../src/builder.mjs";
+import { icon, box, group, grid, pool, renderTree } from "../src/layout-engine.ts";
+import { Diagram } from "../src/builder.ts";
 
 function buildTree() {
   return group("root", null, "Region", { dir: "col", gap: 30 }, [

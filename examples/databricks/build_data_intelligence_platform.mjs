@@ -5,8 +5,8 @@
 // cards (Governance · Open Storage). Concept line-icons + logos come from the merged databricks pack
 // (+ delta/parquet/iceberg reused from the Big Data pack). Run: node examples/databricks/build_data_intelligence_platform.mjs
 import { writeFileSync } from "node:fs";
-import { Diagram } from "../../src/builder.mjs";
-import { frame, icon, box, phantom, renderTree } from "../../src/layout-engine.mjs";
+import { Diagram } from "../../src/builder.ts";
+import { frame, icon, box, phantom, renderTree } from "../../src/layout-engine.ts";
 
 const d = new Diagram("pipeline");
 const CORAL = "#FF3621", NAVY = "#1B3139", CORAL_TINT = "#FDECEA";

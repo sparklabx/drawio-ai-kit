@@ -3,8 +3,8 @@
 // reparented to the nearest visible ancestor. link() to a phantom teaches the distinction.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { Diagram } from "../src/builder.mjs";
-import { group, phantom, icon, renderTree } from "../src/layout-engine.mjs";
+import { Diagram } from "../src/builder.ts";
+import { group, phantom, icon, renderTree } from "../src/layout-engine.ts";
 
 // A representative tree: a visible root group wraps a phantom that holds two icons.
 // After render, the icons must be parented to "root" (nearest visible ancestor), and the

@@ -3,9 +3,9 @@
 // Canonical mxgraph.bpmn shapes (monochrome; red accent on the rejection end event). Engine lays
 // the pool out; sequence flow is solid + rounded, inter-lane handoffs cross lane bands.
 import { writeFileSync } from "node:fs";
-import { Diagram } from "../../src/builder.mjs";
-import { renderTree } from "../../src/layout-engine.mjs";
-import { pool, start, end, gateway, userTask, serviceTask } from "../../src/bpmn.mjs";
+import { Diagram } from "../../src/builder.ts";
+import { renderTree } from "../../src/layout-engine.ts";
+import { pool, start, end, gateway, userTask, serviceTask } from "../../src/bpmn.ts";
 
 const d = new Diagram("bpmn");
 

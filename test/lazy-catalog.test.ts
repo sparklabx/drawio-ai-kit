@@ -1,7 +1,7 @@
 // Bun runs every test file in one process, so compare against the packs already loaded.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { loadCatalog, searchIcon, styleForIcon, _loadedPacks } from "../src/core.mjs";
+import { loadCatalog, searchIcon, styleForIcon, _loadedPacks } from "../src/core.ts";
 
 test("packs are parsed only when one of their styles is read", () => {
   const c = loadCatalog();

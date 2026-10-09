@@ -8,7 +8,7 @@
 //   renderTree(d, tree, [40, 70]);   // emit into the Diagram builder, auto-set page
 //   d.title("...");  d.link("a","b","...");
 
-import { THEME, stageFill, stageStroke } from "./theme.mjs";
+import { THEME, stageFill, stageStroke } from "./theme.ts";
 
 const ICON = 48;
 

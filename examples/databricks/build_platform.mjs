@@ -5,8 +5,8 @@
 // governs across the boundary. Full-colour icons; medallion as colored cylinders.
 // Run: node examples/databricks/build_platform.mjs
 import { writeFileSync } from "node:fs";
-import { Diagram } from "../../src/builder.mjs";
-import { frame, icon, box, phantom, renderTree } from "../../src/layout-engine.mjs";
+import { Diagram } from "../../src/builder.ts";
+import { frame, icon, box, phantom, renderTree } from "../../src/layout-engine.ts";
 
 const d = new Diagram("hybrid");
 const CORAL = "#FF3621", NAVY = "#1B3139", VPC = "#8C4FFF", STORE = "#B0752A";

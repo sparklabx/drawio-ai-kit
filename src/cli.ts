@@ -23,8 +23,8 @@ import {
   listCategories,
   graphFromXml,
   suggestLayout,
-} from "./core.mjs";
-import { packageRoot, skillDir, findDrawioCli, buildRenderArgs, workflowText, scaffoldSource } from "./cli-lib.mjs";
+} from "./core.ts";
+import { packageRoot, skillDir, findDrawioCli, buildRenderArgs, workflowText, scaffoldSource } from "./cli-lib.ts";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -192,7 +192,7 @@ switch (cmd) {
     const { writeFileSync: wf, mkdirSync } = await import("node:fs");
     mkdirSync(dirname(outMjs), { recursive: true });
     // the bundled CLI points scripts at the bundled library; a dev clone running src/ points at src/
-    const lib = basename(__dirname) === "dist" ? "dist/kit.mjs" : "src/kit.mjs";
+    const lib = basename(__dirname) === "dist" ? "dist/kit.mjs" : "src/kit.ts";
     const name = typeof flags.name === "string" ? basename(flags.name).replace(/(\.drawio)?$/, ".drawio") : undefined;
     const script = scaffoldSource(readFileSync(srcPath, "utf8"), packageRoot(), lib, name);
     wf(outMjs, script);
@@ -263,7 +263,7 @@ switch (cmd) {
     process.exit(0);
   }
   case "types": {
-    const { listTypes } = await import("./types.mjs");
+    const { listTypes } = await import("./types.ts");
     out(listTypes());
     break;
   }

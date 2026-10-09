@@ -3,8 +3,8 @@
 // The EKS cluster is a DASHED frame (like Region/AZ) with the EKS logo at the TOP-LEFT corner,
 // SPANNING the private subnets across both AZs — drawn with d.clusterBox() AFTER renderTree.
 import { writeFileSync } from "node:fs";
-import { Diagram } from "../../src/builder.mjs";
-import { group, icon, phantom, renderTree } from "../../src/layout-engine.mjs";
+import { Diagram } from "../../src/builder.ts";
+import { group, icon, phantom, renderTree } from "../../src/layout-engine.ts";
 
 const d = new Diagram("network");
 

@@ -15,7 +15,7 @@ const FAMILY = "mxgraph.aws4";
 export const CATALOG_INDEX = join(__dirname, "..", "data", "catalog-index.json");
 const isDataStyle = (s) => /image=data:/.test(s ?? "");
 
-// ponytail: parse each catalog once per process. bpmn.mjs and every `new Diagram()` share it (read-only).
+// ponytail: parse each catalog once per process. bpmn.ts and every `new Diagram()` share it (read-only).
 const CACHE = new Map();
 
 /** Read the catalog JSON and build a lookup index (memoized per file). */
@@ -916,7 +916,7 @@ export function auditEdges(xml) {
  *  - gateway must split (≥2 outgoing) or merge (≥2 incoming) sequence flow
  *  - start event has no incoming; end event has no outgoing
  *  - no orphan flow object (a node connected to no sequence flow)
- *  ponytail: shape-name whitelist dropped — bpmn.mjs creators throw at build time on unknown names
+ *  ponytail: shape-name whitelist dropped — bpmn.ts creators throw at build time on unknown names
  *  (engine path can't emit an invalid stencil), and draw.io's BPMN stencil vastly exceeds our Tier-1
  *  set so strict whitelisting would false-flag legitimate shapes. Cross-pool sequence-flow check
  *  deferred (needs pool-membership resolution from coordinates; single-pool is the Tier-1 norm). */

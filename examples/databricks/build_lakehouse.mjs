@@ -3,8 +3,8 @@
 // (no gray fills), full-colour product icons, and the medallion drawn as the colored Bronze→Silver→Gold
 // DB cylinders. Run: node examples/databricks/build_lakehouse.mjs
 import { writeFileSync } from "node:fs";
-import { Diagram } from "../../src/builder.mjs";
-import { frame, icon, box, phantom, renderTree } from "../../src/layout-engine.mjs";
+import { Diagram } from "../../src/builder.ts";
+import { frame, icon, box, phantom, renderTree } from "../../src/layout-engine.ts";
 
 const d = new Diagram("pipeline");
 const CORAL = "#FF3621", NAVY = "#1B3139";
