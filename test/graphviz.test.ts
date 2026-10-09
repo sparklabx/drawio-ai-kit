@@ -32,7 +32,7 @@ test("selectRouter: unknown contract never routes via graphviz", () => {
 // --- findDot (the runtime probe, injectable deps) ---
 test("findDot: DOT_CLI env var wins when existsSync true", () => {
   const env = { DOT_CLI: "/custom/bin/dot" };
-  const deps = { existsSync: (p) => p === "/custom/bin/dot" };
+  const deps = { existsSync: (p: string) => p === "/custom/bin/dot" };
   assert.equal(findDot(env, deps), "/custom/bin/dot");
 });
 

@@ -9,8 +9,8 @@ import { ROOT, fakeDrawio, makeTmp, normalizeKitImport, parseOut, runCli, sha256
 
 const match = snapshotFile("cli");
 const tmp = makeTmp("charac-cli");
-const run = (args, opts = {}) => runCli(args, { tmp, ...opts });
-const result = (r) => ({ status: r.status, stdout: parseOut(r.stdout), stderr: r.stderr });
+const run = (args: string[], opts: Record<string, any> = {}) => runCli(args, { tmp, ...opts });
+const result = (r: any) => ({ status: r.status, stdout: parseOut(r.stdout), stderr: r.stderr });
 
 const GOOD_XML = (() => {
   // a known-good diagram, produced by the kit itself (vpc example via scaffold)
@@ -24,9 +24,9 @@ const BAD_XML = `<mxfile><diagram name="P" id="p"><mxGraphModel><root><mxCell id
   `<mxCell id="a" value="dup" vertex="1" parent="1"><mxGeometry x="10" y="10" width="78" height="78" as="geometry"/></mxCell>` +
   `<mxCell id="e1" edge="1" source="a" target="zzz" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>` +
   `</root></mxGraphModel></diagram></mxfile>`;
-const body = (xml) => xml.match(/<diagram[^>]*>([\s\S]*?)<\/diagram>/)[1];
+const body = (xml: string) => xml.match(/<diagram[^>]*>([\s\S]*?)<\/diagram>/)![1];
 const MULTI_XML = `<mxfile><diagram name="Good" id="g">${body(GOOD_XML)}</diagram><diagram name="Bad" id="b">${body(BAD_XML)}</diagram></mxfile>`;
-const file = (name, xml) => { const p = join(tmp, name); writeFileSync(p, xml); return p; };
+const file = (name: string, xml: string) => { const p = join(tmp, name); writeFileSync(p, xml); return p; };
 const good = file("good.drawio", GOOD_XML);
 const bad = file("bad.drawio", BAD_XML);
 const multi = file("multi.drawio", MULTI_XML);
@@ -67,7 +67,7 @@ test("cli: audit / suggest-layout", () => {
 
 test("cli: workflow / principles text equals the skill docs it serves", () => {
   // The prose is docs (may be edited); the CLI contract is "serve these files, joined like this".
-  const ref = (f) => readFileSync(join(ROOT, "skills", "drawio", "references", f), "utf8");
+  const ref = (f: string) => readFileSync(join(ROOT, "skills", "drawio", "references", f), "utf8");
   const wf = run(["workflow"]);
   assert.equal(wf.status, 0);
   assert.equal(wf.stdout, readFileSync(join(ROOT, "skills", "drawio", "workflows", "build.md"), "utf8") + "\n");
@@ -84,9 +84,9 @@ test("cli: workflow / principles text equals the skill docs it serves", () => {
   for (const mode of Object.keys(expectBody)) {
     const r = run(["principles", "--mode", mode]);
     assert.equal(r.status, 0, mode);
-    assert.ok(r.stdout.startsWith(expectBody[mode] + marker), `principles --mode ${mode} body`);
+    assert.ok(r.stdout.startsWith(expectBody[mode as keyof typeof expectBody] + marker), `principles --mode ${mode} body`);
     // the category trailer is computed by code — snapshot it exactly
-    match(`principles.${mode}.categories`, r.stdout.slice(expectBody[mode].length + marker.length));
+    match(`principles.${mode}.categories`, r.stdout.slice(expectBody[mode as keyof typeof expectBody].length + marker.length));
     if (mode === "aws") assert.equal(def.stdout, r.stdout, "default mode is aws");
   }
 });

@@ -11,6 +11,6 @@ test("packs are parsed only when one of their styles is read", () => {
   assert.deepEqual(_loadedPacks(), before);
   const e = c.icons.find((x) => x.lazy && !before.includes(x.pack));
   if (!e) return; // every pack already loaded by an earlier file in this process
-  assert.match(styleForIcon(c, e.name).style, /image=data:image\//);
+  assert.match(styleForIcon(c, e.name)!.style, /image=data:image\//);
   assert.deepEqual(_loadedPacks(), [...before, e.pack]);
 });

@@ -5,11 +5,11 @@ import { loadCatalog, buildCatalogIndex, CATALOG_INDEX, searchIcon, getIcon, sty
 const catalog = loadCatalog();
 
 // fixture helpers mirroring the engine's emitted style shapes
-const _subnet = (id, label, parent = "1") =>
+const _subnet = (id: any, label: any, parent = "1") =>
   `<mxCell id="${id}" value="${label}" style="grIcon=mxgraph.aws4.group_subnet;" parent="${parent}"><mxGeometry x="0" y="0" width="300" height="200" as="geometry"/></mxCell>`;
-const _az = (id, parent = "1") =>
+const _az = (id: any, parent = "1") =>
   `<mxCell id="${id}" value="AZ" style="grIcon=mxgraph.aws4.group_availability_zone;" parent="${parent}"><mxGeometry x="0" y="0" width="400" height="300" as="geometry"/></mxCell>`;
-const _icon = (id, name, parent = "1") =>
+const _icon = (id: any, name: any, parent = "1") =>
   `<mxCell id="${id}" value="${name}" style="resIcon=mxgraph.aws4.${name};" parent="${parent}"><mxGeometry x="10" y="10" width="48" height="48" as="geometry"/></mxCell>`;
 
 test("arch: flags a database in a public subnet", () => {
@@ -20,7 +20,7 @@ test("arch: flags a database in a public subnet", () => {
 
 // A labelled subnet swaps its glyph to the security-group padlock but carries a `subnet=1` marker
 // (builder.group). The audit must still recognise it as a subnet via the marker, not the glyph.
-const _subnetPadlock = (id, label, parent = "1") =>
+const _subnetPadlock = (id: any, label: any, parent = "1") =>
   `<mxCell id="${id}" value="${label}" style="shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_security_group;subnet=1;" parent="${parent}"><mxGeometry x="0" y="0" width="300" height="200" as="geometry"/></mxCell>`;
 
 test("arch: DB in a padlock-glyph public subnet (subnet=1 marker) is still flagged", () => {
@@ -48,8 +48,8 @@ test("arch: skips non-AWS diagrams (gate)", () => {
   assert.equal(auditArchitecture(xml).length, 0);
 });
 
-const _v = (id, x, y) => `<mxCell id="${id}" vertex="1" style="rounded=0;"><mxGeometry x="${x}" y="${y}" width="80" height="50" as="geometry"/></mxCell>`;
-const _e = (s, t) => `<mxCell edge="1" source="${s}" target="${t}" style=""/>`;
+const _v = (id: any, x: any, y: any) => `<mxCell id="${id}" vertex="1" style="rounded=0;"><mxGeometry x="${x}" y="${y}" width="80" height="50" as="geometry"/></mxCell>`;
+const _e = (s: any, t: any) => `<mxCell edge="1" source="${s}" target="${t}" style=""/>`;
 
 test("edges: flags long detour connectors to a far-away node", () => {
   // a shared node parked far at the bottom → 3 long edges (the "parked far" smell)
@@ -66,14 +66,14 @@ test("search finds the correct S3 by its real name 's3'", () => {
   const r = searchIcon(catalog, "s3");
   assert.ok(r.some((x) => x.name === "s3"), "must have an icon named 's3'");
   const s3 = r.find((x) => x.name === "s3");
-  assert.equal(s3.style, undefined, "search results are compact — no style string");
-  assert.ok(s3.color, "compact result keeps the category color");
+  assert.equal(s3!.style, undefined, "search results are compact — no style string");
+  assert.ok(s3!.color, "compact result keeps the category color");
 });
 
 test("search --full returns the style string", () => {
   const r = searchIcon(catalog, "s3", { full: true });
   const s3 = r.find((x) => x.name === "s3");
-  assert.match(s3.style, /resIcon=mxgraph\.aws4\.s3;/);
+  assert.match(s3!.style!, /resIcon=mxgraph\.aws4\.s3;/);
 });
 
 test("search finds EKS by the keyword kubernetes", () => {
@@ -96,9 +96,9 @@ test("search head-noun does not regress 'nat gateway'", () => {
 
 test("styleForIcon returns the style verbatim (S3 = green + points + aspect=fixed)", () => {
   const s = styleForIcon(catalog, "s3");
-  assert.match(s.style, /fillColor=#7AA116/);
-  assert.match(s.style, /aspect=fixed/);
-  assert.match(s.style, /points=/);
+  assert.match(s!.style, /fillColor=#7AA116/);
+  assert.match(s!.style, /aspect=fixed/);
+  assert.match(s!.style, /points=/);
 });
 
 test("validate detects fabricated stencil names", () => {
@@ -108,7 +108,7 @@ test("validate detects fabricated stencil names", () => {
 });
 
 test("validate is clean with a valid stencil", () => {
-  const s = styleForIcon(catalog, "ec2").style;
+  const s = styleForIcon(catalog, "ec2")!.style;
   const xml = `<mxCell id="a" style="${s}"/>`;
   const res = validateDiagram(catalog, xml, { strict: true });
   assert.equal(res.errors.length, 0);
@@ -125,7 +125,7 @@ test("getIcon returns null for a name that does not exist", () => {
 });
 
 test("audit catches huge font sizes and too many sizes (vertices only)", () => {
-  const v = (s, id) => `<mxCell id="${id}" vertex="1" style="rounded=0;fontSize=${s};"/>`;
+  const v = (s: any, id: any) => `<mxCell id="${id}" vertex="1" style="rounded=0;fontSize=${s};"/>`;
   // 5 distinct vertex sizes -> too many; two >=16 cells -> repeated oversizing.
   const xml = `<root>${v(10, "a")}${v(11, "b")}${v(12, "c")}${v(13, "d")}${v(18, "e")}${v(18, "f")}</root>`;
   const a = auditAesthetics(xml);
@@ -134,7 +134,7 @@ test("audit catches huge font sizes and too many sizes (vertices only)", () => {
 });
 
 test("audit font budget ignores edge labels and allows one hero title", () => {
-  const v = (s, id) => `<mxCell id="${id}" vertex="1" style="rounded=0;fontSize=${s};"/>`;
+  const v = (s: any, id: any) => `<mxCell id="${id}" vertex="1" style="rounded=0;fontSize=${s};"/>`;
   // 4 vertex sizes + an edge-label size that must NOT count; a single 18 hero is fine.
   const xml = `<root>${v(11, "a")}${v(12, "b")}${v(14, "c")}${v(18, "d")}<mxCell id="e1" edge="1" style="fontSize=10;"/></root>`;
   const a = auditAesthetics(xml);
@@ -143,12 +143,12 @@ test("audit font budget ignores edge labels and allows one hero title", () => {
 });
 
 test("audit suggests fan-out: square corners + pin connection points", () => {
-  const e = (s, t) => `<mxCell edge="1" source="${s}" target="${t}" style="edgeStyle=orthogonalEdgeStyle;rounded=1;"/>`;
+  const e = (s: any, t: any) => `<mxCell edge="1" source="${s}" target="${t}" style="edgeStyle=orthogonalEdgeStyle;rounded=1;"/>`;
   const xml = `<root>${e("hub", "a")}${e("hub", "b")}${e("hub", "c")}</root>`;
   const a = auditAesthetics(xml);
   assert.ok(a.advice.some((x) => /rounded=0|sharp corners/.test(x)));
   assert.ok(a.advice.some((x) => /Pin connection points/.test(x)));
-  assert.equal(a.metrics.fanOutSources, 1);
+  assert.equal(a.metrics!.fanOutSources, 1);
 });
 
 test("AWS: catches an icon recolored to the wrong category", () => {
@@ -184,8 +184,8 @@ test("AWS: correctly nested groups (subnet inside VPC) are not warned about nest
 });
 
 test("audit catches a label sitting on a broken (L/Z) line missing a waypoint", () => {
-  const v = (id, x, y) => `<mxCell id="${id}" vertex="1" style="rounded=1;"><mxGeometry x="${x}" y="${y}" width="100" height="50" as="geometry"/></mxCell>`;
-  const e = (pts) => `<mxCell id="ed" edge="1" value="streaming" source="a" target="b" style="edgeStyle=orthogonalEdgeStyle;"><mxGeometry relative="1" as="geometry">${pts}</mxGeometry></mxCell>`;
+  const v = (id: any, x: any, y: any) => `<mxCell id="${id}" vertex="1" style="rounded=1;"><mxGeometry x="${x}" y="${y}" width="100" height="50" as="geometry"/></mxCell>`;
+  const e = (pts: any) => `<mxCell id="ed" edge="1" value="streaming" source="a" target="b" style="edgeStyle=orthogonalEdgeStyle;"><mxGeometry relative="1" as="geometry">${pts}</mxGeometry></mxCell>`;
   const noWp = `<root>${v("a", 0, 0)}${v("b", 400, 300)}${e("")}</root>`;
   assert.ok(validateDiagram(catalog, noWp).audit.advice.some((x) => /bent route/.test(x)));
   const withWp = `<root>${v("a", 0, 0)}${v("b", 400, 300)}${e('<Array as="points"><mxPoint x="200" y="150"/></Array>')}</root>`;
@@ -230,7 +230,7 @@ test("geometry: a badge icon fully inside a box is NOT flagged (intentional laye
 });
 
 test("geometry: flags multiple edges entering one target at the same point", () => {
-  const e = (s) => `<mxCell id="e_${s}" edge="1" source="${s}" target="hub" style="entryX=0;entryY=0.5;"/>`;
+  const e = (s: any) => `<mxCell id="e_${s}" edge="1" source="${s}" target="hub" style="entryX=0;entryY=0.5;"/>`;
   const xml = `<root><mxCell id="1" parent="0"/>${e("a")}${e("b")}</root>`;
   assert.ok(auditGeometry(xml).some((a) => /same point/.test(a)));
 });
@@ -259,7 +259,7 @@ test("routeTB: same horizontal band → straight vertical line", () => {
 import { centerInGapX } from "../src/layout.ts";
 test("centerInGapX: aligns a node into the center of the gap between 2 rects", () => {
   // the gap between [0..100] and [300..400] has center 200; a node 40 wide → x=180
-  assert.equal(centerInGapX({ x: 0, w: 100 }, { x: 300, w: 100 }, 40), 180);
+  assert.equal(centerInGapX({ x: 0, w: 100 } as any, { x: 300, w: 100 } as any, 40), 180);
 });
 
 import { Diagram } from "../src/builder.ts";
@@ -295,31 +295,31 @@ test("validate: empty file is rejected, not silently ok", () => {
 
 // ---- layout suggestion (archetype from graph metrics) ----
 test("suggest: a dominant hub → hub-and-spoke", () => {
-  const r = suggestLayout({ nodeCount: 8, edgeCount: 8, maxDegree: 6, hubScore: 0.75, hubId: "hub", topologyBoundary: false, backEdges: 0, maxIconsPerGroup: 1, singleIconFrames: 0, portrait: false });
+  const r = suggestLayout({ nodeCount: 8, edgeCount: 8, maxDegree: 6, hubScore: 0.75, hubId: "hub", topologyBoundary: false, backEdges: 0, maxIconsPerGroup: 1, singleIconFrames: 0, portrait: false } as any);
   assert.equal(r.recommended, "hubspoke");
 });
 test("suggest: topology boundaries → network (beats a busy central store)", () => {
-  const r = suggestLayout({ topologyBoundary: true, nodeCount: 9, edgeCount: 6, maxDegree: 3, hubScore: 0.5, backEdges: 0, maxIconsPerGroup: 2, singleIconFrames: 0, portrait: false });
+  const r = suggestLayout({ topologyBoundary: true, nodeCount: 9, edgeCount: 6, maxDegree: 3, hubScore: 0.5, backEdges: 0, maxIconsPerGroup: 2, singleIconFrames: 0, portrait: false } as any);
   assert.equal(r.recommended, "network");
 });
 test("suggest: a busy central store in a flat pipeline is NOT a hub", () => {
-  const r = suggestLayout({ topologyBoundary: false, nodeCount: 9, edgeCount: 8, maxDegree: 3, hubScore: 0.38, backEdges: 0, maxIconsPerGroup: 2, singleIconFrames: 0, portrait: false });
+  const r = suggestLayout({ topologyBoundary: false, nodeCount: 9, edgeCount: 8, maxDegree: 3, hubScore: 0.38, backEdges: 0, maxIconsPerGroup: 2, singleIconFrames: 0, portrait: false } as any);
   assert.equal(r.recommended, "pipeline");
 });
 test("suggest: large lifecycle → dense-phase-columns", () => {
-  const r = suggestLayout({ topologyBoundary: false, nodeCount: 20, edgeCount: 15, maxDegree: 3, hubScore: 0.2, backEdges: 0, maxIconsPerGroup: 6, singleIconFrames: 0, portrait: false });
+  const r = suggestLayout({ topologyBoundary: false, nodeCount: 20, edgeCount: 15, maxDegree: 3, hubScore: 0.2, backEdges: 0, maxIconsPerGroup: 6, singleIconFrames: 0, portrait: false } as any);
   assert.equal(r.family, "dense-phase-columns");
 });
 test("suggest: a large UNPACKED diagram → sparsity warning", () => {
-  const r = suggestLayout({ topologyBoundary: false, nodeCount: 16, edgeCount: 12, maxDegree: 2, hubScore: 0.2, backEdges: 0, maxIconsPerGroup: 1, singleIconFrames: 14, portrait: false });
+  const r = suggestLayout({ topologyBoundary: false, nodeCount: 16, edgeCount: 12, maxDegree: 2, hubScore: 0.2, backEdges: 0, maxIconsPerGroup: 1, singleIconFrames: 14, portrait: false } as any);
   assert.ok(r.warnings.some((w) => /single icon/.test(w)));
 });
 test("suggest: a small linear pipeline (1 service/stage) does NOT warn sparsity", () => {
-  const r = suggestLayout({ topologyBoundary: false, nodeCount: 5, edgeCount: 4, maxDegree: 2, hubScore: 0.5, backEdges: 0, maxIconsPerGroup: 1, singleIconFrames: 5, portrait: false });
+  const r = suggestLayout({ topologyBoundary: false, nodeCount: 5, edgeCount: 4, maxDegree: 2, hubScore: 0.5, backEdges: 0, maxIconsPerGroup: 1, singleIconFrames: 5, portrait: false } as any);
   assert.ok(!r.warnings.some((w) => /single icon/.test(w)));
 });
 test("suggest: a large TOPOLOGY (1 icon/subnet) does NOT warn sparsity", () => {
-  const r = suggestLayout({ topologyBoundary: true, nodeCount: 14, edgeCount: 8, maxDegree: 2, hubScore: 0.3, backEdges: 0, maxIconsPerGroup: 1, singleIconFrames: 10, portrait: false });
+  const r = suggestLayout({ topologyBoundary: true, nodeCount: 14, edgeCount: 8, maxDegree: 2, hubScore: 0.3, backEdges: 0, maxIconsPerGroup: 1, singleIconFrames: 10, portrait: false } as any);
   assert.ok(!r.warnings.some((w) => /single icon/.test(w)));
 });
 test("graphFromXml: counts leaf nodes/edges and finds the busiest node", () => {
@@ -331,7 +331,7 @@ test("graphFromXml: counts leaf nodes/edges and finds the busiest node", () => {
 });
 
 // ---- ambiguous visual relay (in-edge + out-edge share a node port) ----
-const _at = (id, x) => `<mxCell id="${id}" value="${id}" style="resIcon=mxgraph.aws4.ec2;" vertex="1" parent="1"><mxGeometry x="${x}" y="0" width="48" height="48" as="geometry"/></mxCell>`;
+const _at = (id: any, x: any) => `<mxCell id="${id}" value="${id}" style="resIcon=mxgraph.aws4.ec2;" vertex="1" parent="1"><mxGeometry x="${x}" y="0" width="48" height="48" as="geometry"/></mxCell>`;
 test("geometry: flags a pass-through relay (in + out at the same port)", () => {
   const xml = `<root>${_at("a", 0)}${_at("b", 200)}${_at("c", 400)}<mxCell id="e1" edge="1" source="a" target="b" style="exitX=1;exitY=0.5;entryX=0;entryY=0.5;"/><mxCell id="e2" edge="1" source="b" target="c" style="exitX=0;exitY=0.5;entryX=0;entryY=0.5;"/></root>`;
   assert.ok(auditGeometry(xml).some((a) => /relay/.test(a) && /"b"/.test(a)));
@@ -394,6 +394,6 @@ test("lazy pack styles match the full catalog", async () => {
   const dir = dirname(CATALOG_INDEX).replace(/data$/, "catalog");
   for (const pack of ["azure", "gcp", "database"]) {
     const full = JSON.parse(readFileSync(join(dir, `${pack}.json`), "utf8"));
-    for (const e of full.icons.slice(0, 5)) assert.equal(catalog.byName.get(e.name).style, e.style, `${pack}/${e.name}`);
+    for (const e of full.icons.slice(0, 5)) assert.equal(catalog.byName.get(e.name)!.style, e.style, `${pack}/${e.name}`);
   }
 });

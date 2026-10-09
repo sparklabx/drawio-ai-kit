@@ -55,7 +55,7 @@ test("visible frame()/group() still emit real parent cells", () => {
   assert.match(xml, /<mxCell id="root"/, "root group emits a cell");
   assert.match(xml, /<mxCell id="inner"/, "inner group emits a cell");
   const innerCell = xml.split("<mxCell").find((c) => c.includes(`id="a"`));
-  assert.match(innerCell, /parent="inner"/, "icon inside a real group is parented to it");
+  assert.match(innerCell!, /parent="inner"/, "icon inside a real group is parented to it");
 });
 
 test("link() to a phantom throws a teaching message", () => {
@@ -85,7 +85,7 @@ test("stack:N draws N-1 shadow cards behind the frame, offset up-right, and pass
   assert.ok(stk1 && stk2, "stack:3 emits two shadow cards");
   assert.ok(!xml.includes("acc__stk3"), "…and no more than stack-1");
   // shadow k sits BEFORE the real account cell (lower z-order = drawn behind)
-  const order = (id) => xml.indexOf(`id="${id}"`);
+  const order = (id: string) => xml.indexOf(`id="${id}"`);
   assert.ok(order("acc__stk2") < order("acc__stk1") && order("acc__stk1") < order("acc"), "shadows render behind, farthest first");
   // farther card is offset further right + up than the nearer one (front/identity card stays at the bottom)
   assert.ok(d.R["acc__stk2"].x > d.R["acc__stk1"].x && d.R["acc__stk2"].y < d.R["acc__stk1"].y, "cards step up-and-right");

@@ -15,7 +15,7 @@ export const KIT = join(ROOT, "dist", "kit.mjs");
 export const UPDATE = process.env.UPDATE_SNAPSHOTS === "1";
 const SNAP_DIR = join(dirname(fileURLToPath(import.meta.url)), "__snapshots__");
 
-export const sha256 = (s) => createHash("sha256").update(s).digest("hex");
+export const sha256 = (s: string) => createHash("sha256").update(s).digest("hex");
 
 /** A fresh temp dir (realpath'd: macOS /var → /private/var) with node_modules/drawio-ai-kit → repo,
  *  so generated scripts resolve the kit whether they import an absolute path or the bare package name. */
@@ -28,21 +28,21 @@ export function makeTmp(label = "charac") {
 }
 
 /** Replace machine-specific absolute paths with stable tokens. */
-export function normalize(text, tmp) {
+export function normalize(text: unknown, tmp?: string) {
   let s = String(text);
-  const swap = (from, to) => { if (from) s = s.split(from).join(to); };
+  const swap = (from: string | undefined, to: string) => { if (from) s = s.split(from).join(to); };
   if (tmp) { swap(tmp, "<TMP>"); swap(tmp.replace(/^\/private/, ""), "<TMP>"); }
   swap(ROOT, "<ROOT>");
   return s;
 }
 
 /** Normalize the kit import specifier so absolute-path and bare-package scaffolds compare equal. */
-export const normalizeKitImport = (src) =>
+export const normalizeKitImport = (src: string) =>
   src.replace(/"(?:<ROOT>\/(?:dist|src)\/kit\.(?:mjs|js|ts)|drawio-ai-kit)"/g, '"<KIT>"');
 
 /** Spawn the bundled CLI with the current runtime (node or bun). PATH is emptied unless overridden so
  *  nothing external (a globally installed drawio-ai, draw.io desktop) leaks into the result. */
-export function runCli(args, { cwd, env = {}, tmp } = {}) {
+export function runCli(args: string[], { cwd, env = {}, tmp }: { cwd?: string; env?: Record<string, string>; tmp?: string } = {}) {
   const r = spawnSync(process.execPath, [CLI, ...args], {
     cwd: cwd ?? tmp ?? ROOT,
     encoding: "utf8",
@@ -57,10 +57,10 @@ export function runCli(args, { cwd, env = {}, tmp } = {}) {
 }
 
 /** Parse stdout as JSON when possible, else keep the text. */
-export const parseOut = (s) => { try { return JSON.parse(s); } catch { return s; } };
+export const parseOut = (s: string) => { try { return JSON.parse(s); } catch { return s; } };
 
 /** Fake draw.io desktop binary: logs its argv and writes a stub PNG at the -o path. */
-export function fakeDrawio(dir) {
+export function fakeDrawio(dir: string) {
   const bin = join(dir, "fake-drawio.sh");
   writeFileSync(bin, `#!/bin/sh
 printf '%s\\n' "$@" > "${join(dir, "fake-drawio.argv")}"
@@ -71,10 +71,10 @@ while [ $# -gt 0 ]; do if [ "$1" = "-o" ]; then shift; printf 'PNG' > "$1"; fi; 
 }
 
 /** Per-file JSON snapshot store. In UPDATE mode the file is rebuilt from scratch on first use. */
-export function snapshotFile(name) {
+export function snapshotFile(name: string) {
   const path = join(SNAP_DIR, `${name}.json`);
-  let data = UPDATE ? {} : existsSync(path) ? JSON.parse(readFileSync(path, "utf8")) : {};
-  return function match(key, value) {
+  let data: Record<string, unknown> = UPDATE ? {} : existsSync(path) ? JSON.parse(readFileSync(path, "utf8")) : {};
+  return function match(key: string, value: unknown) {
     const v = JSON.parse(JSON.stringify(value));
     if (UPDATE) {
       data[key] = v;

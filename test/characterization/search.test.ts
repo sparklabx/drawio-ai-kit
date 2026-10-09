@@ -8,7 +8,7 @@ import { makeTmp, parseOut, runCli, snapshotFile } from "./_helpers.ts";
 
 const match = snapshotFile("search-ranking");
 const tmp = makeTmp("charac-search");
-const search = (...args) => {
+const search = (...args: string[]) => {
   const r = runCli(["search", ...args], { tmp });
   assert.equal(r.status, 0, r.stderr);
   return parseOut(r.stdout);
@@ -60,7 +60,7 @@ const RANKING = {
 };
 
 test("search ranking (expected to change with a new search engine)", () => {
-  const names = (r) => (Array.isArray(r) ? r.map((x) => x.name) : Object.fromEntries(Object.entries(r).map(([k, v]) => [k, v.map((x) => x.name)])));
+  const names = (r: any) => (Array.isArray(r) ? r.map((x: any) => x.name) : Object.fromEntries(Object.entries(r).map(([k, v]: [string, any]) => [k, v.map((x: any) => x.name)])));
   for (const q of RANKING.single) match(`single:${q}`, names(search(q)));
   for (const q of RANKING.aliases) match(`alias:${q}`, names(search(q)));
   for (const q of RANKING.batch) match(`batch:${q}`, names(search(q)));

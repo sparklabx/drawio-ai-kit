@@ -3,15 +3,15 @@ import assert from "node:assert/strict";
 import { Diagram } from "../src/builder.ts";
 import { frame, grid, group, icon, renderTree } from "../src/layout-engine.ts";
 
-const portOf = (xml, src, tgt) => {
-  const e = xml.split("<mxCell").find((c) => new RegExp(`source="${src}"`).test(c) && new RegExp(`target="${tgt}"`).test(c));
-  const g = (k) => (e.match(new RegExp(`${k}=([-\\d.]+)`)) || [])[1];
-  return { exitX: g("exitX"), exitY: g("exitY"), entryX: g("entryX"), entryY: g("entryY"), pts: (e.match(/<mxPoint/g) || []).length };
+const portOf = (xml: string, src: string, tgt: string) => {
+  const e = xml.split("<mxCell").find((c: string) => new RegExp(`source="${src}"`).test(c) && new RegExp(`target="${tgt}"`).test(c));
+  const g = (k: string) => (e!.match(new RegExp(`${k}=([-\\d.]+)`)) || [])[1];
+  return { exitX: g("exitX"), exitY: g("exitY"), entryX: g("entryX"), entryY: g("entryY"), pts: (e!.match(/<mxPoint/g) || []).length };
 };
 
 // 5-way fan-out forces several edges to share the gap between hub and the target column → their
 // trunk segments overlap unless the nudge pass separates them. Asserts the nudge invariant.
-function fanOut(order) {
+function fanOut(order: string[]) {
   const d = new Diagram("hubspoke");
   renderTree(d, group("r", "group_region", "R", { dir: "row", gap: 80 }, [
     icon("hub", "ec2", "Hub"),
@@ -64,7 +64,7 @@ test("nudge: a straight A→B link stays straight (no spurious waypoints)", () =
   d.link("a", "b");
   const xml = d.toXML();
   const edge = xml.split("<mxCell").find((c) => /edge="1"/.test(c));
-  assert.doesNotMatch(edge, /<mxPoint/, "an aligned straight link needs no waypoints");
+  assert.doesNotMatch(edge!, /<mxPoint/, "an aligned straight link needs no waypoints");
   assert.equal(d._overlaps, 0);
 });
 
@@ -115,7 +115,7 @@ test("rail: a bottom-rail edge routes along one gutter Y below the node row", ()
   d.link("c", "a", "feedback", { rail: "bottom", dash: true });
   const xml = d.toXML();
   const edge = xml.split("<mxCell").find((s) => /source="c"/.test(s) && /target="a"/.test(s));
-  const ys = [...edge.matchAll(/<mxPoint x="[-\d.]+" y="([-\d.]+)"/g)].map((m) => +m[1]);
+  const ys = [...edge!.matchAll(/<mxPoint x="[-\d.]+" y="([-\d.]+)"/g)].map((m) => +m[1]);
   assert.ok(ys.length >= 2, "rail edge carries waypoints");
   assert.equal(ys[0], ys[1], "the two rail waypoints share one gutter Y");
   assert.ok(ys[0] > d.R["a"].y + d.R["a"].h, "the rail sits below the node row");

@@ -23,7 +23,7 @@ mkdirSync(kitBin);
 writeFileSync(join(kitBin, "drawio-ai"), `#!/bin/sh\nexec "${process.execPath}" "${CLI}" "$@"\n`);
 chmodSync(join(kitBin, "drawio-ai"), 0o755);
 
-const count = (xml, re) => (xml.match(re) ?? []).length;
+const count = (xml: string, re: RegExp) => (xml.match(re) ?? []).length;
 
 test("examples: the template set itself", () => {
   match("_list", examples);
@@ -32,14 +32,14 @@ test("examples: the template set itself", () => {
 for (const rel of examples) {
   test(`example ${rel}`, () => {
     const dir = join(tmp, rel.replace(/\//g, "__").replace(/\.mjs$/, ""));
-    const script = join(dir, rel.split("/").pop());
+    const script = join(dir, rel.split("/").pop()!);
     const sc = runCli(["scaffold", rel, "-o", script], { tmp });
     assert.equal(sc.status, 0, sc.stderr);
     const r = spawnSync(process.execPath, [script], { cwd: dir, encoding: "utf8", env: { HOME: process.env.HOME, PATH: kitBin } });
     assert.equal(r.status, 0, r.stderr);
     const outputs = readdirSync(dir).filter((f) => f.endsWith(".drawio")).sort();
     assert.ok(outputs.length > 0, "example produced no .drawio");
-    const files = {};
+    const files: Record<string, unknown> = {};
     for (const f of outputs) {
       const xml = readFileSync(join(dir, f), "utf8");
       files[f] = {
