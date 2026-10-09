@@ -47,3 +47,4 @@ bun.inproc.example_bpmn_warm_ms.median     1.65      1.68     +1.8%      ok
 - `package.dist_bytes` +45% is dist/types/*.d.ts now counted; the .mjs bundles are about the same size.
 - Tried and dropped: memoizing norm() in searchIcon. Warm search -55% in-process, but cold `search` CLI +1 ms (Map fill). Left for the minisearch phase.
 - node search_lambda wall is within noise of baseline (+5..10% across runs; 'node -e 0' floor is 15 ms).
+- node.inproc.loadCatalog_ms reads 0.01 -> 4.2 ms and trips the compare gate: an artifact. The 4 ms moved from kit import (-4 ms) to the first loadCatalog call; total is unchanged or better.
