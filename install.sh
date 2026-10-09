@@ -71,31 +71,27 @@ skillcmd="skill install -g -y$agents"
 
 if [ "$runtime" = bun ]; then run bun add -g "$pkg"; else run npm i -g "$pkg"; fi
 
-if [ "$dry" = 1 ]; then
-  # shellcheck disable=SC2086 # word list is deliberate
-  [ "$skill" = 0 ] || run drawio-ai $skillcmd
-  run drawio-ai root
-  exit 0
-fi
-
 # Find the global bin dir so the CLI runs even if it is not on PATH yet.
-if [ "$runtime" = bun ]; then
-  gbin=$(bun pm bin -g 2>/dev/null || true)
-else
-  gbin=$(npm prefix -g 2>/dev/null || true)
-  [ -z "$gbin" ] || gbin=$gbin/bin
-fi
-
-if have drawio-ai; then
+if [ "$dry" = 1 ]; then
   cli=drawio-ai
-elif [ -n "$gbin" ] && [ -x "$gbin/drawio-ai" ]; then
-  cli=$gbin/drawio-ai
-  printf '\nNote: %s is not on your PATH. Add it, e.g.:\n  export PATH="%s:$PATH"\n\n' "$gbin" "$gbin"
 else
-  die "install finished but drawio-ai was not found. Check your global bin dir (${gbin:-unknown}) and PATH."
+  if [ "$runtime" = bun ]; then
+    gbin=$(bun pm bin -g 2>/dev/null || true)
+  else
+    gbin=$(npm prefix -g 2>/dev/null || true)
+    [ -z "$gbin" ] || gbin=$gbin/bin
+  fi
+  if have drawio-ai; then
+    cli=drawio-ai
+  elif [ -n "$gbin" ] && [ -x "$gbin/drawio-ai" ]; then
+    cli=$gbin/drawio-ai
+    printf '\nNote: %s is not on your PATH. Add it, e.g.:\n  export PATH="%s:$PATH"\n\n' "$gbin" "$gbin"
+  else
+    die "install finished but drawio-ai was not found. Check your global bin dir (${gbin:-unknown}) and PATH."
+  fi
 fi
 
 # shellcheck disable=SC2086
 [ "$skill" = 0 ] || run "$cli" $skillcmd
-run "$cli" root >/dev/null
-printf 'drawio-ai-kit installed.\n'
+run "$cli" root
+[ "$dry" = 1 ] || printf 'drawio-ai-kit installed.\n'

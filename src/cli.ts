@@ -214,9 +214,13 @@ switch (cmd) {
     // everything after the script belongs to the script (parseFlags would swallow its flags)
     const args = rest.slice(1);
     const pre = process.versions.bun ? ["--no-install", "--preload", hook] : ["--import", pathToFileURL(hook).href];
-    const r = spawnSync(process.execPath, [...pre, script, ...args], { stdio: "inherit" });
+    // DRAWIO_AI_CLI lets the script call this CLI even when `drawio-ai` is not on PATH
+    const r = spawnSync(process.execPath, [...pre, script, ...args], {
+      stdio: "inherit", env: { ...process.env, DRAWIO_AI_CLI: fileURLToPath(import.meta.url) },
+    });
+    if (r.error) { console.error(`cannot run ${process.execPath}: ${r.error.message}`); process.exit(1); }
+    if (r.signal) process.kill(process.pid, r.signal);
     process.exit(r.status ?? 1);
-    break;
   }
   case "root":
     process.stdout.write(packageRoot() + "\n");
@@ -298,6 +302,7 @@ switch (cmd) {
   types
   principles [--mode aws|azure|gcp|databricks|bpmn]
   scaffold <template.mjs> [-o out.mjs] [--name x.drawio] | --list   copy a template as a standalone build script
+  run <script.mjs> [args…]                        run a build script; its import of "drawio-ai-kit" resolves to this install
   root
   render <file> [-o out.png] [--scale N] [--page N] [--check]
   workflow

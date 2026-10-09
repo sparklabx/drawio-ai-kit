@@ -148,7 +148,6 @@ export interface SearchHit {
   style?: string;
   width?: number;
   height?: number;
-  score?: number;
 }
 
 export interface AuditMetrics { fontSizes: number[]; fillColors: number; edges: number; fanOutSources: number }

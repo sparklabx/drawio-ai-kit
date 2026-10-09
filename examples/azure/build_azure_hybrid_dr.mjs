@@ -4,8 +4,7 @@
 // the DR database in sync; Traffic Manager flips DNS on failover. White frames; identity via border + corner icon.
 // Sibling regions are equal-height (engine-enforced). Run: node examples/azure/build_azure_hybrid_dr.mjs
 import { writeFileSync } from "node:fs";
-import { Diagram } from "drawio-ai-kit";
-import { frame, icon, box, phantom, renderTree } from "drawio-ai-kit";
+import { Diagram, frame, icon, box, phantom, renderTree } from "drawio-ai-kit";
 
 const d = new Diagram("network");
 const AZ = "#0078D4", SUB = "#8AB4D8", RGN = "#777777";

@@ -121,14 +121,18 @@ export function scaffoldSource(src: string, name?: string) {
   if (m) {
     // templates that don't print their own VALIDATE line get one from the CLI (exit 2 = not ok, still JSON)
     const validate = /VALIDATE:/.test(s) ? "" : `
-try { console.log("VALIDATE:", __exec("drawio-ai", ["validate", __f], { encoding: "utf8" }).trim()); }
+try { console.log("VALIDATE:", __cli(["validate", __f]).trim()); }
 catch (e) { console.log("VALIDATE:", String(e.stdout ?? e.message).trim()); }`;
     s += `
 // Self-check tail (added by \`drawio-ai scaffold\`): one run = build + validate + render + issues.
 import { execFileSync as __exec } from "node:child_process";
+// \`drawio-ai run\` sets DRAWIO_AI_CLI, so this works even when drawio-ai is not on PATH
+const __cli = (a) => process.env.DRAWIO_AI_CLI
+  ? __exec(process.execPath, [process.env.DRAWIO_AI_CLI, ...a], { encoding: "utf8" })
+  : __exec("drawio-ai", a, { encoding: "utf8" });
 const __f = new URL("./${m[1]}", import.meta.url).pathname;${validate}
 try {
-  console.log(__exec("drawio-ai", ["render", __f, "--check", "-o", __f + ".png"], { encoding: "utf8" }).trim());
+  console.log(__cli(["render", __f, "--check", "-o", __f + ".png"]).trim());
 } catch (e) { console.error("RENDER-SKIPPED:", String(e.message).split("\\n")[0]); }
 `;
   }

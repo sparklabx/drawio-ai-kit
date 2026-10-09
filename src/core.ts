@@ -1,4 +1,4 @@
-// drawio-ai-kit — core engine (zero-dependency, Node >=18, target Node 26)
+// drawio-ai-kit — core engine (Node >=18, target Node 26)
 // Provides: loadCatalog, searchIcon, styleForIcon, styleForGroup, validateDiagram.
 // No external libraries so the CLI always runs, even when the MCP SDK is not installed.
 
@@ -108,16 +108,16 @@ export function searchIcon(catalog: Catalog, query: string, { category, limit = 
   return searchEntries(catalog, query, limit, (e) => {
     if (kind && e.kind !== kind) return false;
     return !cat || norm(e.category) === cat || norm(e.category).includes(cat);
-  }).map((e) => decorate(catalog, e, undefined, { lean: true, compact: !full }));
+  }).map((e) => decorate(catalog, e, { lean: true, compact: !full }));
 }
 
 function colorFor(catalog: Catalog, entry: CatalogEntry): string {
   return entry.color || catalog.categoryColors[entry.category ?? ""] || "#232F3E";
 }
 
-function decorate(catalog: Catalog, entry: CatalogEntry, score?: number, { lean = false, compact = false } = {}): SearchHit {
+function decorate(catalog: Catalog, entry: CatalogEntry, { lean = false, compact = false } = {}): SearchHit {
   // ponytail: compact = search-result shape. The agent builds with icon("<name>") and the engine
-  // resolves the style server-side, so the ~600-char style string (plus fqn/aliases/score) is
+  // resolves the style server-side, so the ~600-char style string (plus fqn/aliases) is
   // pure context burn in search output. `drawio-ai style <name>` returns the full entry.
   if (compact) {
     return {
@@ -148,7 +148,6 @@ function decorate(catalog: Catalog, entry: CatalogEntry, score?: number, { lean 
     aliases: entry.aliases ?? [],
     style,
     ...(styleObj.width ? { width: styleObj.width, height: styleObj.height } : {}),
-    ...(score != null ? { score } : {}),
   };
 }
 

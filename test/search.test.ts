@@ -39,3 +39,15 @@ test("exact names rank first, also when written with spaces or joined", () => {
   assert.equal(names("nat gateway")[0], "nat_gateway");
   assert.equal(names("Route53")[0], "route_53");
 });
+
+test("a compound-name hit does not hide the other keywords", () => {
+  const has = (q: string, ...want: string[]) => {
+    const top = names(q);
+    for (const n of want) assert.ok(top.includes(n), `${q}: ${n} in ${top.join()}`);
+  };
+  has("s3 lambda", "s3", "lambda");
+  has("rds s3 lambda", "rds", "s3", "lambda");
+  has("lambda redis cache", "lambda");
+  has("kubernetes load balancer", "kubernetes");
+  has("ec2 api gateway", "ec2", "api_gateway");
+});

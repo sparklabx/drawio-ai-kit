@@ -2,8 +2,7 @@
 // Two sites as separate blocks, linked through Direct Connect (+ VPN backup); components are
 // mirrored on both sides and DR replication uses dashed edges.
 import { writeFileSync } from "node:fs";
-import { Diagram } from "drawio-ai-kit";
-import { group, frame, icon, box, phantom, renderTree } from "drawio-ai-kit";
+import { Diagram, group, frame, icon, box, phantom, renderTree } from "drawio-ai-kit";
 
 const d = new Diagram("hybrid");
 const onp = (id, label) => box(id, label, { w: 200, h: 50, fill: "#FFFFFF", stroke: "#666666" });

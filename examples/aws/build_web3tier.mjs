@@ -1,8 +1,7 @@
 // 3-tier web application — type "network". Layout engine: NO hardcoded coords.
 // Edge (Route 53 + CloudFront) → VPC with Web / App / Data tiers as subnets; RDS Multi-AZ.
 import { writeFileSync } from "node:fs";
-import { Diagram } from "drawio-ai-kit";
-import { group, frame, icon, box, phantom, renderTree } from "drawio-ai-kit";
+import { Diagram, group, frame, icon, box, phantom, renderTree } from "drawio-ai-kit";
 
 const d = new Diagram("network");
 

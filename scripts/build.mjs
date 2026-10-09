@@ -36,6 +36,10 @@ async function bundle(outdir) {
     for (const log of r.logs) console.error(log);
     process.exit(1);
   }
+  // bin launcher: sh runs node, else bun (a Bun-only install has no `node`, and `bun add -g` links this file as-is).
+  // For JS the ":" string and the // comment are no-ops. Added here because the minifier drops the string.
+  const cli = join(outdir, "cli.mjs");
+  writeFileSync(cli, readFileSync(cli, "utf8").replace(/^#!.*\n/, '#!/bin/sh\n":" //; exec "$(command -v node || command -v bun)" "$0" "$@"\n'));
   // d.ts only (noCheck: never gates on type errors — `npm run typecheck` does that)
   const t = await Bun.$`${TSC} -p tsconfig.build.json --outDir ${join(outdir, "types")}`.cwd(ROOT).nothrow().quiet();
   if (t.exitCode !== 0) {

@@ -3,9 +3,7 @@
 // Canonical mxgraph.bpmn shapes (monochrome; red accent on the rejection end event). Engine lays
 // the pool out; sequence flow is solid + rounded, inter-lane handoffs cross lane bands.
 import { writeFileSync } from "node:fs";
-import { Diagram } from "drawio-ai-kit";
-import { renderTree } from "drawio-ai-kit";
-import { pool, start, end, gateway, userTask, serviceTask } from "drawio-ai-kit";
+import { Diagram, renderTree, pool, start, end, gateway, userTask, serviceTask } from "drawio-ai-kit";
 
 const d = new Diagram("bpmn");
 

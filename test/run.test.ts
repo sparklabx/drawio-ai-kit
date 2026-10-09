@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, realpathSync, symlinkSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, mkdtempSync, realpathSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { CLI, ROOT } from "./characterization/_helpers.ts";
@@ -53,6 +53,36 @@ test("run without a script prints usage", () => {
 });
 
 test("package exports carry types + default and the types file ships", () => {
-  const pkg = JSON.parse(spawnSync("node", ["-p", "JSON.stringify(require('./package.json').exports)"], { cwd: ROOT, encoding: "utf8" }).stdout);
+  const pkg = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")).exports;
   assert.deepEqual(Object.keys(pkg["."]), ["types", "default"]);
+});
+
+test("help lists run", () => {
+  assert.match(sh("node", [CLI], tmp()).stderr, /^ {2}run <script/m);
+});
+
+// A Bun-only machine has no `node`: the bin must still start (bin launcher falls back to bun).
+test("bin starts with only bun on PATH", { skip: !have("bun") }, () => {
+  const bin = tmp();
+  symlinkSync(spawnSync("sh", ["-c", "command -v bun"], { encoding: "utf8" }).stdout.trim(), join(bin, "bun"));
+  const r = spawnSync(CLI, ["root"], { cwd: tmp(), encoding: "utf8", env: { HOME: process.env.HOME, PATH: bin } });
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.stdout.trim(), ROOT);
+});
+
+// `run` hands the scaffolded self-check the CLI path, so it works when `drawio-ai` is not on PATH.
+test("scaffolded self-check validates without drawio-ai on PATH", () => {
+  const dir = tmp();
+  const s = sh("node", [CLI, "scaffold", "aws/build_eventdriven.mjs", "-o", join(dir, "b.mjs")], ROOT);
+  assert.equal(s.status, 0, s.stderr);
+  const r = spawnSync(process.execPath, [CLI, "run", join(dir, "b.mjs")], { cwd: dir, encoding: "utf8", env: { HOME: process.env.HOME, PATH: "/usr/bin:/bin" } });
+  assert.match(r.stdout, /VALIDATE: \{"ok":true/, r.stdout + r.stderr);
+  assert.doesNotMatch(r.stderr, /ENOENT|not found in \$PATH/); // render ran the CLI (it may still skip: no draw.io desktop)
+});
+
+test("run reports a script killed by a signal", () => {
+  const dir = tmp();
+  writeFileSync(join(dir, "b.mjs"), 'process.kill(process.pid, "SIGTERM");\n');
+  const r = sh("node", [CLI, "run", "b.mjs"], dir);
+  assert.equal(r.signal, "SIGTERM");
 });

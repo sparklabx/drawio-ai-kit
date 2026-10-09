@@ -5,8 +5,7 @@
 // LEFT-aligned with the Databricks logo at the left, over WHITE bodies; full-colour icons.
 // Run: node examples/databricks/build_mlops.mjs
 import { writeFileSync } from "node:fs";
-import { Diagram } from "drawio-ai-kit";
-import { frame, icon, box, phantom, renderTree } from "drawio-ai-kit";
+import { Diagram, frame, icon, box, phantom, renderTree } from "drawio-ai-kit";
 
 const d = new Diagram("pipeline");
 // refined (desaturated) header colors matching the reference; bodies are WHITE

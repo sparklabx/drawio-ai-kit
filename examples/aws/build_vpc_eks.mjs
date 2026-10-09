@@ -3,8 +3,7 @@
 // The EKS cluster is a DASHED frame (like Region/AZ) with the EKS logo at the TOP-LEFT corner,
 // SPANNING the private subnets across both AZs — drawn with d.clusterBox() AFTER renderTree.
 import { writeFileSync } from "node:fs";
-import { Diagram } from "drawio-ai-kit";
-import { group, icon, phantom, renderTree } from "drawio-ai-kit";
+import { Diagram, group, icon, phantom, renderTree } from "drawio-ai-kit";
 
 const d = new Diagram("network");
 

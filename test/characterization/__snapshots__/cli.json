@@ -440,11 +440,10 @@
     },
     "stderr": ""
   },
-  "scaffold.serverless.source.sha256": "3c8c045abe4f5079d86f8702f8ea4ac1c93a97b85eb4c5af4734bd2a504db2ae",
+  "scaffold.serverless.source.sha256": "cf97a4435699b1b0ad60faacbfac212df825aa257d8ed699d03ff784b8b261f1",
   "scaffold.serverless.structure": {
     "kitImports": [
       "node:fs",
-      "<KIT>",
       "<KIT>",
       "node:child_process"
     ],
@@ -668,12 +667,12 @@
   "usage.none": {
     "status": 0,
     "stdout": "",
-    "stderr": "drawio-ai-kit CLI\n  search <query>[, <query>…] [--category C] [--limit N] [--kind icon|group] [--full]\n  style <name>\n  validate <file> [--strict]\n  audit <file>\n  suggest-layout <file>                           recommend a layout archetype + sparsity/hub warnings from graph metrics\n  logo <brand> [--embed] [--variant color|mono|text]\n  categories\n  types\n  principles [--mode aws|azure|gcp|databricks|bpmn]\n  scaffold <template.mjs> [-o out.mjs] [--name x.drawio] | --list   copy a template as a standalone build script\n  root\n  render <file> [-o out.png] [--scale N] [--page N] [--check]\n  workflow\n  skill install [-g] [-a <agent>] [-y]              register the bundled skill with your agents (no repo clone)\n  [--catalog <path>]  override the default catalog (catalog/aws.json)\n"
+    "stderr": "drawio-ai-kit CLI\n  search <query>[, <query>…] [--category C] [--limit N] [--kind icon|group] [--full]\n  style <name>\n  validate <file> [--strict]\n  audit <file>\n  suggest-layout <file>                           recommend a layout archetype + sparsity/hub warnings from graph metrics\n  logo <brand> [--embed] [--variant color|mono|text]\n  categories\n  types\n  principles [--mode aws|azure|gcp|databricks|bpmn]\n  scaffold <template.mjs> [-o out.mjs] [--name x.drawio] | --list   copy a template as a standalone build script\n  run <script.mjs> [args…]                        run a build script; its import of \"drawio-ai-kit\" resolves to this install\n  root\n  render <file> [-o out.png] [--scale N] [--page N] [--check]\n  workflow\n  skill install [-g] [-a <agent>] [-y]              register the bundled skill with your agents (no repo clone)\n  [--catalog <path>]  override the default catalog (catalog/aws.json)\n"
   },
   "usage.unknown": {
     "status": 1,
     "stdout": "",
-    "stderr": "drawio-ai-kit CLI\n  search <query>[, <query>…] [--category C] [--limit N] [--kind icon|group] [--full]\n  style <name>\n  validate <file> [--strict]\n  audit <file>\n  suggest-layout <file>                           recommend a layout archetype + sparsity/hub warnings from graph metrics\n  logo <brand> [--embed] [--variant color|mono|text]\n  categories\n  types\n  principles [--mode aws|azure|gcp|databricks|bpmn]\n  scaffold <template.mjs> [-o out.mjs] [--name x.drawio] | --list   copy a template as a standalone build script\n  root\n  render <file> [-o out.png] [--scale N] [--page N] [--check]\n  workflow\n  skill install [-g] [-a <agent>] [-y]              register the bundled skill with your agents (no repo clone)\n  [--catalog <path>]  override the default catalog (catalog/aws.json)\n"
+    "stderr": "drawio-ai-kit CLI\n  search <query>[, <query>…] [--category C] [--limit N] [--kind icon|group] [--full]\n  style <name>\n  validate <file> [--strict]\n  audit <file>\n  suggest-layout <file>                           recommend a layout archetype + sparsity/hub warnings from graph metrics\n  logo <brand> [--embed] [--variant color|mono|text]\n  categories\n  types\n  principles [--mode aws|azure|gcp|databricks|bpmn]\n  scaffold <template.mjs> [-o out.mjs] [--name x.drawio] | --list   copy a template as a standalone build script\n  run <script.mjs> [args…]                        run a build script; its import of \"drawio-ai-kit\" resolves to this install\n  root\n  render <file> [-o out.png] [--scale N] [--page N] [--check]\n  workflow\n  skill install [-g] [-a <agent>] [-y]              register the bundled skill with your agents (no repo clone)\n  [--catalog <path>]  override the default catalog (catalog/aws.json)\n"
   },
   "validate.bad": {
     "status": 2,

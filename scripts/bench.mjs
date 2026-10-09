@@ -209,7 +209,7 @@ const SPLIT = /\.inproc\.(import_ms|loadCatalog_ms)\.median$/;
 const withSum = (m) => {
   for (const k of Object.keys(m)) {
     const rt = k.match(/^(\w+)\.inproc\.import_ms\.median$/)?.[1];
-    if (rt) m[`${rt}.inproc.import_plus_loadCatalog_ms.median`] = m[k] + (m[`${rt}.inproc.loadCatalog_ms.median`] ?? 0);
+    if (rt) m[`${rt}.inproc.import_plus_loadCatalog_ms.median`] = +(m[k] + (m[`${rt}.inproc.loadCatalog_ms.median`] ?? 0)).toFixed(3);
   }
   return m;
 };

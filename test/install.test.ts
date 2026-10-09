@@ -39,20 +39,14 @@ function run(args: string[], { tools = ["bun", "node", "drawio-ai"], node = "v22
   return { ...r, calls, out: r.stdout + r.stderr };
 }
 
-test("bun present: bun add -g, skill install, verify (exact commands)", () => {
-  const r = run([]);
+test("bun present (and preferred over npm): bun add -g, skill install, verify (exact commands)", () => {
+  const r = run([], { tools: ["bun", "npm", "node", "drawio-ai"] });
   assert.equal(r.status, 0, r.stderr);
   assert.deepEqual(r.calls.filter((c) => !c.startsWith("bun pm")), [
     "bun add -g drawio-ai-kit",
     "drawio-ai skill install -g -y",
     "drawio-ai root",
   ]);
-});
-
-test("bun preferred over npm when both exist", () => {
-  const r = run([], { tools: ["bun", "npm", "node", "drawio-ai"] });
-  assert.ok(r.calls.includes("bun add -g drawio-ai-kit"));
-  assert.ok(!r.calls.some((c) => c.startsWith("npm i")));
 });
 
 test("npm only: node checked, npm i -g", () => {

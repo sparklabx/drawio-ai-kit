@@ -2,8 +2,7 @@
 // Uses the THEME via themed creators (stage / band / endpoint): pale per-stage tints,
 // neutral band, theme-aware (light-dark) colors — no hand-picked hex. Engine does the layout.
 import { writeFileSync } from "node:fs";
-import { Diagram } from "drawio-ai-kit";
-import { group, frame, icon, stage, band, endpoint, phantom, renderTree } from "drawio-ai-kit";
+import { Diagram, group, frame, icon, stage, band, endpoint, phantom, renderTree } from "drawio-ai-kit";
 
 const d = new Diagram("pipeline");
 

@@ -31,13 +31,18 @@ Replace the scorer in `src/core.ts` with `src/search.ts`, built on
   shorthand and concept phrases (`postgres: ["pg", "psql", "relational
   database"]`). It ships in the package. A new domain adds aliases there (see
   `docs/adding-a-domain.md`).
-- **Multi-keyword**: tokens are searched with AND; if empty, over shorter
-  tails (head noun last: `gateway vpc endpoint`); if still empty the tokens
-  are separate services, so one search per token, merged round-robin.
+- **Multi-keyword**: the whole query (AND), else shorter tails (head noun
+  last: `gateway vpc endpoint`), forms a lead list. It is merged round-robin
+  with one search per token, so a compound icon (`s3_object_lambda`) never
+  hides a keyword (`s3 lambda` still returns `s3` and `lambda`).
   `k8s pg es` returns one hit per service. Comma and space both work.
+- **Exact fast path**: a query that is an icon name or curated alias is
+  answered from two maps; MiniSearch is not built. Cost: no fuzzy padding
+  after the exact hit. Benefit: one-shot CLI search of a known name meets the
+  perf gate (the baseline was not loosened).
 - **Vendor words** (`aws`, `azure`, `gcp`, `google`) scope to that pack, and
   fall back to all packs if it has no match.
-- **The index is built at runtime** on the first search per catalog. A
+- **The index is built at runtime** on the first non-exact search per catalog. A
   prebuilt index was measured (`loadJSON` 7.1 ms vs 8-9 ms to build; 218 KB)
   and gave no real saving.
 

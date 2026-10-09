@@ -3,8 +3,7 @@
 // (Internet / interconnect) — never nest one cloud inside another. AWS uses its group stencils; Azure
 // has none, so its containers are plain frame()s. Run: node examples/multicloud/build_multicloud.mjs
 import { writeFileSync } from "node:fs";
-import { Diagram } from "drawio-ai-kit";
-import { group, frame, icon, box, phantom, renderTree } from "drawio-ai-kit";
+import { Diagram, group, frame, icon, box, phantom, renderTree } from "drawio-ai-kit";
 
 const d = new Diagram("hybrid");
 

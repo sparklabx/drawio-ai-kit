@@ -18,11 +18,7 @@
   "alias:dns": [
     "route_53",
     "gcp_cloud_dns",
-    "azure_dns_zones",
-    "azure_dns_multistack",
-    "azure_dns_private_resolver",
-    "azure_dns_security_policy",
-    "route_53_resolver_dns_firewall"
+    "azure_dns_zones"
   ],
   "alias:es": [
     "elasticsearch",
@@ -30,9 +26,7 @@
     "opensearch"
   ],
   "alias:iam": [
-    "identity_and_access_management",
-    "identity_access_management_iam_roles_anywhere",
-    "access_analyzer"
+    "identity_and_access_management"
   ],
   "alias:k8s": [
     "kubernetes",
@@ -51,8 +45,7 @@
     "comet"
   ],
   "alias:mq": [
-    "mq",
-    "mq_broker"
+    "mq"
   ],
   "alias:pg": [
     "postgres",
@@ -65,28 +58,13 @@
       "application_load_balancer"
     ],
     "ecs": [
-      "ecs",
-      "ecs_anywhere",
-      "ecs_copilot_cli",
-      "ecs_service_connect",
-      "ecs_service",
-      "ecs_task"
+      "ecs"
     ],
     "rds": [
-      "rds",
-      "rds_instance",
-      "rds_proxy",
-      "rds_instance_alt",
-      "rds_multi_az",
-      "rds_on_vmware",
-      "rds_optimized_writes",
-      "rds_proxy_alt"
+      "rds"
     ],
     "elasticache": [
-      "elasticache",
-      "elasticache_for_memcached",
-      "elasticache_for_redis",
-      "elasticache_for_valkey"
+      "elasticache"
     ]
   },
   "batch:k8s, pg, es": {
@@ -110,20 +88,10 @@
   },
   "batch:s3, lambda, nat gateway": {
     "s3": [
-      "s3",
-      "s3_select",
-      "s3_tables",
-      "s3_vectors",
-      "s3_batch_operations",
-      "s3_file_gateway",
-      "s3_object_lambda",
-      "s3_object_lock"
+      "s3"
     ],
     "lambda": [
-      "lambda",
-      "lambda_function",
-      "s3_object_lambda",
-      "s3_object_lambda_access_points"
+      "lambda"
     ],
     "nat gateway": [
       "nat_gateway"
@@ -150,18 +118,6 @@
       "style": "sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;fillColor=#7AA116;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.s3;",
       "width": 78,
       "height": 78
-    },
-    {
-      "name": "s3_select",
-      "fqn": "mxgraph.aws4.s3_select",
-      "label": "S3 Select",
-      "category": "Storage",
-      "kind": "icon",
-      "color": "#7AA116",
-      "aliases": [],
-      "style": "sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#7AA116;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.s3_select;",
-      "width": 78,
-      "height": 78
     }
   ],
   "flags:storage --limit 20": [
@@ -171,139 +127,6 @@
       "category": "Storage",
       "kind": "icon",
       "color": "#7AA116"
-    },
-    {
-      "name": "azure_storage_accounts",
-      "label": "Storage Accounts",
-      "category": "Storage",
-      "kind": "icon",
-      "color": "#5A6B7B"
-    },
-    {
-      "name": "gcp_cloud_storage",
-      "label": "Cloud Storage",
-      "category": "Google Cloud",
-      "kind": "icon",
-      "color": "#5A6B7B"
-    },
-    {
-      "name": "backup_storage",
-      "label": "Backup Storage",
-      "category": "Storage",
-      "kind": "icon",
-      "color": "#7AA116"
-    },
-    {
-      "name": "cold_storage",
-      "label": "Cold Storage",
-      "category": "General",
-      "kind": "icon",
-      "color": "#232F3D"
-    },
-    {
-      "name": "storage_gateway",
-      "label": "Storage Gateway",
-      "category": "Storage",
-      "kind": "icon",
-      "color": "#7AA116"
-    },
-    {
-      "name": "tape_storage",
-      "label": "Tape Storage",
-      "category": "General",
-      "kind": "icon",
-      "color": "#ffffff"
-    },
-    {
-      "name": "azure_storage_actions",
-      "label": "Storage Actions",
-      "category": "Storage",
-      "kind": "icon",
-      "color": "#5A6B7B"
-    },
-    {
-      "name": "azure_storage_explorer",
-      "label": "Storage Explorer",
-      "category": "Storage",
-      "kind": "icon",
-      "color": "#5A6B7B"
-    },
-    {
-      "name": "azure_storage_container",
-      "label": "Storage Container",
-      "category": "General",
-      "kind": "icon",
-      "color": "#5A6B7B"
-    },
-    {
-      "name": "azure_storage_queue",
-      "label": "Storage Queue",
-      "category": "General",
-      "kind": "icon",
-      "color": "#5A6B7B"
-    },
-    {
-      "name": "azure_storage_hubs",
-      "label": "Storage Hubs",
-      "category": "New Icons",
-      "kind": "icon",
-      "color": "#5A6B7B"
-    },
-    {
-      "name": "azure_storage_functions",
-      "label": "Storage Functions",
-      "category": "Other",
-      "kind": "icon",
-      "color": "#5A6B7B"
-    },
-    {
-      "name": "dbx_object_storage",
-      "label": "Object Storage",
-      "category": "Databricks",
-      "kind": "icon",
-      "color": "#1B3139"
-    },
-    {
-      "name": "dense_storage_node",
-      "label": "Dense Storage Node",
-      "category": "General",
-      "kind": "icon",
-      "color": "#ffffff"
-    },
-    {
-      "name": "s3_storage_lens",
-      "label": "S3 Storage Lens",
-      "category": "Storage",
-      "kind": "icon",
-      "color": "#7AA116"
-    },
-    {
-      "name": "azure_storage_azure_files",
-      "label": "Storage Azure Files",
-      "category": "General",
-      "kind": "icon",
-      "color": "#5A6B7B"
-    },
-    {
-      "name": "azure_azure_container_storage",
-      "label": "Azure Container Storage",
-      "category": "New Icons",
-      "kind": "icon",
-      "color": "#5A6B7B"
-    },
-    {
-      "name": "azure_azure_storage_mover",
-      "label": "Azure Storage Mover",
-      "category": "Other",
-      "kind": "icon",
-      "color": "#5A6B7B"
-    },
-    {
-      "name": "azure_storage_accounts_classic",
-      "label": "Storage Accounts (Classic)",
-      "category": "Storage",
-      "kind": "icon",
-      "color": "#5A6B7B"
     }
   ],
   "flags:subnet --kind icon": [
@@ -332,38 +155,29 @@
     }
   ],
   "single:api gateway": [
-    "api_gateway",
-    "gcp_cloud_api_gateway",
-    "endpoint"
+    "api_gateway"
   ],
   "single:bigquery": [
-    "bigquery",
-    "gcp_bigquery"
+    "bigquery"
   ],
   "single:cloudfront": [
-    "cloudfront",
-    "cloudfront_functions"
+    "cloudfront"
   ],
   "single:cosmos db": [
-    "cosmosdb",
-    "azure_azure_cosmos_db"
+    "cosmosdb"
   ],
   "single:delta lake": [
     "delta",
+    "cloudtrail_cloudtrail_lake",
     "data_lake_resource_icon",
+    "lake_formation",
+    "delta_sharing",
     "azure_data_lake_analytics",
-    "azure_data_lake_store_gen1",
-    "azure_data_lake_storage_gen1"
+    "security_lake",
+    "azure_sql_data_warehouses"
   ],
   "single:ec2": [
-    "ec2",
-    "ec2_image_builder",
-    "group_ec2_instance_contents",
-    "ec2_m1_mac_instance",
-    "ec2_aws_microservice_extractor_for_net",
-    "ec2_c6a_instance",
-    "ec2_c6gn_instance",
-    "ec2_c6i_instance"
+    "ec2"
   ],
   "single:kafka": [
     "kafka",
@@ -373,16 +187,10 @@
     "kubernetes",
     "eks",
     "azure_kubernetes_services",
-    "gcp_google_kubernetes_engine",
-    "azure_kubernetes_hub",
-    "azure_arc_kubernetes",
-    "azure_kubernetes_fleet_manager"
+    "gcp_google_kubernetes_engine"
   ],
   "single:lambda": [
-    "lambda",
-    "lambda_function",
-    "s3_object_lambda",
-    "s3_object_lambda_access_points"
+    "lambda"
   ],
   "single:load balancer": [
     "application_load_balancer",
@@ -390,9 +198,7 @@
     "elastic_load_balancing",
     "classic_load_balancer",
     "azure_load_balancers",
-    "gcp_cloud_load_balancing",
-    "gateway_load_balancer",
-    "azure_load_balancer_hub"
+    "gcp_cloud_load_balancing"
   ],
   "single:nat gateway": [
     "nat_gateway"
@@ -401,40 +207,25 @@
     "postgres",
     "postgresql_instance",
     "rds_postgresql_instance",
-    "azure_azure_database_postgresql_server",
-    "rds_postgresql_instance_alt",
-    "azure_arc_postgresql",
-    "azure_azure_database_postgresql_server_group",
-    "rds_trusted_language_extensions_for_postgresql"
+    "azure_azure_database_postgresql_server"
   ],
   "single:redis": [
-    "redis",
-    "azure_cache_redis",
-    "elasticache_for_redis",
-    "azure_azure_managed_redis",
-    "memorydb_for_redis"
+    "redis"
   ],
   "single:s3": [
-    "s3",
-    "s3_select",
-    "s3_tables",
-    "s3_vectors",
-    "s3_batch_operations",
-    "s3_file_gateway",
-    "s3_object_lambda",
-    "s3_object_lock"
+    "s3"
   ],
   "single:user task": [
-    "bpmn_task_user"
+    "bpmn_task_user",
+    "ecs_task",
+    "user",
+    "users",
+    "bpmn_task_service",
+    "azure_users",
+    "bpmn_task_manual",
+    "authenticated_user"
   ],
   "single:vpc": [
-    "vpc",
-    "vpc_virtual_private_cloud_vpc",
-    "group_vpc",
-    "vpc_lattice",
-    "vpc_access_points",
-    "vpc_carrier_gateway",
-    "vpc_reachability_analyzer",
-    "vpc_network_access_analyzer"
+    "vpc"
   ]
 }
