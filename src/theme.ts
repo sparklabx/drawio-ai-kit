@@ -45,5 +45,5 @@ export const THEME = {
   gaps: { layer: 50, item: 16 },
 };
 
-export const stageFill = (i) => THEME.stages[i % THEME.stages.length];
-export const stageStroke = (i) => THEME.stageStroke[i % THEME.stageStroke.length];
+export const stageFill = (i: number) => THEME.stages[i % THEME.stages.length];
+export const stageStroke = (i: number) => THEME.stageStroke[i % THEME.stageStroke.length];

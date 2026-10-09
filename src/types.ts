@@ -1,6 +1,11 @@
+import type { DiagramTypePreset } from "./model.ts";
+
 // drawio-ai-kit — "diagram type" registry.
 // Each type declares a layout + a matching edge-routing strategy, so the generator/router
 // picks the right corner & lane style per diagram type instead of forcing one approach on all.
+
+export type DiagramTypeName = keyof typeof DIAGRAM_TYPES;
+export type EdgeRole = "tree" | "fanout" | "flow";
 
 export const DIAGRAM_TYPES = {
   pipeline: {
@@ -68,17 +73,17 @@ export const DIAGRAM_TYPES = {
     grouping: "pool-lane-phase",  // Pool → Lane (role row) × Phase (milestone column)
     notes: "Horizontal swimlanes: lanes = roles stacked vertically, phases = vertical milestone bands with a header row. Sequence flow stays within a pool (solid); message flow connects pools (dashed). One start event top-left, end events on the right; gateways where paths split/merge.",
   },
-};
+} satisfies Record<string, DiagramTypePreset>;
 
-export function typePreset(name) {
-  return DIAGRAM_TYPES[name] || DIAGRAM_TYPES.pipeline;
+export function typePreset(name: string): DiagramTypePreset {
+  return (DIAGRAM_TYPES as Record<string, DiagramTypePreset>)[name] || DIAGRAM_TYPES.pipeline;
 }
 
 /**
  * rounded=0/1 for an edge based on type + role.
  * role: "tree"/"fanout" → always sharp corners; "flow"/default → follows the type's edgeCorner.
  */
-export function edgeRounded(typeOrPreset, role) {
+export function edgeRounded(typeOrPreset: string | DiagramTypePreset, role?: EdgeRole | string): 0 | 1 {
   const p = typeof typeOrPreset === "string" ? typePreset(typeOrPreset) : typeOrPreset;
   if (role === "tree" || role === "fanout") return 0;
   return p.edgeCorner === "sharp" ? 0 : 1;
