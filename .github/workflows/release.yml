@@ -1,0 +1,35 @@
+name: Release
+
+# Push a tag `vX.Y.Z` (matching package.json "version") → test, verify dist/, publish to npm with provenance.
+# Auth: npm Trusted Publishing (OIDC, no token) once it is configured for this repo + workflow on npmjs.com.
+# Until then (e.g. the very first publish), an NPM_TOKEN repo secret is used as the fallback.
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: read
+  id-token: write # npm provenance + trusted publishing
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: npm
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 24 # npm ≥ 11.5 for trusted publishing
+          registry-url: https://registry.npmjs.org
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.2
+      - name: Tag matches package.json version
+        run: test "v$(node -p 'require("./package.json").version')" = "$GITHUB_REF_NAME"
+      - run: npm test
+      - name: dist/ is the fresh bundle of src/
+        run: bun run build:check
+      - name: Publish
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

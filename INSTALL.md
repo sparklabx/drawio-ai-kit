@@ -11,15 +11,18 @@ Optional (everything else works without them):
 ## Install
 
 ```bash
-npm i -g github:sparklabx/drawio-ai-kit
+npm i -g drawio-ai-kit
 # or, with Bun:
-bun add -g github:sparklabx/drawio-ai-kit
+bun add -g drawio-ai-kit
 ```
 
-This puts the `drawio-ai` binary on PATH. The package isn't on the npm registry —
-it installs straight from GitHub. Pin a specific version for reproducibility:
-`npm i -g github:sparklabx/drawio-ai-kit#<commit-sha>` (or `#v2.0.0` once a tag
-exists). The `#<ref>` suffix works the same with `bun add -g`. If Bun's global bin dir isn't on PATH,
+This puts the `drawio-ai` binary on PATH. The npm package is about 2 MB, so the install takes seconds.
+Releases are published from CI with npm provenance, so each version traces back to its commit and workflow run.
+Pin a version with `drawio-ai-kit@2.0.0`.
+
+Fallback when the registry is blocked: install straight from GitHub with
+`npm i -g github:sparklabx/drawio-ai-kit` (optionally `#<tag-or-sha>`). This downloads the whole repo, so it is slower.
+`bun add -g` accepts the same specs. If Bun's global bin dir isn't on PATH,
 add `~/.bun/bin`. To install from a local clone instead: `npm i -g .` (the committed `dist/` is
 ready to run; after editing `src/`, rebuild it with `bun run build`, which needs
 [Bun](https://bun.sh); `npm link` for live edits).
@@ -32,13 +35,17 @@ lifecycle-script blocking doesn't affect it.
 
 The kit ships ONE skill, `skills/drawio/` (SKILL.md + `references/` + `workflows/`), covering
 AWS, Azure, GCP, Databricks, multi-cloud and BPMN. Install it with the `skills` CLI (auto-detects
-Claude Code, Cursor, Codex, Gemini CLI, … and writes to each agent's skill dir):
+Claude Code, Cursor, Codex, Gemini CLI, … and writes to each agent's skill dir).
+`drawio-ai skill install` hands the skill folder of the package you just installed to that CLI, so nothing is downloaded twice:
 
 ```bash
-npx skills add sparklabx/drawio-ai-kit
-# or, with Bun:
-bunx skills add sparklabx/drawio-ai-kit
+drawio-ai skill install            # interactive: pick agents + scope
+drawio-ai skill install -g -y      # every detected agent, user-wide, no prompts
+drawio-ai skill install -a claude-code -y
 ```
+
+Any extra flags pass through to `skills add`. Without the CLI, `npx skills add sparklabx/drawio-ai-kit` still works,
+but it clones the repo.
 
 Restart your agent after adding it. Try: *"draw an AWS 3-tier web app"*
 

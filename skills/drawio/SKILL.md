@@ -22,7 +22,7 @@ command -v drawio-ai >/dev/null 2>&1 && drawio-ai root || echo "MISSING"
 If it prints `MISSING`: stop. Tell the user to install it, then try again:
 
 ```bash
-npm i -g github:sparklabx/drawio-ai-kit
+npm i -g drawio-ai-kit
 ```
 
 Never run `npm i -g` yourself.

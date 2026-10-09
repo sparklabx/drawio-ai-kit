@@ -17,7 +17,7 @@ This document describes the codebase structure, architecture, development comman
 
 Two runtime layers over a prebuilt content pipeline:
 
-- **Node layer** — `src/cli.mjs` is the **sole tool surface**: the `drawio-ai` CLI with 11 subcommands (`search`, `style`, `validate`, `audit`, `logo`, `categories`, `types`, `principles`, `root`, `workflow`, `render`). `src/cli-lib.mjs` holds the pure, testable helpers behind `root`/`render`/`workflow`. `src/core.mjs` is the zero-dep catalog + validation engine; `src/builder.mjs` + `src/layout-engine.mjs` build diagrams declaratively.
+- **Node layer** — `src/cli.mjs` is the **sole tool surface**: the `drawio-ai` CLI with 13 subcommands (`search`, `style`, `validate`, `audit`, `logo`, `categories`, `types`, `principles`, `root`, `workflow`, `render`, `scaffold`, `skill install`). `src/cli-lib.mjs` holds the pure, testable helpers behind `root`/`render`/`workflow`. `src/core.mjs` is the zero-dep catalog + validation engine; `src/builder.mjs` + `src/layout-engine.mjs` build diagrams declaratively.
 - **Python layer** — `scripts/*.py` regenerate `catalog/*.json` from upstream sources (run manually, not in CI). `vendor/*.py` are runtime helpers (brand logos, PNG repair, URL encode, graphviz autolayout).
 - **Content (read-only after generation)** — `catalog/*.json` icons, `data/shape-index.json.gz` raw index, `skills/drawio/` (the single skill: SKILL.md + `references/*.md` guidance + `workflows/*.md`), `examples/*/build_*.mjs` templates (grouped by domain).
 
@@ -89,7 +89,7 @@ const report = d.validate({ strict: true }); // { ok, errors, warnings, audit, s
 - **`src/layout.mjs`** — pure-math edge router: `routeLR`/`routeTB`/`routeLRFan`/`routeTBFan`/`routeLRFanIn`/`routeTBFanIn`/`route`; helpers `centerInGapX/Y`, `centerInBoxX`, `distributeY`, `inset`, `panelSize`. No imports.
 - **`src/types.mjs`** — `DIAGRAM_TYPES` (pipeline/hierarchy/network/hubspoke/hybrid/mesh/sequence); `typePreset(name)`, `edgeRounded(type,role)` (0 sharp for tree/fanout, else type's `edgeCorner`), `listTypes()`.
 - **`src/theme.mjs`** — `THEME` tokens (light-dark pairs, stages, subnetPublic/Private, gaps, fonts); `stageFill(i)`, `stageStroke(i)`. One edit restyles every diagram.
-- **`src/cli.mjs`** — the `drawio-ai` CLI, a thin `switch (cmd)` dispatcher. 11 subcommands: `search`, `style`, `validate` (exit 2 on failure), `audit`, `logo`, `categories`, `types`, `principles [--mode aws|azure|gcp|databricks|bpmn]`, `root`, `workflow`, `render <file> [-o out.png] [--scale N] [--page N]`. Data commands print JSON; `principles`/`workflow`/`root` print raw text; `render` prints `{ ok, path }`.
+- **`src/cli.mjs`** — the `drawio-ai` CLI, a thin `switch (cmd)` dispatcher. 13 subcommands: `search`, `style`, `validate` (exit 2 on failure), `audit`, `logo`, `categories`, `types`, `principles [--mode aws|azure|gcp|databricks|bpmn]`, `root`, `workflow`, `render <file> [-o out.png] [--scale N] [--page N]`, `scaffold`, `skill install [skills-add flags]` (runs `npx skills add <root>/skills/drawio`). Data commands print JSON; `principles`/`workflow`/`root` print raw text; `render` prints `{ ok, path }`.
 - **`src/kit.mjs`** — public library entry; re-exports builder, layout-engine, bpmn, core, theme, types. Bundled to `dist/kit.mjs` — what user build scripts import.
 - **`src/cli-lib.mjs`** — pure, testable helpers behind the CLI (no top-level side effects): `packageRoot()` (install dir for `root`), `findDrawioCli(env, deps)` (locates the draw.io desktop CLI: `DRAWIO_CLI` → PATH → known locations → `null`; deps injectable for tests), `buildRenderArgs({file,out,scale,page})` (draw.io argv), `workflowText()` (reads `skills/drawio/workflows/build.md`), `scaffoldSource()` (template → runnable script importing `dist/kit.mjs`).
 
@@ -112,8 +112,14 @@ Catalog regeneration (Python, manual, macOS-only rasterizer):
 
 ```bash
 python3.11 scripts/ingest_index.py          # data/shape-index.json.gz → catalog/aws.json
-python3 scripts/build_pack.py <pack>        # packs/<pack>/manifest.json → catalog/<pack>.json (default: bigdata)
+python3 scripts/build_pack.py <pack>…       # packs/<pack>/ → catalog/<pack>.json (minified SVG icons; 96 px PNG only when smaller)
+python3 scripts/build_pack.py --shrink-png <pack>…   # re-encode a catalog's embedded PNGs at 96 px, in place
+scripts/bench-install.sh [spec]             # cold-cache install timing + packed size
 ```
+
+Icons are embedded as `data:image/svg+xml,<base64>` (vector, small). Keep each icon ≤16 KB and the catalog ≤6 MB:
+`test/catalog-size.test.mjs` enforces both limits.
+`bun run build` also writes `data/catalog-index.json` (pack metadata without images). The CLI searches it and parses a pack's full JSON only when one of its styles is used. Commit it after any `catalog/` change; `build:check` and `npm test` fail when it is stale.
 
 ## Runtime / Tooling Preferences
 

@@ -1,10 +1,31 @@
 {
   "name": "drawio-ai-kit",
   "version": "2.0.0",
-  "description": "A kit that helps an AI draw beautiful, correct draw.io diagrams: ground-truth AWS/Azure/GCP stencil catalogs, layout principles, and a validator. Exposed via the zero-dependency drawio-ai CLI.",
+  "description": "Helps an AI draw correct, beautiful draw.io diagrams: ground-truth AWS/Azure/GCP/OSS icon catalogs, a declarative layout engine, a validator, and one agent skill. Zero-dependency drawio-ai CLI.",
+  "keywords": [
+    "drawio",
+    "draw.io",
+    "diagram",
+    "architecture-diagram",
+    "aws",
+    "azure",
+    "gcp",
+    "bpmn",
+    "ai",
+    "agent-skill",
+    "claude"
+  ],
+  "homepage": "https://github.com/sparklabx/drawio-ai-kit#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sparklabx/drawio-ai-kit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sparklabx/drawio-ai-kit/issues"
+  },
   "type": "module",
   "bin": {
-    "drawio-ai": "./dist/cli.mjs"
+    "drawio-ai": "dist/cli.mjs"
   },
   "scripts": {
     "cli": "node src/cli.mjs",
@@ -21,6 +42,7 @@
     "dist",
     "catalog",
     "data/lobe-icons.json",
+    "data/catalog-index.json",
     "vendor",
     "examples",
     "skills",
@@ -34,5 +56,9 @@
   "license": "MIT",
   "exports": {
     ".": "./dist/kit.mjs"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }
