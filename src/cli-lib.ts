@@ -2,6 +2,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { existsSync as fsExistsSync, readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
+import type { FindDeps, RenderArgs, RouterName } from "./model.ts";
 
 const KNOWN_LOCATIONS = [
   "/opt/homebrew/bin/drawio",
@@ -22,7 +23,7 @@ function defaultLocateOnPath() {
 }
 
 // Graphviz (`dot`) probe — same `command -v` pattern, parameterised by binary name.
-const locateBin = (bin) => () => {
+const locateBin = (bin: string) => () => {
   try {
     return execFileSync("/bin/sh", ["-c", `command -v ${bin}`], {
       encoding: "utf8",
@@ -45,7 +46,7 @@ export function packageRoot() {
  * Locates the draw.io desktop CLI by priority order.
  * Injectable env + deps for testing without real binaries.
  */
-export function findDrawioCli(env, deps = {}) {
+export function findDrawioCli(env: NodeJS.ProcessEnv, deps: FindDeps = {}) {
   const existsSync = deps.existsSync ?? fsExistsSync;
   const locateOnPath = deps.locateOnPath ?? defaultLocateOnPath;
 
@@ -70,7 +71,7 @@ export function findDrawioCli(env, deps = {}) {
  * the real binary (mirrors findDrawioCli). Resolution order: DOT_CLI env var →
  * `command -v dot` on PATH → null. Returns null when absent (enhancement-only).
  */
-export function findDot(env, deps = {}) {
+export function findDot(env: NodeJS.ProcessEnv, deps: FindDeps = {}) {
   const existsSync = deps.existsSync ?? fsExistsSync;
   const locateOnPath = deps.locateOnPath ?? defaultLocateOnPathDot;
 
@@ -94,7 +95,7 @@ export function findDot(env, deps = {}) {
  * (kit-rect ↔ dot ↔ mxPoint) is a documented follow-up (see ADR-0004); until it
  * lands, bake always routes via the kit router regardless of this decision.
  */
-export function selectRouter(contract, dotAvailable) {
+export function selectRouter(contract: string, dotAvailable: boolean): RouterName {
   if (contract !== "bake") return "kit";      // scaffold never consults any external router
   return dotAvailable ? "graphviz" : "kit";   // bake: graphviz when present, else kit fallback
 }
@@ -105,7 +106,7 @@ export function selectRouter(contract, dotAvailable) {
 // ponytail: scale 1 — the vision API downscales anything wider than ~1568px anyway,
 // so scale 2 only buys ~600 extra image tokens per self-check read. Deliverable PNGs pass --scale 2.
 // page is 1-BASED: draw.io desktop numbers pages from 1 since v27.0.2 (it rejects -p 0 outright).
-export function buildRenderArgs({ file, out, scale = 1, page = 1 }) {
+export function buildRenderArgs({ file, out, scale = 1, page = 1 }: RenderArgs) {
   return [
     "-x", "-f", "png",
     "-s", String(scale),
@@ -121,13 +122,13 @@ export function buildRenderArgs({ file, out, scale = 1, page = 1 }) {
  * .drawio written next to the script, and a self-check tail that renders --check and prints the
  * machine-readable issue list — so one `node` run = build + validate + render + issues.
  */
-export function scaffoldSource(src, root, lib = "dist/kit.mjs", name) {
+export function scaffoldSource(src: string, root: string, lib = "dist/kit.mjs", name?: string) {
   // every engine module is re-exported by the one library entry, so all kit imports collapse onto it
   let s = src.replace(/"\.\.\/\.\.\/src\/[a-z-]+\.(?:mjs|ts)"/g, `"${root}/${lib}"`);
   s = s.replace(/new URL\("\.\.\/\.\.\/out\//g, 'new URL("./');
   let m = s.match(/new URL\("\.\/([^"]+\.drawio)"/);
   // --name renames the output once here, so the write line and the self-check tail can't disagree
-  if (m && name) { s = s.replaceAll(`"./${m[1]}"`, `"./${name}"`); m = [null, name]; }
+  if (m && name) { s = s.replaceAll(`"./${m[1]}"`, `"./${name}"`); m = [m[0], name]; }
   if (m) {
     // templates that don't print their own VALIDATE line get one from the CLI (exit 2 = not ok, still JSON)
     const validate = /VALIDATE:/.test(s) ? "" : `

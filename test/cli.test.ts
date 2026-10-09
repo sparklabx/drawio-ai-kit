@@ -12,7 +12,7 @@ import {
 } from "../src/cli-lib.ts";
 
 // --- search (CLI-level: compact + batch contracts) ---
-const runCli = (...args) =>
+const runCli = (...args: string[]) =>
   execFileSync(process.execPath, [join(packageRoot(), "src", "cli.ts"), ...args], { encoding: "utf8" });
 
 test("cli search: single query returns a compact array (no style)", () => {
@@ -24,8 +24,8 @@ test("cli search: single query returns a compact array (no style)", () => {
 test("cli search: comma-separated queries return a map keyed by query", () => {
   const r = JSON.parse(runCli("search", "s3, lambda"));
   assert.ok(!Array.isArray(r));
-  assert.ok(r["s3"].some((x) => x.name === "s3"));
-  assert.ok(r["lambda"].some((x) => x.name === "lambda"));
+  assert.ok(r["s3"].some((x: any) => x.name === "s3"));
+  assert.ok(r["lambda"].some((x: any) => x.name === "lambda"));
 });
 
 // --- packageRoot ---
@@ -39,14 +39,14 @@ test("packageRoot returns an absolute directory containing package.json and src/
 // --- findDrawioCli ---
 test("findDrawioCli: env var wins if existsSync true", () => {
   const env = { DRAWIO_CLI: "/custom/drawio" };
-  const deps = { existsSync: (p) => p === "/custom/drawio" };
+  const deps = { existsSync: (p: string) => p === "/custom/drawio" };
   assert.equal(findDrawioCli(env, deps), "/custom/drawio");
 });
 
 test("findDrawioCli: env var skipped if existsSync false, falls to known locations", () => {
   const env = { DRAWIO_CLI: "/nope" };
   const deps = {
-    existsSync: (p) => p === "/usr/local/bin/drawio",
+    existsSync: (p: string) => p === "/usr/local/bin/drawio",
     locateOnPath: () => "",
   };
   assert.equal(findDrawioCli(env, deps), "/usr/local/bin/drawio");
@@ -64,7 +64,7 @@ test("findDrawioCli: locateOnPath wins over known locations", () => {
 test("findDrawioCli: first known location found wins", () => {
   const env = {};
   const deps = {
-    existsSync: (p) => p === "/opt/homebrew/bin/drawio" || p === "/Applications/draw.io.app/Contents/MacOS/draw.io",
+    existsSync: (p: string) => p === "/opt/homebrew/bin/drawio" || p === "/Applications/draw.io.app/Contents/MacOS/draw.io",
     locateOnPath: () => "",
   };
   // homebrew is first in the list
@@ -148,7 +148,7 @@ test("scaffoldSource --name renames the output in the write line AND the self-ch
   const src = `writeFileSync(new URL("../../out/x_kit.drawio", import.meta.url), d.mxfile("X"));\n`;
   const out = scaffoldSource(src, "/opt/kit", "dist/kit.mjs", "shop.drawio");
   assert.doesNotMatch(out, /x_kit/);
-  assert.equal(out.match(/"\.\/shop\.drawio"/g).length, 2);
+  assert.equal(out.match(/"\.\/shop\.drawio"/g)!.length, 2);
 });
 
 test("scaffoldSource without a drawio write appends no self-check tail", () => {
@@ -164,5 +164,10 @@ test("scaffoldSource adds a VALIDATE line only when the template prints none", (
 
 test("skill: anything but `install` prints usage and exits 1 (never shells out)", () => {
   assert.throws(() => execFileSync(process.execPath, [join(packageRoot(), "src", "cli.ts"), "skill"], { encoding: "utf8", stdio: "pipe" }),
-    (e) => e.status === 1 && /skill install/.test(e.stderr));
+    (e: any) => e.status === 1 && /skill install/.test(e.stderr));
+});
+
+test("cli search: valueless --category is ignored, not passed as `true`", () => {
+  const r = JSON.parse(runCli("search", "s3", "--category"));
+  assert.ok(r.some((x: any) => x.name === "s3"));
 });

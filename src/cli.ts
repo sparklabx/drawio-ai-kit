@@ -24,13 +24,14 @@ import {
   graphFromXml,
   suggestLayout,
 } from "./core.ts";
+import type { Flags, ParsedArgs } from "./model.ts";
 import { packageRoot, skillDir, findDrawioCli, buildRenderArgs, workflowText, scaffoldSource } from "./cli-lib.ts";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-function parseFlags(args) {
-  const flags = {};
-  const positional = [];
+function parseFlags(args: string[]): ParsedArgs {
+  const flags: Flags = {};
+  const positional: string[] = [];
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
     if (a.startsWith("--")) {
@@ -46,23 +47,26 @@ function parseFlags(args) {
   return { flags, positional };
 }
 
-function out(obj) {
+function out(obj: unknown) {
   // ponytail: compact JSON — pretty-printing costs ~30-40% extra tokens on every machine-read output
   process.stdout.write(JSON.stringify(obj) + "\n");
 }
 
 const [cmd, ...rest] = process.argv.slice(2);
 const { flags, positional } = parseFlags(rest);
-const catalog = loadCatalog(flags.catalog);
+// a valueless `--key` parses as true; string options treat that as absent
+const str = (v: string | true | undefined) => (typeof v === "string" ? v : undefined);
+const errMsg = (e: unknown) => (e instanceof Error ? e.message : String(e));
+const catalog = loadCatalog(str(flags.catalog));
 
 switch (cmd) {
   case "search": {
     const q = positional.join(" ");
     if (!q) { console.error('A query is required. Example: drawio-ai search s3  (batch: drawio-ai search "s3, lambda, nat gateway")'); process.exit(1); }
     const opts = {
-      category: flags.category,
+      category: str(flags.category),
       limit: flags.limit ? Number(flags.limit) : 8,
-      kind: flags.kind,
+      kind: str(flags.kind),
       full: !!flags.full,
     };
     // ponytail: comma = batch mode — one CLI call for a whole diagram's icon lookups instead of
@@ -87,15 +91,16 @@ switch (cmd) {
     // Multi-tab deck: each <diagram> tab legitimately has its own root cells ("0"/"1") — validating
     // the whole file at once false-positives on duplicate ids. Validate per tab and aggregate.
     const tabs = [...xml.matchAll(/<diagram[^>]*?name="([^"]*)"[^>]*>([\s\S]*?)<\/diagram>/g)];
-    let res;
+    let res: { ok: boolean; errors: string[]; warnings?: string[]; audit?: { advice?: string[] } };
     if (tabs.length > 1) {
-      res = { ok: true, errors: [], warnings: [], audit: { advice: [] } };
+      const agg = { ok: true, errors: [] as string[], warnings: [] as string[], audit: { advice: [] as string[] } };
+      res = agg;
       for (const [, name, body] of tabs) {
         const r = validateDiagram(catalog, body, { strict: !!flags.strict });
-        res.ok &&= r.ok;
-        res.errors.push(...r.errors.map((e) => `[${name}] ${e}`));
-        res.warnings.push(...(r.warnings ?? []).map((w) => `[${name}] ${w}`));
-        res.audit.advice.push(...(r.audit?.advice ?? []).map((a) => `[${name}] ${a}`));
+        agg.ok &&= r.ok;
+        agg.errors.push(...r.errors.map((e) => `[${name}] ${e}`));
+        agg.warnings.push(...(r.warnings ?? []).map((w) => `[${name}] ${w}`));
+        agg.audit.advice.push(...(r.audit?.advice ?? []).map((a) => `[${name}] ${a}`));
       }
     } else {
       res = validateDiagram(catalog, xml, { strict: !!flags.strict });
@@ -129,7 +134,7 @@ switch (cmd) {
     if (flags.embed) argv.push("--embed");
     if (flags.variant) argv.push("--variant", String(flags.variant));
     try { process.stdout.write(execFileSync("python3", argv, { encoding: "utf8" })); }
-    catch (e) { console.error("python3 is required to run aiicons.py:", e.message); process.exit(1); }
+    catch (e) { console.error("python3 is required to run aiicons.py:", errMsg(e)); process.exit(1); }
     break;
   }
   case "categories":
@@ -137,16 +142,16 @@ switch (cmd) {
     break;
   case "principles": {
     const base = join(skillDir(), "references");
-    const read = (f) => readFileSync(join(base, f), "utf8");
+    const read = (f: string) => readFileSync(join(base, f), "utf8");
     const MODES = ["aws", "azure", "gcp", "databricks", "bpmn"];
     // ponytail: one "Category: count" line beats 2.4KB of pretty JSON — agents search, they don't browse.
     // Vendor packs of OTHER domains are filtered out (AWS mode has no use for Intune/GCP categories);
     // neutral packs (cicd, database, network, …) stay in every mode.
-    const cats = (mode) => {
+    const cats = (mode: string) => {
       const excludePacks = new Set(MODES.filter((m) => m !== mode));
       return "\n\n## Icon groups available in the catalog\n" + listCategories(catalog, { excludePacks }).map((c) => `${c.category}: ${c.count}`).join(" · ");
     };
-    const mode = flags.mode || "aws";
+    const mode = str(flags.mode) ?? "aws";
     if (!MODES.includes(mode)) {
       // hard error — silently serving AWS rules for a typo'd mode hands an agent the wrong cloud's rules
       console.error(`Unknown --mode "${mode}". Valid modes: ${MODES.join(", ")}.`);
@@ -155,7 +160,7 @@ switch (cmd) {
     if (mode === "bpmn") {
       process.stdout.write(read("bpmn.md") + "\n\n---\n\n## Shared layout principles (apply to BPMN too)\n" + read("principles.md") + cats("bpmn"));
     } else {
-      const cloudMap = { azure: "azure-architecture.md", gcp: "gcp-architecture.md", databricks: "databricks-architecture.md" };
+      const cloudMap: Record<string, string> = { azure: "azure-architecture.md", gcp: "gcp-architecture.md", databricks: "databricks-architecture.md" };
       const cloudRule = cloudMap[mode];
       const sections = cloudRule
         ? [read(cloudRule), read("principles.md"), read("diagram-types.md"), read("style-guide.md")]
@@ -168,11 +173,11 @@ switch (cmd) {
     // drawio-ai scaffold <domain/build_x.mjs | build_x.mjs> [-o out.mjs] [--name x.drawio] | --list
     const { readdirSync: rd } = await import("node:fs");
     const exDir = join(__dirname, "..", "examples");
-    const domains = rd(exDir).filter((d) => !d.includes("."));
+    const domains = rd(exDir).filter((d) => !d.includes(".")).sort();
     if (flags.list || !positional[0]) {
       const rows = [];
       for (const dom of domains)
-        for (const f of rd(join(exDir, dom)).filter((f) => f.endsWith(".mjs")))
+        for (const f of rd(join(exDir, dom)).filter((f) => f.endsWith(".mjs")).sort())
           rows.push(`${dom}/${f} — ${readFileSync(join(exDir, dom, f), "utf8").split("\n")[0].replace(/^\/\/ ?/, "")}`);
       process.stdout.write(rows.join("\n") + "\n");
       break;
@@ -185,10 +190,10 @@ switch (cmd) {
     }
     const srcPath = join(exDir, rel);
     if (!existsSync(srcPath)) { console.error(`Template "${rel}" not found. Run: drawio-ai scaffold --list`); process.exit(1); }
-    let outFlag2 = flags.o ?? flags.out;
+    let outFlag2 = str(flags.o) ?? str(flags.out);
     const pos2 = [...positional];
     for (let i = 0; i < pos2.length - 1; i++) if (pos2[i] === "-o") { outFlag2 = pos2[i + 1]; break; }
-    const outMjs = outFlag2 ?? join(process.cwd(), rel.split("/").pop());
+    const outMjs = outFlag2 ?? join(process.cwd(), rel.split("/").pop() ?? rel);
     const { writeFileSync: wf, mkdirSync } = await import("node:fs");
     mkdirSync(dirname(outMjs), { recursive: true });
     // the bundled CLI points scripts at the bundled library; a dev clone running src/ points at src/
@@ -212,12 +217,12 @@ switch (cmd) {
     if (positional[0] !== "install") { console.error("usage: drawio-ai skill install [skills-cli add flags…]"); process.exit(1); }
     try {
       execFileSync("npx", ["-y", "skills", "add", skillDir(), ...rest.slice(1)], { stdio: "inherit", shell: process.platform === "win32" });
-    } catch (e) { process.exit(e.status ?? 1); }
+    } catch (e) { process.exit((e as { status?: number }).status ?? 1); }
     break;
   }
   case "render": {
     // Handle -o (single-dash) since parseFlags only captures --flags
-    let outFlag = flags.o ?? flags.out;
+    let outFlag = str(flags.o) ?? str(flags.out);
     const pos = [...positional];
     for (let i = 0; i < pos.length - 1; i++) {
       if (pos[i] === "-o") { outFlag = pos[i + 1]; pos.splice(i, 2); break; }
@@ -242,14 +247,14 @@ switch (cmd) {
     try {
       execFileSync(cli, argv, { encoding: "utf8", timeout: 60000, stdio: ["ignore", "pipe", "pipe"] });
     } catch (e) {
-      console.error("Render failed: " + e.message);
+      console.error("Render failed: " + errMsg(e));
       process.exit(1);
     }
     if (!existsSync(outPath)) {
       console.error("Render produced no output file.");
       process.exit(1);
     }
-    const result = { ok: true, path: outPath };
+    const result: { ok: boolean; path: string; issues?: string[] } = { ok: true, path: outPath };
     // --check also reports the machine-readable issue list — fix from THIS checklist first;
     // read the PNG only to confirm, not to hunt problems one by one.
     if (flags.check) {
