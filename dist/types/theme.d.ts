@@ -36,5 +36,5 @@ export declare const THEME: {
         item: number;
     };
 };
-export declare const stageFill: (i: any) => string;
-export declare const stageStroke: (i: any) => string;
+export declare const stageFill: (i: number) => string;
+export declare const stageStroke: (i: number) => string;

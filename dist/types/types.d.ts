@@ -1,8 +1,11 @@
+import type { DiagramTypePreset } from "./model.ts";
+export type DiagramTypeName = keyof typeof DIAGRAM_TYPES;
+export type EdgeRole = "tree" | "fanout" | "flow";
 export declare const DIAGRAM_TYPES: {
     pipeline: {
         label: string;
         orientation: string;
-        edgeCorner: string;
+        edgeCorner: "rounded";
         laneStrategy: string;
         grouping: string;
         notes: string;
@@ -10,7 +13,7 @@ export declare const DIAGRAM_TYPES: {
     hierarchy: {
         label: string;
         orientation: string;
-        edgeCorner: string;
+        edgeCorner: "sharp";
         laneStrategy: string;
         grouping: string;
         notes: string;
@@ -18,16 +21,16 @@ export declare const DIAGRAM_TYPES: {
     network: {
         label: string;
         orientation: string;
-        edgeCorner: string;
+        edgeCorner: "rounded";
         laneStrategy: string;
         grouping: string;
-        mirrorAZ: boolean;
+        mirrorAZ: true;
         notes: string;
     };
     hubspoke: {
         label: string;
         orientation: string;
-        edgeCorner: string;
+        edgeCorner: "rounded";
         laneStrategy: string;
         grouping: string;
         notes: string;
@@ -35,7 +38,7 @@ export declare const DIAGRAM_TYPES: {
     hybrid: {
         label: string;
         orientation: string;
-        edgeCorner: string;
+        edgeCorner: "rounded";
         laneStrategy: string;
         grouping: string;
         notes: string;
@@ -43,7 +46,7 @@ export declare const DIAGRAM_TYPES: {
     mesh: {
         label: string;
         orientation: string;
-        edgeCorner: string;
+        edgeCorner: "rounded";
         laneStrategy: string;
         grouping: string;
         notes: string;
@@ -51,7 +54,7 @@ export declare const DIAGRAM_TYPES: {
     sequence: {
         label: string;
         orientation: string;
-        edgeCorner: string;
+        edgeCorner: "rounded";
         laneStrategy: string;
         grouping: string;
         notes: string;
@@ -59,22 +62,22 @@ export declare const DIAGRAM_TYPES: {
     bpmn: {
         label: string;
         orientation: string;
-        edgeCorner: string;
+        edgeCorner: "rounded";
         laneStrategy: string;
         grouping: string;
         notes: string;
     };
 };
-export declare function typePreset(name: any): any;
+export declare function typePreset(name: string): DiagramTypePreset;
 /**
  * rounded=0/1 for an edge based on type + role.
  * role: "tree"/"fanout" → always sharp corners; "flow"/default → follows the type's edgeCorner.
  */
-export declare function edgeRounded(typeOrPreset: any, role: any): 0 | 1;
+export declare function edgeRounded(typeOrPreset: string | DiagramTypePreset, role?: EdgeRole | string): 0 | 1;
 export declare function listTypes(): ({
     label: string;
     orientation: string;
-    edgeCorner: string;
+    edgeCorner: "rounded";
     laneStrategy: string;
     grouping: string;
     notes: string;
@@ -82,7 +85,7 @@ export declare function listTypes(): ({
 } | {
     label: string;
     orientation: string;
-    edgeCorner: string;
+    edgeCorner: "sharp";
     laneStrategy: string;
     grouping: string;
     notes: string;
@@ -90,24 +93,16 @@ export declare function listTypes(): ({
 } | {
     label: string;
     orientation: string;
-    edgeCorner: string;
+    edgeCorner: "rounded";
     laneStrategy: string;
     grouping: string;
-    mirrorAZ: boolean;
+    mirrorAZ: true;
     notes: string;
     key: string;
 } | {
     label: string;
     orientation: string;
-    edgeCorner: string;
-    laneStrategy: string;
-    grouping: string;
-    notes: string;
-    key: string;
-} | {
-    label: string;
-    orientation: string;
-    edgeCorner: string;
+    edgeCorner: "rounded";
     laneStrategy: string;
     grouping: string;
     notes: string;
@@ -115,7 +110,7 @@ export declare function listTypes(): ({
 } | {
     label: string;
     orientation: string;
-    edgeCorner: string;
+    edgeCorner: "rounded";
     laneStrategy: string;
     grouping: string;
     notes: string;
@@ -123,7 +118,7 @@ export declare function listTypes(): ({
 } | {
     label: string;
     orientation: string;
-    edgeCorner: string;
+    edgeCorner: "rounded";
     laneStrategy: string;
     grouping: string;
     notes: string;
@@ -131,7 +126,15 @@ export declare function listTypes(): ({
 } | {
     label: string;
     orientation: string;
-    edgeCorner: string;
+    edgeCorner: "rounded";
+    laneStrategy: string;
+    grouping: string;
+    notes: string;
+    key: string;
+} | {
+    label: string;
+    orientation: string;
+    edgeCorner: "rounded";
     laneStrategy: string;
     grouping: string;
     notes: string;
