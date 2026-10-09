@@ -378,3 +378,7 @@ test("graphFromXml/suggestLayout report a container with a tall empty band", () 
   assert.ok(m.emptyBand > 200, `expected a big empty band, got ${m.emptyBand}`);
   assert.match(suggestLayout(m).warnings.join(" "), /empty band/);
 });
+
+test("loadCatalog parses each catalog file once per process", () => {
+  assert.equal(loadCatalog(), catalog);
+});

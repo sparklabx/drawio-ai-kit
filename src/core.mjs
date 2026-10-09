@@ -11,9 +11,18 @@ export const DEFAULT_CATALOG = join(__dirname, "..", "catalog", "aws.json");
 
 const FAMILY = "mxgraph.aws4";
 
-/** Read the catalog JSON and build a lookup index. */
+// ponytail: parse each catalog once per process. bpmn.mjs and every `new Diagram()` share it (read-only).
+// Per-pack lazy loading would need a split name index; skipped while the full parse costs ~6 ms.
+const CACHE = new Map();
+
+/** Read the catalog JSON and build a lookup index (memoized per file). */
 export function loadCatalog(path = DEFAULT_CATALOG) {
   const file = isAbsolute(path) ? path : join(process.cwd(), path);
+  if (!CACHE.has(file)) CACHE.set(file, parseCatalog(file));
+  return CACHE.get(file);
+}
+
+function parseCatalog(file) {
   const raw = JSON.parse(readFileSync(file, "utf8"));
   // Each entry carries its pack name (catalog filename) so callers can filter per domain mode.
   const tag = (arr, pack) => arr.map((e) => ({ ...e, pack }));
