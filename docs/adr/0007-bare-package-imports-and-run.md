@@ -35,6 +35,12 @@ user's project and re-run on another machine.
 6. `install.sh` (POSIX sh) is the one-line installer: it installs the CLI
    globally with Bun or npm, then runs `drawio-ai skill install -g -y`. It
    never installs a runtime and has a `--dry-run` mode.
+7. `dist/cli.mjs` keeps the standard `#!/usr/bin/env node` shebang. A `/bin/sh`
+   polyglot launcher was rejected: npm's Windows cmd-shim reads the shebang and
+   would invoke `/bin/sh`. On a Bun-only machine (no `node`), `install.sh` instead
+   replaces Bun's global `drawio-ai` bin with a POSIX wrapper that runs
+   `exec bun "<global pkg>/dist/cli.mjs"`. Re-run `install.sh` after
+   `bun update -g`. `test/install.test.ts` pins the shebang.
 
 ## Consequences
 

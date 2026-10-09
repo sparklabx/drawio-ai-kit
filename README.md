@@ -34,6 +34,8 @@ One diagram per platform — all generated end-to-end by the kit: no hand-placed
 
 **Requirements:** Node.js ≥20.6 **or** Bun 1.4+. Nothing else to install.
 
+> **Bun-only machine (no `node`)?** The CLI's shebang is `#!/usr/bin/env node` (the Windows-safe standard), so `install.sh` wraps Bun's global `drawio-ai` bin to run `bun <pkg>/dist/cli.mjs`. Re-run `install.sh` after `bun update -g`. With a manual `bun add -g`, run `bun $(bun pm bin -g)/../install/global/node_modules/drawio-ai-kit/dist/cli.mjs` or install Node.
+
 ### 1. One-liner (CLI + skill)
 
 ```bash

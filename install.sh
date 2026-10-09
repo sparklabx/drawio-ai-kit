@@ -71,6 +71,25 @@ skillcmd="skill install -g -y$agents"
 
 if [ "$runtime" = bun ]; then run bun add -g "$pkg"; else run npm i -g "$pkg"; fi
 
+# Bun-only machine: dist/cli.mjs has a `#!/usr/bin/env node` shebang (Windows-safe), so with no node the
+# bin Bun linked would fail. Replace it with a wrapper that runs the CLI under bun. Re-run after `bun update -g`.
+if [ "$runtime" = bun ] && ! have node; then
+  if [ "$dry" = 1 ]; then
+    printf '+ write bun wrapper over the global drawio-ai bin\n'
+  else
+    gb=$(bun pm bin -g 2>/dev/null || true)
+    cli_js=$gb/../install/global/node_modules/drawio-ai-kit/dist/cli.mjs
+    if [ -n "$gb" ] && [ -f "$cli_js" ]; then
+      rm -f "$gb/drawio-ai"
+      printf '#!/bin/sh\nexec bun "%s" "$@"\n' "$cli_js" > "$gb/drawio-ai"
+      chmod +x "$gb/drawio-ai"
+      printf 'No node found: wrapped %s to run under bun (re-run install.sh after "bun update -g").\n' "$gb/drawio-ai"
+    else
+      printf 'warning: could not locate the global drawio-ai-kit package to wrap for bun\n' >&2
+    fi
+  fi
+fi
+
 # Find the global bin dir so the CLI runs even if it is not on PATH yet.
 if [ "$dry" = 1 ]; then
   cli=drawio-ai

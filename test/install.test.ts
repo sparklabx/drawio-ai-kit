@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, writeFileSync, chmodSync, mkdirSync, readFileSync, existsSync } from "node:fs";
+import { mkdtempSync, writeFileSync, chmodSync, mkdirSync, readFileSync, existsSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -16,6 +16,10 @@ function run(args: string[], { tools = ["bun", "node", "drawio-ai"], node = "v22
   const gbin = join(root, "gbin"); // bun global bin dir, on PATH only when onPath
   const nbin = join(root, "gprefix", "bin"); // npm global bin dir
   for (const d of [bin, gbin, nbin]) mkdirSync(d, { recursive: true });
+  const pkgDist = join(root, "install", "global", "node_modules", "drawio-ai-kit", "dist"); // bun's global pkg layout
+  mkdirSync(pkgDist, { recursive: true });
+  writeFileSync(join(pkgDist, "cli.mjs"), "");
+  for (const t of ["rm", "chmod"]) symlinkSync(`/bin/${t}`, join(bin, t)); // real coreutils the wrapper step needs
   const log = join(root, "log");
   const shim = (dir: string, name: string, body: string) => {
     const p = join(dir, name);
@@ -36,7 +40,7 @@ function run(args: string[], { tools = ["bun", "node", "drawio-ai"], node = "v22
   }
   const r = spawnSync("/bin/sh", [script, ...args], { encoding: "utf8", env: { PATH: bin, HOME: root, ...env } });
   const calls = existsSync(log) ? readFileSync(log, "utf8").trim().split("\n").filter(Boolean) : [];
-  return { ...r, calls, out: r.stdout + r.stderr };
+  return { ...r, root, calls, out: r.stdout + r.stderr };
 }
 
 test("bun present (and preferred over npm): bun add -g, skill install, verify (exact commands)", () => {
@@ -136,4 +140,24 @@ test("--help, unknown flag, missing value", () => {
   assert.match(h.stdout, /--dry-run/);
   assert.notEqual(run(["--bogus"]).status, 0);
   assert.notEqual(run(["--version"]).status, 0);
+});
+
+test("bun without node: wraps the global bin to exec bun (idempotent)", () => {
+  const go = () => run([], { tools: ["bun", "drawio-ai"], onPath: false });
+  const r = go();
+  assert.equal(r.status, 0, r.stderr);
+  const w = readFileSync(join(r.root, "gbin", "drawio-ai"), "utf8");
+  assert.match(w, /^#!\/bin\/sh\nexec bun ".*\/drawio-ai-kit\/dist\/cli\.mjs" "\$@"\n$/);
+  assert.ok(r.calls.some((c) => /^bun .*cli\.mjs root$/.test(c)), "CLI ran through bun");
+  assert.equal(go().status, 0);
+});
+
+test("bun with node: bin left alone (no wrapper)", () => {
+  const r = run([], { onPath: false });
+  assert.doesNotMatch(readFileSync(join(r.root, "gbin", "drawio-ai"), "utf8"), /exec bun/);
+});
+
+test("dist/cli.mjs keeps the Windows-safe node shebang", () => {
+  const first = readFileSync(join(import.meta.dirname, "..", "dist", "cli.mjs"), "utf8").split("\n")[0];
+  assert.equal(first, "#!/usr/bin/env node");
 });

@@ -61,15 +61,6 @@ test("help lists run", () => {
   assert.match(sh("node", [CLI], tmp()).stderr, /^ {2}run <script/m);
 });
 
-// A Bun-only machine has no `node`: the bin must still start (bin launcher falls back to bun).
-test("bin starts with only bun on PATH", { skip: !have("bun") }, () => {
-  const bin = tmp();
-  symlinkSync(spawnSync("sh", ["-c", "command -v bun"], { encoding: "utf8" }).stdout.trim(), join(bin, "bun"));
-  const r = spawnSync(CLI, ["root"], { cwd: tmp(), encoding: "utf8", env: { HOME: process.env.HOME, PATH: bin } });
-  assert.equal(r.status, 0, r.stderr);
-  assert.equal(r.stdout.trim(), ROOT);
-});
-
 // `run` hands the scaffolded self-check the CLI path, so it works when `drawio-ai` is not on PATH.
 test("scaffolded self-check validates without drawio-ai on PATH", () => {
   const dir = tmp();
