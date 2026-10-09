@@ -20,21 +20,20 @@ Skills call the CLI at any time.
 
 ## Shared Workflow
 
-The build → validate → render → write-path loop every Domain Skill shares,
+The build → validate → render → write-path loop every diagram follows (`skills/drawio/workflows/build.md`),
 served once by `drawio-ai workflow` (not copied into each skill).
 
-## Domain Skill
+## Skill
 
-A small, single-domain `SKILL.md` an agent reads to produce diagrams — one per
-rule domain (`drawio-aws`, `drawio-azure`, `drawio-gcp`, `drawio-databricks`,
-`drawio-bpmn`). The agent-facing frontend. Each is thin: a sharp trigger
-description, a preflight that checks the CLI is installed, a pointer to the
-Shared Workflow, and its own rules via `drawio-ai principles --mode <domain>`.
-A Domain Skill is inert without the Kit behind it.
+The single agent-facing frontend, `skills/drawio/`. `SKILL.md` routes: check the CLI, ask the
+user only what's missing (domain, scope), load **one** domain reference from `references/`, then
+run `workflows/build.md`. Replaced the five per-domain Domain Skills at 2.0.0 — a capable agent
+picks the domain by asking, so one skill with strong references beats five thin ones. Written in
+short explicit steps so a small model (Haiku-class) can drive it. Inert without the Kit behind it.
 
 ## Agent
 
-The coding assistant a Domain Skill is installed *into* — Claude Code, Codex,
+The coding assistant the skill is installed *into* — Claude Code, Codex,
 Gemini CLI, Cursor, etc. Each Agent has its own skills directory; skills are
 distributed via the standard npm skills tooling.
 

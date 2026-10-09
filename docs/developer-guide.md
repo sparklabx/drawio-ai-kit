@@ -8,8 +8,9 @@ This document describes the codebase structure, architecture, development comman
 |-------|-------|-------|
 | Runtime (CLI) | Node.js ≥18 (ESM, `.nvmrc` = 22) | `"type": "module"`; zero default exports anywhere; **zero runtime dependencies** |
 | Runtime (data cook) | Python 3.11, stdlib only | regenerates `catalog/*.json`; not run by CI |
-| Package manager | **npm** (`package-lock.json`, lockfile v3) | zero runtime deps |
-| Test framework | Node built-in `node:test` | no test deps |
+| Dev tooling | **Bun 1.4+** (`bun test`, `bun run build`) | maintainers only; users run the bundle on plain Node |
+| Package manager | **npm** (`package-lock.json`, lockfile v3) for users | zero deps, so `bun install` writes no `bun.lock`; `npm ci`/`npm audit` stay in CI |
+| Test framework | Node built-in `node:test` | no test deps; runs unchanged under both `node --test` and `bun test` |
 | Rendering | draw.io desktop CLI (optional) + Graphviz `dot` (optional, for >15-node autolayout) | both probed at runtime, absent → browser-URL fallback |
 
 ## Project Overview
@@ -18,7 +19,7 @@ Two runtime layers over a prebuilt content pipeline:
 
 - **Node layer** — `src/cli.mjs` is the **sole tool surface**: the `drawio-ai` CLI with 11 subcommands (`search`, `style`, `validate`, `audit`, `logo`, `categories`, `types`, `principles`, `root`, `workflow`, `render`). `src/cli-lib.mjs` holds the pure, testable helpers behind `root`/`render`/`workflow`. `src/core.mjs` is the zero-dep catalog + validation engine; `src/builder.mjs` + `src/layout-engine.mjs` build diagrams declaratively.
 - **Python layer** — `scripts/*.py` regenerate `catalog/*.json` from upstream sources (run manually, not in CI). `vendor/*.py` are runtime helpers (brand logos, PNG repair, URL encode, graphviz autolayout).
-- **Content (read-only after generation)** — `catalog/*.json` icons, `data/shape-index.json.gz` raw index, `rules/*.md` guidance, `examples/*/build_*.mjs` templates (grouped by domain).
+- **Content (read-only after generation)** — `catalog/*.json` icons, `data/shape-index.json.gz` raw index, `skills/drawio/` (the single skill: SKILL.md + `references/*.md` guidance + `workflows/*.md`), `examples/*/build_*.mjs` templates (grouped by domain).
 
 > The MCP server and bespoke installer were **removed at 1.0.0** (see ADR-0002). The CLI is the only tool surface; skills shell out to it and resolve the engine for `import` via `drawio-ai root`.
 
@@ -67,15 +68,16 @@ const report = d.validate({ strict: true }); // { ok, errors, warnings, audit, s
 
 | Path | Purpose |
 |------|---------|
-| `src/` | Node ESM modules — the entire runtime (see Important Files) |
+| `src/` | Node ESM modules — the readable source of the runtime (see Important Files). Not shipped. |
+| `dist/` | **Shipped runtime**: Bun `--production` bundle of `src/cli.mjs` + `src/kit.mjs` (`bun run build` → `scripts/build.mjs`). Committed; CI fails if stale or non-deterministic. |
 | `catalog/*.json` | **Prebuilt icon catalogs** (aws + 8 packs). Committed. One schema: `{ meta, categoryColors, groups[], icons[] }` where each icon carries verbatim draw.io `style` strings. `loadCatalog()` auto-merges every sibling file. |
 | `packs/<name>/` | Source manifests for non-AWS packs: `manifest.json` (+ optional `assets/`). Fields: `name, label, devicon|slug|url, color, tags`. Tiles generated at build time → `catalog/<name>.json`. |
 | `data/shape-index.json.gz` | Vendored 10,446-shape index (Apache-2.0, jgraph/drawio-mcp). Source of `catalog/aws.json`. |
 | `data/lobe-icons.json` | lobehub icon name manifest (877 AI/LLM brand names) for `logo`. |
-| `rules/*.md` | Guidance consumed by `principles`: `principles.md` (grid/color/edges), `aws-architecture.md` / `azure-architecture.md` / `gcp-architecture.md` / `databricks-architecture.md` (domain nesting), `bpmn.md` (swimlane rules), `diagram-types.md` (7 types + 14 templates), `style-guide.md` (themed tokens). |
-| `skills/drawio-<domain>/SKILL.md` | The 5 thin Domain Skills (`aws`, `azure`, `gcp`, `databricks`, `bpmn`) — sharp triggers that preflight the CLI, then point to `drawio-ai workflow` + `principles --mode <domain>`. See `docs/adding-a-domain-skill.md`. |
+| `skills/drawio/` | The single skill. `SKILL.md` (4 steps: CLI check → ask → route → build), `references/*.md` (`api.md`, `principles.md`, per-domain `*-architecture.md`, `bpmn.md`, `diagram-types.md`, `style-guide.md` — also served by `principles --mode`), `workflows/*.md` (`build.md` — also served by `workflow`; `from-iac.md`; `delegate.md`). See `docs/adding-a-domain.md`. |
 | `examples/<domain>/build_*.mjs` | 18 declarative templates grouped by domain (`aws/`, `azure/`, `gcp/`, `multicloud/`, `bpmn/`). Run → `out/<name>_kit.drawio`. |
 | `scripts/*.py` | Catalog regenerators (Python 3.11, stdlib only). |
+| `scripts/build.mjs` | Bun-only maintainer build (`Bun.build`): writes `dist/` + a size report; `--check` verifies dist is fresh, `--analyze` writes a metafile + module-graph markdown to `$TMPDIR`. |
 | `vendor/*.py` | Runtime helpers (third-party/MIT): autolayout, encode URL, repair PNG, aiicons. |
 | `test/` | `core.test.mjs` (engine), `edges.test.mjs` (edge audits), `save-guard.test.mjs` (kit-is-read-only), `cli.test.mjs` (`cli-lib.mjs` pure fns). |
 
@@ -88,16 +90,22 @@ const report = d.validate({ strict: true }); // { ok, errors, warnings, audit, s
 - **`src/types.mjs`** — `DIAGRAM_TYPES` (pipeline/hierarchy/network/hubspoke/hybrid/mesh/sequence); `typePreset(name)`, `edgeRounded(type,role)` (0 sharp for tree/fanout, else type's `edgeCorner`), `listTypes()`.
 - **`src/theme.mjs`** — `THEME` tokens (light-dark pairs, stages, subnetPublic/Private, gaps, fonts); `stageFill(i)`, `stageStroke(i)`. One edit restyles every diagram.
 - **`src/cli.mjs`** — the `drawio-ai` CLI, a thin `switch (cmd)` dispatcher. 11 subcommands: `search`, `style`, `validate` (exit 2 on failure), `audit`, `logo`, `categories`, `types`, `principles [--mode aws|azure|gcp|databricks|bpmn]`, `root`, `workflow`, `render <file> [-o out.png] [--scale N] [--page N]`. Data commands print JSON; `principles`/`workflow`/`root` print raw text; `render` prints `{ ok, path }`.
-- **`src/cli-lib.mjs`** — pure, testable helpers behind the CLI (no top-level side effects): `packageRoot()` (install dir for `root`), `findDrawioCli(env, deps)` (locates the draw.io desktop CLI: `DRAWIO_CLI` → PATH → known locations → `null`; deps injectable for tests), `buildRenderArgs({file,out,scale,page})` (draw.io argv), `workflowText()` (the Shared Workflow served by `workflow`).
+- **`src/kit.mjs`** — public library entry; re-exports builder, layout-engine, bpmn, core, theme, types. Bundled to `dist/kit.mjs` — what user build scripts import.
+- **`src/cli-lib.mjs`** — pure, testable helpers behind the CLI (no top-level side effects): `packageRoot()` (install dir for `root`), `findDrawioCli(env, deps)` (locates the draw.io desktop CLI: `DRAWIO_CLI` → PATH → known locations → `null`; deps injectable for tests), `buildRenderArgs({file,out,scale,page})` (draw.io argv), `workflowText()` (reads `skills/drawio/workflows/build.md`), `scaffoldSource()` (template → runnable script importing `dist/kit.mjs`).
 
 ## Development Commands
 
 ```bash
-npm install              # zero deps — installs nothing but dev familiarity
-npm test                 # node --test (runs test/*.test.mjs)
-npm run cli              # node src/cli.mjs
-npm run gen:catalog      # python3.11 scripts/ingest_index.py → catalog/aws.json
-npx drawio-ai search s3  # via bin
+bun test                 # runs test/*.test.mjs (node:test suites) under Bun
+bun test --watch         # re-run on change (also: bun run test:watch)
+bun run coverage         # bun test --coverage (report only, no gate)
+npm test                 # node --test — the Node compatibility check; must also pass
+bun run cli search s3    # node src/cli.mjs (the CLI itself runs on Node)
+bun run build            # scripts/build.mjs → dist/ + size report (commit it)
+bun run build:check      # rebuild into a temp dir; fail if dist/ differs
+bun run build:analyze    # build + metafile.json / bundle.md module-graph report in $TMPDIR
+bun run gen:catalog      # python3.11 scripts/ingest_index.py → catalog/aws.json
+node dist/cli.mjs search s3  # the shipped bundle, as users run it
 ```
 
 Catalog regeneration (Python, manual, macOS-only rasterizer):
@@ -109,11 +117,11 @@ python3 scripts/build_pack.py <pack>        # packs/<pack>/manifest.json → cat
 
 ## Runtime / Tooling Preferences
 
-- **Node ≥18**, dev version **22** (`.nvmrc`); CI pins 20.
-- **npm** (not pnpm/yarn) — respect `package-lock.json`.
+- **Node ≥18**, dev version **22** (`.nvmrc`); CI pins 20. `src/` must stay Node-compatible: no `Bun.*` APIs there.
+- **Bun 1.4+** for dev commands (tests, build); CI pins 1.4.2. **npm** stays the user install path — respect `package-lock.json` (not pnpm/yarn).
 - **Python 3.11** for `scripts/` and `vendor/aiicons.py`; stdlib only, no `requirements.txt`.
 - **Zero runtime dependencies.** `npm audit --omit=dev --audit-level=high` runs in CI and **fails on high/critical** — keep it dep-free.
-- **No bundler, no transpiler, no TypeScript.** Plain `.mjs`. Edit files directly; Node runs them.
+- **No transpiler, no TypeScript.** Plain `.mjs`. Edit files directly; Node runs `src/` as-is. The only bundling step is `bun run build` for the shipped `dist/`.
 - Env overrides: `DRAWIO_CLI` (draw.io desktop CLI for `render`), `DRAWIO_CATALOG` (catalog path), CLI flag `--catalog PATH`.
 - Optional externals: draw.io desktop CLI (PNG export via `render`), Graphviz `dot` (autolayout for >15 nodes). Both absent → `vendor/encode_drawio_url.py` browser-URL fallback (no upload).
 
@@ -140,11 +148,11 @@ python3 scripts/build_pack.py <pack>        # packs/<pack>/manifest.json → cat
 - **New non-AWS icon** — add entry to `packs/<pack>/manifest.json` (`devicon|slug|url` + `color` + `tags`) → `python3 scripts/build_pack.py <pack>`.
 - **New pack** — create `packs/<name>/manifest.json` → `build_pack.py <name>` → `catalog/<name>.json` auto-merges via `loadCatalog()`.
 - **New example** — copy `examples/aws/build_vpc.mjs`; write output to `out/`, not the repo.
-- **New rule/type/domain** — edit `rules/*.md` / `src/types.mjs` `DIAGRAM_TYPES`; for a new Domain Skill follow `docs/adding-a-domain-skill.md`.
+- **New rule/type/domain** — edit `skills/drawio/references/*.md` / `src/types.mjs` `DIAGRAM_TYPES`; for a new domain follow `docs/adding-a-domain.md`.
 
 ## Testing & QA
 
 - Framework: **`node:test`** (built-in). `core.test.mjs` (engine), `edges.test.mjs` (edge audits), `save-guard.test.mjs` (save refuses to write inside the kit), `cli.test.mjs` (`cli-lib.mjs` pure functions).
 - Covered: `core.mjs` (`loadCatalog`, `searchIcon`, `getIcon`, `styleForIcon`, `validateDiagram` + all 5 audits), `layout.mjs` (`routeLR`, `routeTB`, `centerInGapX`), `layout-engine.mjs` + `builder.mjs` (`Diagram`, `renderTree`, `group`, `icon`), `cli-lib.mjs` (`packageRoot`, `findDrawioCli` all branches, `buildRenderArgs`, `workflowText`). No fixtures, no subprocess spawns.
-- Run: `npm test`. CI runs the same on push/PR to `main`.
-- No coverage gate; no Python script tests (data builders, validated by the Node catalog tests that consume their output).
+- Run: `bun test` (fast) and `npm test` (Node). CI runs both on push/PR to `main`: the `test` job on Node 20, the `bun` job on Bun 1.4.2 (with `--coverage`).
+- No coverage gate (`bun run coverage` prints a report); no Python script tests (data builders, validated by the Node catalog tests that consume their output).

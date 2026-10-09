@@ -1,15 +1,18 @@
 # Draw.io AI Kit — API Cheat Sheet (Agent Reference)
 
-Use this single-file reference to build diagrams. Avoid opening individual library files.
+This page is the whole engine API. **Import** `dist/kit.mjs`, but never **read** it (or `src/`) — everything you need is here.
 
 ## 1. Imports
+`drawio-ai scaffold` writes these for you. Writing a script by hand? Everything comes from ONE file —
+replace `<ROOT>` with the path `drawio-ai root` prints (shell variables do not work inside JS strings):
 ```javascript
-// ROOT = $(drawio-ai root) — absolute path; relative imports only work inside the kit repo
-import { Diagram } from "<ROOT>/src/builder.mjs";
-import { frame, icon, box, phantom, renderTree, stage, band, subnet, endpoint, ossBox } from "<ROOT>/src/layout-engine.mjs";
+import { writeFileSync } from "node:fs";
+import { Diagram, group, frame, grid, icon, box, phantom, renderTree, stage, band, subnet, endpoint, ossBox } from "<ROOT>/dist/kit.mjs";
+// BPMN creators come from the same file:
+import { pool, start, end, gateway, userTask, serviceTask, task } from "<ROOT>/dist/kit.mjs";
 ```
 
-## 2. Layout Elements (`src/layout-engine.mjs`)
+## 2. Layout Elements
 Build node trees declaratively. **No hardcoded coordinates.**
 
 ### Leaf Nodes
@@ -41,7 +44,7 @@ Build node trees declaratively. **No hardcoded coordinates.**
 - `subnet(id, label, children, opts)`: AWS/Cloud subnet container. Border green if label contains `"Public"`, teal if `"Private"`.
 - `phantom(id, label, opts, children)`: Invisible layout container used to group columns/rows without rendering a boundary.
 
-## 3. Diagram Builder (`src/builder.mjs`)
+## 3. Diagram Builder
 - `const d = new Diagram(type, opts)`: Initializes a diagram.
   - `type`: `"pipeline"` | `"hierarchy"` | `"network"` | `"hubspoke"` | `"hybrid"` | `"mesh"` | `"sequence"`.
 - `renderTree(d, rootNode, [x, y])`: Computes layout, places elements, and emits cells into diagram `d` starting at `[x, y]` (default: `[40, 70]`).
@@ -52,15 +55,40 @@ Build node trees declaratively. **No hardcoded coordinates.**
   - `opts: { flow: true }`: Animated flow (main pipeline path).
   - `opts: { dash: true }`: Dashed line (sync/DR/governance/lineage).
   - `opts: { role: "fanout" }`: Sharp, bundled comb routing for 1-to-N fan-out.
+  - `opts: { dir: "LR"|"TB" }`: Force horizontal-first / vertical-first exit — only when the auto side is wrong.
+  - `opts: { rounded: true }`: Rounded corners (BPMN sequence flow, flow edges).
+  - `opts: { route: { es: "R", en: "L" } }`: Pin exit/entry sides (`L`/`R`/`T`/`B`). Last resort — it usually moves crowding elsewhere.
   - `opts: { rail: "top"|"bottom", lane }`: ONLY for a long edge that would cut through the dense middle
     (a feedback edge across many columns). NOT for a short feedback between nodes at a similar level — a
     plain link connects them side-to-side, which is tidier than dropping to a gutter and looping.
 - `d.clusterBox(id, childIds, label, opts)`: Draws a dashed, no-fill frame spanning multiple children after `renderTree`.
   - `opts: { icon, stroke, dashed: true, pad, padTop }`
 - `d.validate()`: Audits diagram rules. Returns `{ ok, errors, warnings, audit: { advice } }`.
-- `d.mxfile(title)`: Returns the raw XML string for saving.
+- `d.link(a, b, label, { step: 1 })`: Numbered badge on the edge (request walkthroughs, type `"sequence"`).
+  `badgePos: -1…1` slides the badge/label toward the source (-1) or target (1) when it lands on a caption.
+- `d.title(text)`: Page title, centered over the diagram.
+- `d.mxfile(title)`: Returns the raw XML string for saving: `writeFileSync(path, d.mxfile("Title"))`.
 
-## 4. Design Rules & Themes (`src/theme.mjs`)
+## 4. BPMN (swimlanes)
+Use `new Diagram("bpmn")` and ONE `pool` as the tree root. Every child carries `{ lane, col }`
+(0-based lane index, column index); the engine places it in that cell. `phases` are header labels
+over the columns — each phase spans an even share of the columns (3 phases × 6 cols = 2 cols each).
+BPMN links: pass `{ rounded: true }` for sequence flow, `{ dash: true }` for message flow between pools.
+```javascript
+const proc = pool("order", "Order Management", { lanes: ["Customer", "Sales"], phases: ["Intake", "Review"] }, [
+  start("s1", { lane: 0, col: 0, label: "Order received" }),
+  userTask("t1", { lane: 0, col: 1, label: "Place order" }),
+  gateway("g1", { lane: 1, col: 2, label: "Approved?" }),        // type: exclusive | parallel | inclusive | event
+  end("e1", { lane: 1, col: 3, label: "Done" }),                  // type: none | terminate | error | cancel
+  end("e2", { lane: 0, col: 3, label: "Rejected", type: "error" }),
+]);
+renderTree(d, proc);
+d.link("s1", "t1"); d.link("t1", "g1"); d.link("g1", "e1", "yes"); d.link("g1", "e2", "no");   // a gateway must split or merge
+```
+- Creators: `start` · `intermediate` · `end` · `gateway` · `task` · `userTask` · `serviceTask` · `manualTask` · `scriptTask` · `businessRuleTask` · `subProcess`.
+- `pool(..., { orientation: "vertical" })` for vertical swimlanes.
+
+## 5. Design Rules & Themes
 - **Theme Colors:** Coral = `"#FF3621"`, Navy = `"#1B3139"`, VPC = `"#8C4FFF"`, Store = `"#B0752A"`.
 - **Nesting Hierarchy:** Group levels are Cloud/Account/Region (0) → VPC (2) → AZ (3) → Subnet (4) → SG (5).
 - **Recoloring Policy:** Never change catalog icon colors. Let the icons carry the color, keep frame backgrounds pale white (`light-dark(#ffffff, #0f1620)`).

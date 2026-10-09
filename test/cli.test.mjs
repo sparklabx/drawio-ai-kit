@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { execFileSync } from "node:child_process";
 import {
@@ -119,30 +119,45 @@ test("workflowText mentions drawio-ai root for importing the engine", () => {
 // be exported by that module. This is the bug class where the snippet said
 // `import { group } from "core.mjs"` while group lives in layout-engine.mjs — agents following
 // the "source of truth" workflow then crash on line 1.
-test("workflowText import snippet names only real exports", async () => {
-  const txt = workflowText();
-  const imports = [...txt.matchAll(/import\s*\{([^}]+)\}\s*from\s*"[^"]*\/src\/([a-z-]+\.mjs)"/g)];
-  assert.ok(imports.length >= 2, "workflow must show engine import lines");
-  for (const [, names, file] of imports) {
-    const mod = await import(join(packageRoot(), "src", file));
-    for (const raw of names.split(",")) {
-      const name = raw.trim().split(/\s+as\s+/)[0].trim();
-      if (!name) continue;
-      assert.ok(name in mod, `workflow snippet imports "${name}" from ${file}, which does not export it`);
-    }
-  }
-});
+for (const [label, txt] of [
+  ["workflow", workflowText()],
+  ["references/api.md", readFileSync(join(packageRoot(), "skills/drawio/references/api.md"), "utf8")],
+]) {
+  test(`${label} import snippet names only real exports`, async () => {
+    const imports = [...txt.matchAll(/import\s*\{([^}]+)\}\s*from\s*"<ROOT>\/dist\/kit\.mjs"/g)];
+    assert.ok(imports.length >= 1, `${label} must show the engine import line`);
+    const mod = await import(join(packageRoot(), "src", "kit.mjs"));   // dist/kit.mjs is built from it
+    for (const [, names] of imports)
+      for (const raw of names.split(",")) {
+        const name = raw.trim().split(/\s+as\s+/)[0].trim();
+        if (name) assert.ok(name in mod, `${label} imports "${name}" from kit.mjs, which does not export it`);
+      }
+  });
+}
 
 // --- scaffoldSource ---
 test("scaffoldSource rewrites kit imports to absolute and retargets output", () => {
   const src = `import { Diagram } from "../../src/builder.mjs";\nwriteFileSync(new URL("../../out/x_kit.drawio", import.meta.url), d.mxfile("X"));\n`;
   const out = scaffoldSource(src, "/opt/kit");
-  assert.match(out, /from "\/opt\/kit\/src\/builder\.mjs"/);
+  assert.match(out, /from "\/opt\/kit\/dist\/kit\.mjs"/);
   assert.match(out, /new URL\("\.\/x_kit\.drawio"/);
   assert.match(out, /render", __f, "--check"/, "self-check tail appended");
+});
+
+test("scaffoldSource --name renames the output in the write line AND the self-check tail", () => {
+  const src = `writeFileSync(new URL("../../out/x_kit.drawio", import.meta.url), d.mxfile("X"));\n`;
+  const out = scaffoldSource(src, "/opt/kit", "dist/kit.mjs", "shop.drawio");
+  assert.doesNotMatch(out, /x_kit/);
+  assert.equal(out.match(/"\.\/shop\.drawio"/g).length, 2);
 });
 
 test("scaffoldSource without a drawio write appends no self-check tail", () => {
   const out = scaffoldSource(`import { a } from "../../src/core.mjs";\n`, "/opt/kit");
   assert.doesNotMatch(out, /--check/);
+});
+
+test("scaffoldSource adds a VALIDATE line only when the template prints none", () => {
+  const w = `writeFileSync(new URL("../../out/x.drawio", import.meta.url), d.mxfile("X"));\n`;
+  assert.match(scaffoldSource(w, "/opt/kit"), /\["validate", __f\]/);
+  assert.doesNotMatch(scaffoldSource(`console.log("VALIDATE:", 1);\n` + w, "/opt/kit"), /\["validate", __f\]/);
 });

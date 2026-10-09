@@ -5,10 +5,11 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.0.2-22D3EE?style=flat-square" alt="Version 1.0.2">
+  <img src="https://img.shields.io/badge/version-2.0.0-22D3EE?style=flat-square" alt="Version 2.0.0">
   <img src="https://img.shields.io/badge/dependencies-0-2BB3A3?style=flat-square" alt="Dependencies: 0">
-  <img src="https://img.shields.io/badge/skills-5-5AA9FF?style=flat-square" alt="5 domain skills">
+  <img src="https://img.shields.io/badge/skill-1%20(all%20domains)-5AA9FF?style=flat-square" alt="1 skill, all domains">
   <img src="https://img.shields.io/badge/node-%E2%89%A518-B98CF0?style=flat-square" alt="Node ≥18">
+  <img src="https://img.shields.io/badge/built%20with-Bun-F9F1E1?style=flat-square" alt="Built with Bun">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-F59E0B?style=flat-square" alt="License: MIT"></a>
   <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-welcome-ff69b4?style=flat-square" alt="PRs welcome"></a>
 </p>
@@ -18,7 +19,7 @@ An orchestration and validation framework enabling AI agents to generate **struc
 It mitigates common AI agent hallucinations (such as generating non-existent stencil IDs that result in empty shapes) using three key components:
 
 1. **Declarative Catalog** — A single source of truth mapping draw.io stencil IDs (`mxgraph.aws4.*`) to their respective taxonomies and canonical color palettes.
-2. **Design Principles** — Codified architectural and layout rules (`rules/principles.md`).
+2. **Design Principles** — Codified architectural and layout rules (`skills/drawio/references/principles.md`).
 3. **Structural Validator** — A static analysis engine that audits diagram XML to guarantee stencil references are valid and design principles are satisfied prior to serialization.
 
 Exposed to the AI via the **zero-dependency `drawio-ai` CLI**.
@@ -31,47 +32,57 @@ One diagram per platform — all generated end-to-end by the kit: no hand-placed
 
 ## Quick start
 
-Full install — the CLI plus all 5 Domain Skills (AWS, Azure, GCP, Databricks, BPMN) — in one line:
+Full install — the CLI plus the `drawio` skill (AWS, Azure, GCP, Databricks, multi-cloud, BPMN) — in one line:
 
 ```bash
 npm i -g github:sparklabx/drawio-ai-kit && npx skills add sparklabx/drawio-ai-kit
+```
+
+Using Bun? Same thing:
+
+```bash
+bun add -g github:sparklabx/drawio-ai-kit && bunx skills add sparklabx/drawio-ai-kit
 ```
 
 Restart your agent, then try: *"draw an AWS 3-tier web app"*.
 
 The first command puts the `drawio-ai` binary on PATH (installs straight from
 GitHub — not yet on the npm registry; see [INSTALL.md](INSTALL.md) to pin a version
-or install from a clone). The second registers the Domain Skills with your agent
-(the `skills` CLI auto-detects Claude Code, Codex, Gemini CLI, …) — without it the
-agent never picks the kit up on its own.
+or install from a clone). The CLI ships as a **Bun-minified production bundle** (`dist/`, ~76 KB of JS)
+that runs on plain Node ≥18, so you only need Bun if you choose to install with it (Node must still be on PATH). The second command registers the
+single `drawio` skill with your agent (the `skills` CLI auto-detects Claude Code, Codex, Gemini CLI, …) —
+without it the agent never picks the kit up on its own.
 
-- Just one domain instead: `npx skills add sparklabx/drawio-ai-kit --skill drawio-aws` (`--list` previews all 5)
+One skill covers every domain: it asks you what's missing (which cloud? what to draw?), then
+loads just that domain's reference. It is written in short, explicit steps so small fast models
+(e.g. Claude Haiku) can drive it end-to-end.
+
 - Optional, for the full experience: the **draw.io desktop app** enables `drawio-ai render` (the vision self-check); **Graphviz** enables `vendor/autolayout.py` for large graphs. Details in [INSTALL.md](INSTALL.md).
 
 ## Is it safe to install?
 
 Short answer: yes — and you don't have to take my word for it.
 
-- **No hidden code.** No `postinstall` (or any lifecycle) hooks — nothing runs on `npm install`. Zero runtime dependencies. **No `sudo`, no `curl | bash`, no remote code.**
+- **No hidden code.** No `postinstall` (or any lifecycle) hooks — nothing runs on `npm install`. Zero runtime dependencies. **No `sudo`, no `curl | bash`, no remote code.** The shipped `dist/` is minified, but it is a reproducible build of the readable `src/` — CI rebuilds it on every PR and fails if the committed bundle differs.
 - **Zero runtime dependencies.** The single dependency (`@modelcontextprotocol/sdk`) was removed at 1.0.0. The package is now fully self-contained.
 - **Runs locally, no telemetry.** The CLI only reads/writes local files. The single optional outbound call is icon-logo fetching from public CDNs (lobe-icons), and it's opt-in.
 - **Easy to undo:**
 
 ```bash
-npm uninstall -g drawio-ai-kit              # remove the CLI
-npx skills remove drawio-aws              # remove a domain skill (repeat for each)
+npm uninstall -g drawio-ai-kit              # remove the CLI (Bun: bun remove -g drawio-ai-kit)
+npx skills remove drawio                  # remove the skill (Bun: bunx skills remove drawio)
 ```
 
 - **Updating** — two independent channels:
 
 ```bash
-npm i -g github:sparklabx/drawio-ai-kit   # CLI/engine (icon search, workflow, validator, rules)
-npx skills update                         # the Domain Skills (SKILL.md) — always pulls latest
+npm i -g github:sparklabx/drawio-ai-kit   # CLI/engine (Bun: bun add -g github:sparklabx/drawio-ai-kit)
+npx skills update                         # the skill (Bun: bunx skills update)
 ```
 
-The skills are thin frontends that call `drawio-ai` at runtime, so engine fixes reach you the
-moment you update the CLI — no skill re-install needed. `npx skills update` only refreshes the
-SKILL.md text. Pin a specific release with `github:sparklabx/drawio-ai-kit#v1.0.1`.
+The skill drives `drawio-ai` at runtime, so engine fixes reach you the moment you update the
+CLI. `npx skills update` refreshes the skill's docs. Pin a specific release with
+`github:sparklabx/drawio-ai-kit#v2.0.0`.
 
 To report a security issue, see [`SECURITY.md`](SECURITY.md).
 
@@ -80,8 +91,7 @@ To report a security issue, see [`SECURITY.md`](SECURITY.md).
 Define a diagram **topology** (`pipeline`/`hierarchy`/`network`/`hubspoke`/`hybrid`/`mesh`/`sequence`), declare the **nested structure**, and the layout engine programmatically computes spatial coordinates (x/y/w/h) — frames auto-size to fit their children, while rows and columns auto-space. You define the logical topology, not raw pixels.
 
 ```js
-import { Diagram } from "./src/builder.mjs";
-import { group, icon, box, renderTree } from "./src/layout-engine.mjs";
+import { Diagram, group, icon, box, renderTree } from "<ROOT>/dist/kit.mjs";   // <ROOT> = `drawio-ai root`
 
 const d = new Diagram("network");
 const tree = group("region", "group_region", "Region", { dir: "row" }, [
@@ -99,12 +109,22 @@ const res = d.validate();            // names real? colors/nesting/labels clean?
 
 Icon names are retrieved from `drawio-ai search` to prevent name fabrication; edge routing, container sizing, alignment, and contextual corner styles are dynamically computed. The AI agent defines the logical layout and iterates via a render-analyze-rectify loop (vision-based self-correction). Example: `examples/aws/build_mesh.mjs` (zero manual coordinates).
 
+## Migration (from 1.x)
+
+At **2.0.0** the 5 domain skills (`drawio-aws`, `drawio-azure`, `drawio-gcp`, `drawio-databricks`,
+`drawio-bpmn`) were merged into ONE `drawio` skill, and the CLI became a Bun-minified bundle in `dist/`.
+
+- **Skills:** `npx skills remove drawio-aws drawio-azure drawio-gcp drawio-databricks drawio-bpmn`, then `npx skills add sparklabx/drawio-ai-kit`.
+- **CLI:** `npm i -g github:sparklabx/drawio-ai-kit` (same command — the bin now points at `dist/cli.mjs`).
+- **Your build scripts:** import everything from `<ROOT>/dist/kit.mjs` (the package no longer ships `src/`). Re-scaffold, or replace `<ROOT>/src/builder.mjs` / `layout-engine.mjs` / `bpmn.mjs` imports with that one path.
+- `drawio-ai principles --mode …` and `drawio-ai workflow` still work; they now print the skill's `references/` and `workflows/build.md`.
+
 ## Migration (from <1.0)
 
 At **1.0.0** the MCP server and bespoke installer were removed. To migrate:
 
 - **Install:** switch from `claude mcp add ... mcp-server.mjs` to `npm i -g github:sparklabx/drawio-ai-kit`.
-- **Skills:** replace the old `drawio-cloud-architect` skill with the 5 thin Domain Skills — all at once with `npx skills add sparklabx/drawio-ai-kit`, or per domain with `--skill drawio-aws` etc.
+- **Skills:** replace the old `drawio-cloud-architect` skill with `npx skills add sparklabx/drawio-ai-kit`.
 - **Vision self-check:** the inline image was replaced by `drawio-ai render` → PNG → `Read`.
 - **Uninstall:** `npm uninstall -g drawio-ai-kit` + remove each skill via the skills tooling.
 
@@ -146,6 +166,7 @@ Each file builds one common architecture via the layout engine (zero hardcoded c
 
 ## Runtime architecture
 - **Node 18+** (`.nvmrc` pins the current LTS) — orchestration and validation layer: CLI and validator (`src/`). Supported runtimes include Node 20, 22 (LTS), or 24.
+- **Bun 1.4+** — maintainers only: `bun test` runs the suites, `bun run build` bundles `src/` into the minified `dist/` that ships (`--production --splitting --target=node`). Users never need Bun.
 - **Python 3.11** (`.python-version`) — data ingestion and compilation pipeline: catalog generator + icon-pack builder (`scripts/build_pack.py`, stdlib only).
 
 Install the dependencies:
@@ -167,32 +188,42 @@ brew install python@3.11              # then: python3.11 --version
 | `logo` | Logo for non-AWS brands (AI/LLM + some) as an `image` style, via `vendor/aiicons.py` (lobe-icons). Needs python3. |
 | `categories` | List all catalog categories. |
 | `types` | List supported diagram topologies. |
-| `principles` | Design rules + architecture preset + catalog categories. Pass `--mode aws|azure|gcp|databricks|bpmn` for a domain. |
+| `principles` | Design rules + architecture preset + catalog categories (from the skill's `references/`). Pass `--mode aws|azure|gcp|databricks|bpmn` for a domain. |
 | `root` | Print the installed Kit's absolute path (for `import` by path). |
-| `workflow` | Print the shared build → validate → render → write workflow. |
+| `workflow` | Print the build → validate → render → write workflow (`skills/drawio/workflows/build.md`). |
+| `scaffold` | Copy a template as a runnable build script: `scaffold build_vpc.mjs -o <dir>/build.mjs --name vpc.drawio` (`--list` shows all). |
 
-Each of the 5 Domain Skills (`drawio-aws`, `drawio-azure`, `drawio-gcp`, `drawio-databricks`, `drawio-bpmn`) wraps these commands into a full build-with-engine → validate → **render + vision self-check** → final-export workflow. Vendored helpers in `vendor/`: `autolayout.py` (Graphviz layout for >15-node graphs), `aiicons.py`, `repair_png.py`, `encode_drawio_url.py` (browser fallback).
+The `drawio` skill wraps these commands into a full build-with-engine → validate → **render + vision self-check** → final-export workflow. Vendored helpers in `vendor/`: `autolayout.py` (Graphviz layout for >15-node graphs), `aiicons.py`, `repair_png.py`, `encode_drawio_url.py` (browser fallback).
 
-## Domain Skills
+## The skill
 
-The kit ships 5 thin Domain Skills — one per cloud/domain — distributed via the standard npm skills tooling:
+One skill, `skills/drawio/`, covers every domain — installed with `npx skills add sparklabx/drawio-ai-kit`:
 
-| Skill | Domain |
-| --- | --- |
-| `drawio-aws` | AWS |
-| `drawio-azure` | Azure |
-| `drawio-gcp` | GCP |
-| `drawio-databricks` | Databricks |
-| `drawio-bpmn` | BPMN |
+```text
+skills/drawio/
+├── SKILL.md              4 steps: check CLI → ask what's missing → pick the domain reference → build
+├── references/           read on demand — the agent loads only its domain's file
+│   ├── api.md            the whole engine API on one page
+│   ├── principles.md     layout rules (dense grids, flow, no overlap)
+│   ├── aws-architecture.md · azure-architecture.md · gcp-architecture.md
+│   ├── databricks-architecture.md · bpmn.md
+│   └── diagram-types.md · style-guide.md
+└── workflows/
+    ├── build.md          scaffold → run → fix-all-issues → look once → deliver
+    ├── from-iac.md       Terraform/Terramate inventory before drawing
+    └── delegate.md       hand the build loop to a (cheap) subagent
+```
 
-Add one or more with the `skills` CLI, e.g. `npx skills add sparklabx/drawio-ai-kit --skill drawio-aws` (or drop `--skill` to install all 5; `--list` previews). Each skill is a thin frontend; the deterministic engine, validator, and rules live in the `drawio-ai-kit` package, reached via the `drawio-ai` CLI.
+Small-model friendly by design: every step names the exact file to read and the exact command
+to run, templates are scaffolded runnable (`--name` sets the output), and the validator's
+messages say what to change.
 
 ## Other hosts (Coworker AI, Agent SDK, …)
 
 The kit isn't tied to one app — the "brains" live in the **CLI + repo + rules**, so
 any Claude host that can run **shell commands** can use it. Point the agent at the
 CLI: `drawio-ai principles`, `drawio-ai search`, `drawio-ai validate`, plus the
-template index & reproduction loop in `rules/diagram-types.md`. (`draw.io` CLI is
+template index & reproduction loop in `skills/drawio/references/diagram-types.md`. (`draw.io` CLI is
 only needed for PNG render / vision-check.)
 
 ## CLI usage
@@ -246,7 +277,10 @@ See `THIRD_PARTY_NOTICES.md` for attributions.
 ## Tests
 
 ```bash
-npm test        # node --test
+bun test            # the node:test suites, run by Bun (fast)
+npm test            # the same suites on plain Node — must also pass
+bun run build       # bun → dist/ — commit the result; CI fails if dist/ is stale
+bun run build:check # rebuild into a temp dir and fail if dist/ differs
 ```
 
 ## Notes & licensing

@@ -23,5 +23,5 @@ To remove everything:
 
 ```bash
 npm uninstall -g drawio-ai-kit              # remove the CLI
-npx skills remove drawio-aws              # remove a domain skill (repeat for each)
+npx skills remove drawio                  # remove the skill
 ```

@@ -1,6 +1,6 @@
 # Diagram types — layout & routing presets
 
-Pick the diagram type first — each has its own layout & edge-routing preset (`src/types.mjs` → `typePreset(name)`).
+Pick the diagram type first — each has its own layout & edge-routing preset.
 
 ## Pick the type
 
@@ -14,17 +14,17 @@ Pick the diagram type first — each has its own layout & edge-routing preset (`
 | Multi-account connectivity / service mesh (VPC Lattice, TGW, peering, RAM share) | `mesh` |
 | Numbered request walkthrough over an architecture | `sequence` |
 
-## Templates — copy-paste starting points (`examples/`)
+## Templates — starting points (`drawio-ai scaffold <name>`; `--list` shows all)
 
 Before free-handing, check if a template matches the request. Open it, **reproduce its structure**, then adapt the labels / LAYERS block.
 
 | You're drawing | Start from |
 |---|---|
-| A **Multi-AZ workload layer** — AZ private-subnet columns · pods on EC2 worker nodes · per-app cross-AZ `clusterBox` · GitOps band | `examples/aws/build_multiaz_template.mjs` |
-| A **multi-account Landing Zone / hub-and-spoke** — Network account + **Transit Gateway** · Ingress/Inspection/Egress VPCs · workload spokes · hybrid (DX/VPN) · governance — incl. a **multi-tab SA deck** (As-Is · To-Be · Networking · Security · Backup · Logging · CI/CD) | `examples/aws/build_landingzone_hubspoke_template.mjs` |
-| A single VPC (Multi-AZ · EKS · NAT) | `examples/aws/build_vpc_eks.mjs` |
-| Hybrid / DR (on-prem ↔ cloud, two sites) | `examples/aws/build_hybrid.mjs` |
-| Multi-account mesh / TGW connectivity | `examples/aws/build_mesh.mjs` |
+| A **Multi-AZ workload layer** — AZ private-subnet columns · pods on EC2 worker nodes · per-app cross-AZ `clusterBox` · GitOps band | `drawio-ai scaffold build_multiaz_template.mjs` |
+| A **multi-account Landing Zone / hub-and-spoke** — Network account + **Transit Gateway** · Ingress/Inspection/Egress VPCs · workload spokes · hybrid (DX/VPN) · governance — incl. a **multi-tab SA deck** (As-Is · To-Be · Networking · Security · Backup · Logging · CI/CD) | `drawio-ai scaffold build_landingzone_hubspoke_template.mjs` |
+| A single VPC (Multi-AZ · EKS · NAT) | `drawio-ai scaffold build_vpc_eks.mjs` |
+| Hybrid / DR (on-prem ↔ cloud, two sites) | `drawio-ai scaffold build_hybrid.mjs` |
+| Multi-account mesh / TGW connectivity | `drawio-ai scaffold build_mesh.mjs` |
 
 ## Reproduction loop — build → validate → conform → fix (repeat)
 

@@ -13,7 +13,7 @@ examples/
 └── bpmn/         BPMN swimlane processes
 ```
 
-> Containment rules differ per cloud — run `drawio-ai principles --mode aws|azure|gcp|databricks|bpmn` before building.
+> Containment rules differ per cloud — see `skills/drawio/references/<cloud>-architecture.md` (or `drawio-ai principles --mode aws|azure|gcp|databricks|bpmn`). Copy one as a runnable script with `drawio-ai scaffold <file> -o <dir>/build.mjs --name <name>.drawio`.
 
 ## `aws/`
 

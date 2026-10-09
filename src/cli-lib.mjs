@@ -1,6 +1,6 @@
 import { fileURLToPath } from "node:url";
-import { dirname } from "node:path";
-import { existsSync as fsExistsSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { existsSync as fsExistsSync, readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 
 const KNOWN_LOCATIONS = [
@@ -121,16 +121,23 @@ export function buildRenderArgs({ file, out, scale = 1, page = 1 }) {
  * .drawio written next to the script, and a self-check tail that renders --check and prints the
  * machine-readable issue list — so one `node` run = build + validate + render + issues.
  */
-export function scaffoldSource(src, root) {
-  let s = src.replaceAll('"../../src/', `"${root}/src/`);
+export function scaffoldSource(src, root, lib = "dist/kit.mjs", name) {
+  // every engine module is re-exported by the one library entry, so all kit imports collapse onto it
+  let s = src.replace(/"\.\.\/\.\.\/src\/[a-z-]+\.mjs"/g, `"${root}/${lib}"`);
   s = s.replace(/new URL\("\.\.\/\.\.\/out\//g, 'new URL("./');
-  const m = s.match(/new URL\("\.\/([^"]+\.drawio)"/);
+  let m = s.match(/new URL\("\.\/([^"]+\.drawio)"/);
+  // --name renames the output once here, so the write line and the self-check tail can't disagree
+  if (m && name) { s = s.replaceAll(`"./${m[1]}"`, `"./${name}"`); m = [null, name]; }
   if (m) {
+    // templates that don't print their own VALIDATE line get one from the CLI (exit 2 = not ok, still JSON)
+    const validate = /VALIDATE:/.test(s) ? "" : `
+try { console.log("VALIDATE:", __exec("drawio-ai", ["validate", __f], { encoding: "utf8" }).trim()); }
+catch (e) { console.log("VALIDATE:", String(e.stdout ?? e.message).trim()); }`;
     s += `
 // Self-check tail (added by \`drawio-ai scaffold\`): one run = build + validate + render + issues.
 import { execFileSync as __exec } from "node:child_process";
+const __f = new URL("./${m[1]}", import.meta.url).pathname;${validate}
 try {
-  const __f = new URL("./${m[1]}", import.meta.url).pathname;
   console.log(__exec("drawio-ai", ["render", __f, "--check", "-o", __f + ".png"], { encoding: "utf8" }).trim());
 } catch (e) { console.error("RENDER-SKIPPED:", String(e.message).split("\\n")[0]); }
 `;
@@ -138,91 +145,13 @@ try {
   return s;
 }
 
+/** The single skill's folder — SKILL.md, references/, workflows/. The CLI serves its docs from here. */
+export const skillDir = () => join(packageRoot(), "skills", "drawio");
+
 /**
  * Returns the Shared Workflow text — agent instructions for build→validate→render→write.
+ * Source of truth is the skill's workflows/build.md, so the CLI and the skill never drift.
  */
 export function workflowText() {
-  return `# Shared Workflow: drawio-ai diagram generation
-
-## 1. Import the engine
-Resolve the Kit's install dir once (shell), then import by that absolute path:
-\`\`\`bash
-ROOT="$(drawio-ai root)"   # absolute path to the installed Kit
-\`\`\`
-\`\`\`js
-import { Diagram } from "<ROOT>/src/builder.mjs";
-import { group, frame, grid, icon, box, renderTree } from "<ROOT>/src/layout-engine.mjs";
-import { loadCatalog, searchIcon } from "<ROOT>/src/core.mjs";   // optional: in-process icon lookup
-\`\`\`
-(Replace \`<ROOT>\` with the path \`drawio-ai root\` printed — shell substitution does not run inside JS strings.)
-
-## 1b. Source is an IaC repo (terraform/terramate)? Inventory first, never read .tf raw
-Raw HCL floods context with boilerplate and the model starts guessing resources that don't exist.
-Extract a machine-made inventory instead, then diagram ONLY from it:
-\`\`\`bash
-terraform graph                                        # real dependency edges (if init'd)
-grep -rn '^resource\\|^module' --include='*.tf' .       # zero-noise resource/module list
-terramate list --run-order                             # real stack order (terramate repos)
-\`\`\`
-Anything not in the inventory does not go in the diagram.
-
-## 2. Build the diagram
-Declare the nested structure with \`group\`/\`frame\`/\`grid\` + \`icon\`/\`box\`, then \`renderTree(d, tree)\` computes every x/y/w/h — never hand-write coordinates. Add edges with \`d.link(source, target, label)\`.
-
-Edge API cheat-sheet (so you never have to read builder.mjs):
-\`\`\`js
-d.link(srcId, tgtId, label = "", opts = {})
-// DEFAULT: a bare d.link(src, tgt) with NO routing opts. The router picks the facing side and the exact
-// port for you — it "attacks" the nearest side (a target to the left is entered on its left, a node below
-// on its top) and de-collides parallel edges. Reach for a routing opt ONLY after a render shows a plain
-// link actually failing; a pre-emptive rail/dir/route usually makes the edge WORSE, not better.
-// opts: { role: "fanout"|"tree",  // sharp corners, bundled lanes
-//         dir: "LR"|"TB",         // force horizontal-first / vertical-first exit (only when the auto side is wrong)
-//         dash: true,             // dashed (governance/replication semantics)
-//         flow: true,             // animated flow (draw.io/SVG only)
-//         rounded: true,          // rounded corners (flow edges)
-//         rail: "top"|"bottom",   // ONLY for a LONG edge that would otherwise cut through the dense middle —
-//                                 // e.g. a feedback edge spanning many columns. It drops BOTH ends to a
-//                                 // top/bottom gutter and runs along it (+ lane:n to stack parallel rails).
-//                                 // NOT for a short feedback between two nodes at a similar level: a plain
-//                                 // d.link connects them side-to-side, which is far tidier than a gutter loop.
-//                                 // Rails fix long HORIZONTAL runs; never rail a full-height edge — and a
-//                                 // cross-cutting band (governance/security) spanning the width needs NO arrow.
-//         stroke: "#hex" }        // override color
-// Router handles obstacle avoidance, port de-collision, waypoints — do not add coordinates.
-// Containers (frames/groups) are valid link targets — prefer linking a cluster frame over
-// each replica inside it.
-\`\`\`
-
-## 2b. Sanity-check the layout choice (cheap, catches the #1 quality failures)
-After the first build, run \`drawio-ai suggest-layout <file>\`. It reads the diagram's graph and returns:
-- \`recommended\` — the archetype that fits the graph: \`network\` (topology nesting), \`hubspoke\` (one node carries most edges), \`hierarchy\` (portrait/top-down), or \`pipeline\` (left-to-right; \`family\` says compact vs **dense-phase-columns** = pack phases as grids).
-- \`warnings\` — actionable smells, most importantly **"N frames hold a single icon"** (the sparsity failure — pack related services into fewer \`grid()\` boxes, 3–8 icons each) and near-hub / backward-edge hints.
-If \`recommended\` disagrees with how you drew it, or a sparsity warning fires, **restructure now** — before polishing. This is far cheaper than discovering it in the vision check.
-
-## 3. Validate
-If your build script already prints its \`d.validate()\` result (the examples all do), read that during
-iteration — do NOT also run \`drawio-ai validate\` on every loop; it re-prints the same report.
-Run \`drawio-ai validate <file>\` ONCE as the final gate before delivering.
-
-## 4. Render
-Run \`drawio-ai render <file> --check -o <output.png>\` for the vision self-check — \`--check\` clamps
-the long edge to ~1100px (layout inspection needs geometry, not full resolution; image tokens scale
-with pixels). After the layout looks right, render ONCE more without \`--check\` for the final PNG.
-Only pass \`--scale 2\` when the user asked for a high-res PNG deliverable.
-
-## Vision self-check discipline
-Reading the PNG: list EVERY layout problem you can see (overlaps, misaligned rows, edges cutting
-through nodes, label collisions, cramped spacing) in ONE pass, fix them ALL in one edit round, then
-re-render. Target ≤ 2 render/fix cycles — one fix per cycle is the expensive anti-pattern (each
-extra cycle re-reads the whole context plus another image).
-
-## 5. Write output to an absolute path under the user's project
-Never write into the kit itself. Always write the .drawio (and rendered .png) to the user's project directory, using an absolute path they specify.
-
-## Preflight: Graphviz (optional)
-Bake-route quality is best with Graphviz (\`dot\`) installed; if absent, the kit's built-in A*/nudge router is used (zero-dependency, works everywhere). Scaffold is unaffected either way — drag-time routing is always draw.io-native.
-
-## Loop
-If the visual check reveals layout issues, go back to step 2 (rebuild), then re-validate and re-render. Do not skip validation.`;
+  return readFileSync(join(skillDir(), "workflows", "build.md"), "utf8");
 }

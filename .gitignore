@@ -20,3 +20,7 @@ workspace-outputs/
 *.sarif
 gitleaks.json
 
+
+# bun test --coverage --coverage-reporter=lcov output, bun pm pack / npm pack tarballs
+coverage/
+*.tgz

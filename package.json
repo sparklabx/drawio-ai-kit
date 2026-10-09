@@ -1,32 +1,38 @@
 {
   "name": "drawio-ai-kit",
-  "version": "1.0.2",
+  "version": "2.0.0",
   "description": "A kit that helps an AI draw beautiful, correct draw.io diagrams: ground-truth AWS/Azure/GCP stencil catalogs, layout principles, and a validator. Exposed via the zero-dependency drawio-ai CLI.",
   "type": "module",
   "bin": {
-    "drawio-ai": "./src/cli.mjs"
+    "drawio-ai": "./dist/cli.mjs"
   },
   "scripts": {
     "cli": "node src/cli.mjs",
+    "build": "bun scripts/build.mjs",
+    "build:check": "bun scripts/build.mjs --check",
+    "build:analyze": "bun scripts/build.mjs --analyze",
     "test": "node --test",
+    "test:bun": "bun test",
+    "test:watch": "bun test --watch",
+    "coverage": "bun test --coverage",
     "gen:catalog": "python3.11 scripts/ingest_index.py"
   },
   "files": [
-    "src",
+    "dist",
     "catalog",
-    "data",
-    "rules",
+    "data/lobe-icons.json",
     "vendor",
-    "scripts",
     "examples",
     "skills",
     "README.md",
-    "THIRD_PARTY_NOTICES.md",
-    ".nvmrc",
-    ".python-version"
+    "NOTICE",
+    "THIRD_PARTY_NOTICES.md"
   ],
   "engines": {
     "node": ">=18"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "exports": {
+    ".": "./dist/kit.mjs"
+  }
 }

@@ -19,7 +19,7 @@ export const BPMN = {
 const CATALOG = loadCatalog();
 const look = (name) => {
   const s = styleForIcon(CATALOG, name);
-  if (!s) throw new Error(`BPMN shape not in catalog: "${name}" — verify with search_icon.`);
+  if (!s) throw new Error(`BPMN shape not in catalog: "${name}" — verify with: drawio-ai search ${name}`);
   return s; // { style, width, height }
 };
 

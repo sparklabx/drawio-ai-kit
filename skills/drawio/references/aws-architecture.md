@@ -4,7 +4,7 @@ Conventions specific to AWS architecture diagrams. Layer these on top of the gen
 
 ## Containers — nest in the real order
 
-Use the official AWS group shapes (`search_icon "<name>" --kind group`) and **nest them by parent-child**, not by stacking:
+Use the official AWS group shapes (`drawio-ai search "<name>" --kind group`) and **nest them by parent-child**, not by stacking:
 
 ```text
 AWS Cloud (group_aws_cloud_alt)
@@ -30,7 +30,7 @@ Category colors: Compute/Containers `#ED7100` · Storage `#7AA116` · Database `
 - **Data pipeline (left → right):** Sources → Ingestion → Processing → Storage → Integration/Serving → Consumers; cross-cutting layers as a band below (see `principles.md` §8).
 - **VPC / network diagram:** Each **Availability Zone is a vertical COLUMN**, the AZs sit **side by side**, and the **VPC is the horizontal box** wrapping them (Region → VPC → AZ columns → subnets). Inside an AZ, subnets are **tiers stacked top→bottom** (Public → App → Data); keep the **same tier aligned horizontally across AZs** (public-a level with public-b). Users/Internet sit outside the VPC; a shared ALB/NAT/bus spans **horizontally across the AZ columns**.
 - **Event-driven / bus:** see the `hubspoke` preset in `diagram-types.md` (bus in the centre, producers one side, consumers the other).
-- **Hybrid / DR:** on-prem is a SEPARATE block OUTSIDE the AWS Region/Cloud container — never nested. See the `hybrid` preset in `diagram-types.md` and `examples/aws/build_hybrid.mjs`.
+- **Hybrid / DR:** on-prem is a SEPARATE block OUTSIDE the AWS Region/Cloud container — never nested. See the `hybrid` preset in `diagram-types.md` and `drawio-ai scaffold build_hybrid.mjs`.
 
 ## Multi-AZ
 
