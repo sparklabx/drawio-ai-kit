@@ -6,6 +6,7 @@
 //   drawio-ai render <file> [-o out.png] [--scale N] [--page N] [--bake]
 //   drawio-ai root
 //   drawio-ai workflow
+//   drawio-ai skill install [-g] [-a <agent>] [-y]
 //   drawio-ai categories
 //   drawio-ai principles [--mode aws|azure|gcp|databricks|bpmn]
 
@@ -205,6 +206,15 @@ switch (cmd) {
   case "workflow":
     process.stdout.write(workflowText() + "\n");
     break;
+  case "skill": {
+    // Register the skill that ships inside this package — no second download of the repo. The skills
+    // CLI still does the per-agent detection; extra args pass through (-g, -a claude-code, -y, --copy).
+    if (positional[0] !== "install") { console.error("usage: drawio-ai skill install [skills-cli add flags…]"); process.exit(1); }
+    try {
+      execFileSync("npx", ["-y", "skills", "add", skillDir(), ...rest.slice(1)], { stdio: "inherit", shell: process.platform === "win32" });
+    } catch (e) { process.exit(e.status ?? 1); }
+    break;
+  }
   case "render": {
     // Handle -o (single-dash) since parseFlags only captures --flags
     let outFlag = flags.o ?? flags.out;
@@ -273,6 +283,7 @@ switch (cmd) {
   root
   render <file> [-o out.png] [--scale N] [--page N] [--check]
   workflow
+  skill install [-g] [-a <agent>] [-y]              register the bundled skill with your agents (no repo clone)
   [--catalog <path>]  override the default catalog (catalog/aws.json)`
     );
     process.exit(cmd ? 1 : 0);

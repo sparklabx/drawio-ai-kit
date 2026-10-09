@@ -161,3 +161,8 @@ test("scaffoldSource adds a VALIDATE line only when the template prints none", (
   assert.match(scaffoldSource(w, "/opt/kit"), /\["validate", __f\]/);
   assert.doesNotMatch(scaffoldSource(`console.log("VALIDATE:", 1);\n` + w, "/opt/kit"), /\["validate", __f\]/);
 });
+
+test("skill: anything but `install` prints usage and exits 1 (never shells out)", () => {
+  assert.throws(() => execFileSync(process.execPath, [join(packageRoot(), "src", "cli.mjs"), "skill"], { encoding: "utf8", stdio: "pipe" }),
+    (e) => e.status === 1 && /skill install/.test(e.stderr));
+});
