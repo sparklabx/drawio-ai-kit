@@ -17,9 +17,9 @@ export const BPMN = {
   taskH: 56,
 };
 
-const CATALOG = loadCatalog();
+const CATALOG = () => loadCatalog(); // lazy: importing the kit must not parse the catalog
 const look = (name: string) => {
-  const s = styleForIcon(CATALOG, name);
+  const s = styleForIcon(CATALOG(), name);
   if (!s) throw new Error(`BPMN shape not in catalog: "${name}" — verify with: drawio-ai search ${name}`);
   return s; // { style, width, height }
 };

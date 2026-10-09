@@ -57,7 +57,8 @@ const { flags, positional } = parseFlags(rest);
 // a valueless `--key` parses as true; string options treat that as absent
 const str = (v: string | true | undefined) => (typeof v === "string" ? v : undefined);
 const errMsg = (e: unknown) => (e instanceof Error ? e.message : String(e));
-const catalog = loadCatalog(str(flags.catalog));
+// lazy: only catalog commands pay for parsing it (loadCatalog caches per path)
+const catalog = () => loadCatalog(str(flags.catalog));
 
 switch (cmd) {
   case "search": {
@@ -73,13 +74,13 @@ switch (cmd) {
     // one agent tool-call round-trip per icon. Same limit as single-query so ranking depth is identical.
     const queries = q.split(",").map((s) => s.trim()).filter(Boolean);
     out(queries.length > 1
-      ? Object.fromEntries(queries.map((one) => [one, searchIcon(catalog, one, opts)]))
-      : searchIcon(catalog, q, opts));
+      ? Object.fromEntries(queries.map((one) => [one, searchIcon(catalog(), one, opts)]))
+      : searchIcon(catalog(), q, opts));
     break;
   }
   case "style": {
     const name = positional[0];
-    const icon = name ? getIcon(catalog, name) : null;
+    const icon = name ? getIcon(catalog(), name) : null;
     if (!icon) { console.error(`Stencil "${name}" not found in catalog.`); process.exit(1); }
     out(icon);
     break;
@@ -96,14 +97,14 @@ switch (cmd) {
       const agg = { ok: true, errors: [] as string[], warnings: [] as string[], audit: { advice: [] as string[] } };
       res = agg;
       for (const [, name, body] of tabs) {
-        const r = validateDiagram(catalog, body, { strict: !!flags.strict });
+        const r = validateDiagram(catalog(), body, { strict: !!flags.strict });
         agg.ok &&= r.ok;
         agg.errors.push(...r.errors.map((e) => `[${name}] ${e}`));
         agg.warnings.push(...(r.warnings ?? []).map((w) => `[${name}] ${w}`));
         agg.audit.advice.push(...(r.audit?.advice ?? []).map((a) => `[${name}] ${a}`));
       }
     } else {
-      res = validateDiagram(catalog, xml, { strict: !!flags.strict });
+      res = validateDiagram(catalog(), xml, { strict: !!flags.strict });
     }
     // ponytail: a clean pass needs no metrics — but keep the empty arrays so "all three are empty"
     // is visible, not inferred (an A/B agent flagged the bare {ok:true} as ambiguous)
@@ -138,7 +139,7 @@ switch (cmd) {
     break;
   }
   case "categories":
-    out(listCategories(catalog));
+    out(listCategories(catalog()));
     break;
   case "principles": {
     const base = join(skillDir(), "references");
@@ -149,7 +150,7 @@ switch (cmd) {
     // neutral packs (cicd, database, network, …) stay in every mode.
     const cats = (mode: string) => {
       const excludePacks = new Set(MODES.filter((m) => m !== mode));
-      return "\n\n## Icon groups available in the catalog\n" + listCategories(catalog, { excludePacks }).map((c) => `${c.category}: ${c.count}`).join(" · ");
+      return "\n\n## Icon groups available in the catalog\n" + listCategories(catalog(), { excludePacks }).map((c) => `${c.category}: ${c.count}`).join(" · ");
     };
     const mode = str(flags.mode) ?? "aws";
     if (!MODES.includes(mode)) {
@@ -260,7 +261,7 @@ switch (cmd) {
     if (flags.check) {
       const xml2 = readFileSync(file, "utf8");
       if (!/<\/diagram>[\s\S]*<diagram/.test(xml2)) {
-        const v = validateDiagram(catalog, xml2, {});
+        const v = validateDiagram(catalog(), xml2, {});
         result.issues = [...v.errors, ...(v.warnings ?? []), ...(v.audit?.advice ?? [])];
       }
     }
