@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { loadCatalog, searchIcon, getIcon, styleForIcon, validateDiagram, auditAesthetics, auditGeometry, auditEdges, auditArchitecture, graphFromXml, suggestLayout } from "../src/core.mjs";
+import { loadCatalog, buildCatalogIndex, CATALOG_INDEX, searchIcon, getIcon, styleForIcon, validateDiagram, auditAesthetics, auditGeometry, auditEdges, auditArchitecture, graphFromXml, suggestLayout } from "../src/core.mjs";
 
 const catalog = loadCatalog();
 
@@ -381,4 +381,19 @@ test("graphFromXml/suggestLayout report a container with a tall empty band", () 
 
 test("loadCatalog parses each catalog file once per process", () => {
   assert.equal(loadCatalog(), catalog);
+});
+
+test("data/catalog-index.json is fresh (run 'bun run build' after editing catalog/)", async () => {
+  const { readFileSync } = await import("node:fs");
+  assert.equal(readFileSync(CATALOG_INDEX, "utf8"), JSON.stringify(buildCatalogIndex()));
+});
+
+test("lazy pack styles match the full catalog", async () => {
+  const { dirname, join } = await import("node:path");
+  const { readFileSync } = await import("node:fs");
+  const dir = dirname(CATALOG_INDEX).replace(/data$/, "catalog");
+  for (const pack of ["azure", "gcp", "database"]) {
+    const full = JSON.parse(readFileSync(join(dir, `${pack}.json`), "utf8"));
+    for (const e of full.icons.slice(0, 5)) assert.equal(catalog.byName.get(e.name).style, e.style, `${pack}/${e.name}`);
+  }
 });

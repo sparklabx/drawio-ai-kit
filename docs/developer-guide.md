@@ -119,6 +119,7 @@ scripts/bench-install.sh [spec]             # cold-cache install timing + packed
 
 Icons are embedded as `data:image/svg+xml,<base64>` (vector, small). Keep each icon ≤16 KB and the catalog ≤6 MB:
 `test/catalog-size.test.mjs` enforces both limits.
+`bun run build` also writes `data/catalog-index.json` (pack metadata without images). The CLI searches it and parses a pack's full JSON only when one of its styles is used. Commit it after any `catalog/` change; `build:check` and `npm test` fail when it is stale.
 
 ## Runtime / Tooling Preferences
 

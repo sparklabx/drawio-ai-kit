@@ -42,6 +42,7 @@
     "dist",
     "catalog",
     "data/lobe-icons.json",
+    "data/catalog-index.json",
     "vendor",
     "examples",
     "skills",

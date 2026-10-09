@@ -2,10 +2,11 @@
 // Maintainer build: bundles src/cli.mjs + src/kit.mjs into the shipped dist/.
 // Runs on Bun only (Bun.build). The OUTPUT is plain Node >=18 ESM — users never need Bun.
 //
-//   bun run build            rebuild dist/ and print a size report
+//   bun run build            rebuild dist/ + data/catalog-index.json and print a size report
 //   bun run build:check      rebuild into a temp dir; fail if dist/ differs (stale or non-deterministic)
 //   bun run build:analyze    also write a module-graph report (metafile JSON + markdown) to $TMPDIR
-import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { buildCatalogIndex, CATALOG_INDEX } from "../src/core.mjs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -37,7 +38,14 @@ async function bundle(outdir) {
 const files = (dir) => readdirSync(dir).sort();
 const kb = (n) => `${(n / 1024).toFixed(1)} KB`;
 
+// Slim catalog index (pack metadata without embedded images) so the CLI loads a pack's images only on use.
+const index = JSON.stringify(buildCatalogIndex());
+
 if (check) {
+  if (readFileSync(CATALOG_INDEX, "utf8") !== index) {
+    console.error("data/catalog-index.json is stale — run 'bun run build' and commit it");
+    process.exit(1);
+  }
   const tmp = mkdtempSync(join(tmpdir(), "drawio-dist-"));
   await bundle(tmp);
   const want = files(tmp);
@@ -54,6 +62,7 @@ if (check) {
   process.exit(0);
 }
 
+writeFileSync(CATALOG_INDEX, index);
 await bundle(DIST);
 let raw = 0;
 let gz = 0;
