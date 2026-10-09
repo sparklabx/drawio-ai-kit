@@ -4,7 +4,12 @@
 //
 // rect = { x, y, w, h }.  Returns { pins, wp } — pins is a style string; wp is {x,y} or null.
 
-const frac = (v, lo, len) => ((v - lo) / len).toFixed(3);
+import type { Geometry as Rect, Point } from "./model.ts";
+
+type Route = { pins: string; wp: Point[] };
+type LaneOpts = { tol?: number; laneX?: number | null; laneY?: number | null };
+
+const frac = (v: number, lo: number, len: number) => ((v - lo) / len).toFixed(3);
 
 // laneX/laneY: the "gap" coordinate for the perpendicular segment — it should be the MIDDLE OF THE WHITE GAP between two columns/rows,
 // not the midpoint of two nodes (a node may be a narrow icon centered in a column → the node midpoint lands on a frame edge).
@@ -15,7 +20,7 @@ const frac = (v, lo, len) => ((v - lo) / len).toFixed(3);
 
 /** Connect horizontally. Exit/entry are pinned to the side FACING the other node (target right →
  *  exit right/enter left; target left → exit left/enter right) so the edge never loops the wrong way. */
-export function routeLR(s, t, { tol = 8, laneX = null } = {}) {
+export function routeLR(s: Rect, t: Rect, { tol = 8, laneX = null }: LaneOpts = {}): Route {
   const fwd = (t.x + t.w / 2) >= (s.x + s.w / 2);   // target to the right of source?
   const exX = fwd ? 1 : 0, enX = fwd ? 0 : 1;
   const ov0 = Math.max(s.y, t.y);
@@ -41,7 +46,7 @@ export function routeLR(s, t, { tol = 8, laneX = null } = {}) {
 // short branch. Force a corner (even when bands overlap) so a straight line doesn't break the trunk.
 
 /** A horizontal fan-out edge: shared vertical trunk at laneX; exit/entry face the target side. */
-export function routeLRFan(s, t, { laneX }) {
+export function routeLRFan(s: Rect, t: Rect, { laneX }: { laneX: number }): Route {
   const fwd = (t.x + t.w / 2) >= (s.x + s.w / 2);
   const exX = fwd ? 1 : 0, enX = fwd ? 0 : 1;
   const sy = Math.round(s.y + s.h / 2), ty = Math.round(t.y + t.h / 2);
@@ -53,7 +58,7 @@ export function routeLRFan(s, t, { laneX }) {
 }
 
 /** A vertical fan-out edge: shared horizontal trunk at laneY; exit/entry face the target side. */
-export function routeTBFan(s, t, { laneY }) {
+export function routeTBFan(s: Rect, t: Rect, { laneY }: { laneY: number }): Route {
   const down = (t.y + t.h / 2) >= (s.y + s.h / 2);
   const exY = down ? 1 : 0, enY = down ? 0 : 1;
   const sx = Math.round(s.x + s.w / 2), tx = Math.round(t.x + t.w / 2);
@@ -69,7 +74,7 @@ export function routeTBFan(s, t, { laneY }) {
 // arrowheads don't stack on one spot — a clean "reverse comb" into the target edge.
 
 /** A horizontal fan-in edge: distinct entryY; exit/entry face the source→target side. */
-export function routeLRFanIn(s, t, { laneX, entryY }) {
+export function routeLRFanIn(s: Rect, t: Rect, { laneX, entryY }: { laneX: number; entryY: number }): Route {
   const fwd = (t.x + t.w / 2) >= (s.x + s.w / 2);
   const exX = fwd ? 1 : 0, enX = fwd ? 0 : 1;
   const sy = Math.round(s.y + s.h / 2), ty = Math.round(t.y + t.h * entryY);
@@ -81,7 +86,7 @@ export function routeLRFanIn(s, t, { laneX, entryY }) {
 }
 
 /** A vertical fan-in edge: distinct entryX; exit/entry face the source→target side. */
-export function routeTBFanIn(s, t, { laneY, entryX }) {
+export function routeTBFanIn(s: Rect, t: Rect, { laneY, entryX }: { laneY: number; entryX: number }): Route {
   const down = (t.y + t.h / 2) >= (s.y + s.h / 2);
   const exY = down ? 1 : 0, enY = down ? 0 : 1;
   const sx = Math.round(s.x + s.w / 2), tx = Math.round(t.x + t.w * entryX);
@@ -94,7 +99,7 @@ export function routeTBFanIn(s, t, { laneY, entryX }) {
 
 /** Connect vertically. Exit/entry pinned to the side FACING the other node (target below →
  *  exit bottom/enter top; target above → exit top/enter bottom) so the edge never loops. */
-export function routeTB(s, t, { tol = 8, laneY = null } = {}) {
+export function routeTB(s: Rect, t: Rect, { tol = 8, laneY = null }: LaneOpts = {}): Route {
   const down = (t.y + t.h / 2) >= (s.y + s.h / 2);   // target below source?
   const exY = down ? 1 : 0, enY = down ? 0 : 1;
   const ov0 = Math.max(s.x, t.x);
@@ -115,35 +120,35 @@ export function routeTB(s, t, { tol = 8, laneY = null } = {}) {
 }
 
 /** X to place a node of width w in the MIDDLE OF THE horizontal GAP between 2 rects (left, right). */
-export function centerInGapX(left, right, w) {
+export function centerInGapX(left: Rect, right: Rect, w: number) {
   return Math.round((left.x + left.w + right.x) / 2 - w / 2);
 }
 /** Y to place a node of height h in the MIDDLE OF THE vertical GAP between 2 rects (top, bottom). */
-export function centerInGapY(top, bottom, h) {
+export function centerInGapY(top: Rect, bottom: Rect, h: number) {
   return Math.round((top.y + top.h + bottom.y) / 2 - h / 2);
 }
 
 /** X to CENTER a node of width w inside a box. */
-export function centerInBoxX(box, w) {
+export function centerInBoxX(box: Rect, w: number) {
   return Math.round(box.x + (box.w - w) / 2);
 }
 /**
  * Y (top edge) for element i of n, distributed EVENLY vertically inside the box,
  * reserving the `top` header and `bottom` margin. itemH = cell height (icon + label).
  */
-export function distributeY(box, n, i, { top = 50, bottom = 24, itemH = 78 } = {}) {
+export function distributeY(box: Rect, n: number, i: number, { top = 50, bottom = 24, itemH = 78 }: { top?: number; bottom?: number; itemH?: number } = {}) {
   const usable = box.h - top - bottom;
   const step = usable / n;
   return Math.round(box.y + top + step * (i + 0.5) - itemH / 2);
 }
 
 /** Child rect that fits SNUGLY INSIDE the parent rect (margins l/t/r/b). Used for tightly nested frames. */
-export function inset(rect, { l = 18, t = 24, r = 18, b = 12 } = {}) {
+export function inset(rect: Rect, { l = 18, t = 24, r = 18, b = 12 }: { l?: number; t?: number; r?: number; b?: number } = {}): Rect {
   return { x: rect.x + l, y: rect.y + t, w: rect.w - l - r, h: rect.h - t - b };
 }
 
 /** Box size that FITS n icons (grid of cols columns) — no wasted space in the box. */
-export function panelSize(n, { cols = 1, itemW = 130, itemH = 84, gap = 18, pad = 20, header = 34 } = {}) {
+export function panelSize(n: number, { cols = 1, itemW = 130, itemH = 84, gap = 18, pad = 20, header = 34 }: { cols?: number; itemW?: number; itemH?: number; gap?: number; pad?: number; header?: number } = {}) {
   const rows = Math.ceil(n / cols);
   return {
     w: pad * 2 + cols * itemW + (cols - 1) * gap,
@@ -152,7 +157,7 @@ export function panelSize(n, { cols = 1, itemW = 130, itemH = 84, gap = 18, pad 
 }
 
 /** Auto-pick LR/TB by relative position (prefer the axis with the larger offset). */
-export function route(s, t, opts) {
+export function route(s: Rect, t: Rect, opts?: LaneOpts): Route {
   const dx = (t.x + t.w / 2) - (s.x + s.w / 2);
   const dy = (t.y + t.h / 2) - (s.y + s.h / 2);
   if (Math.abs(dx) >= Math.abs(dy)) return dx >= 0 ? routeLR(s, t, opts) : routeLR(t, s, opts);
