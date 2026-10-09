@@ -30,3 +30,11 @@ Architecture details live in [docs/developer-guide.md](docs/developer-guide.md);
 - Keep diffs small and focused; one concern per PR.
 - Add or extend a test in [test/](test/) when behavior changes — `bun test` and `npm test` must both pass.
 - For security issues, don't open a public issue — see [SECURITY.md](SECURITY.md).
+- CI fails if the npm tarball grows past 2.5 MB (`npm pack`), or if any catalog icon is over 16 KB. Check locally with `scripts/bench-install.sh`.
+
+## Releasing
+
+1. Bump `version` in `package.json`, run `bun run build`, and commit.
+2. Tag and push the tag: `git tag v2.0.1 && git push origin v2.0.1`.
+3. `.github/workflows/release.yml` checks that the tag matches the version, runs the tests and `build:check`, then runs `npm publish --provenance`.
+   Auth uses npm trusted publishing (OIDC) for `sparklabx/drawio-ai-kit` + `release.yml` + environment `npm`, falling back to the `NPM_TOKEN` secret.
