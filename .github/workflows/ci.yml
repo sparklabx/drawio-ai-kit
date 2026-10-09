@@ -23,6 +23,8 @@ jobs:
         run: npm run typecheck
       - name: Audit dependencies (fail on high/critical)
         run: npm audit --omit=dev --audit-level=high
+      - name: Shellcheck install.sh (tests run in the next step)
+        run: shellcheck install.sh
       - name: Tests (node --test)
         run: npm test
       - name: Smoke-test the bundled CLI on Node
