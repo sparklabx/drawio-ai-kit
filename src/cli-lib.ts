@@ -112,10 +112,9 @@ export function buildRenderArgs({ file, out, scale = 1, page = 1 }: RenderArgs) 
  * .drawio written next to the script, and a self-check tail that renders --check and prints the
  * machine-readable issue list — so one `node` run = build + validate + render + issues.
  */
-export function scaffoldSource(src: string, root: string, lib = "dist/kit.mjs", name?: string) {
-  // every engine module is re-exported by the one library entry, so all kit imports collapse onto it
-  let s = src.replace(/"\.\.\/\.\.\/src\/[a-z-]+\.(?:mjs|ts)"/g, `"${root}/${lib}"`);
-  s = s.replace(/new URL\("\.\.\/\.\.\/out\//g, 'new URL("./');
+export function scaffoldSource(src: string, name?: string) {
+  // examples already `import … from "drawio-ai-kit"`; only the output path is rewritten
+  let s = src.replace(/new URL\("\.\.\/\.\.\/out\//g, 'new URL("./');
   let m = s.match(/new URL\("\.\/([^"]+\.drawio)"/);
   // --name renames the output once here, so the write line and the self-check tail can't disagree
   if (m && name) { s = s.replaceAll(`"./${m[1]}"`, `"./${name}"`); m = [m[0], name]; }

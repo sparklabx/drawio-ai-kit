@@ -52,7 +52,7 @@
     "THIRD_PARTY_NOTICES.md"
   ],
   "engines": {
-    "node": ">=20"
+    "node": ">=20.6"
   },
   "license": "MIT",
   "exports": {

@@ -22,7 +22,7 @@ const analyze = args.has("--analyze");
 async function bundle(outdir) {
   rmSync(outdir, { recursive: true, force: true });
   const r = await Bun.build({
-    entrypoints: [join(ROOT, "src/cli.ts"), join(ROOT, "src/kit.ts")],
+    entrypoints: [join(ROOT, "src/cli.ts"), join(ROOT, "src/kit.ts"), join(ROOT, "src/run-hook.ts")],
     outdir,
     target: "node",
     format: "esm",

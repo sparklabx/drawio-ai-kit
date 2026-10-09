@@ -2,8 +2,8 @@
 // An organization fans out to member accounts; a user signs in to the management account and
 // assumes a cross-account role into the workload accounts.
 import { writeFileSync } from "node:fs";
-import { Diagram } from "../../src/builder.ts";
-import { group, frame, icon, box, phantom, renderTree } from "../../src/layout-engine.ts";
+import { Diagram } from "drawio-ai-kit";
+import { group, frame, icon, box, phantom, renderTree } from "drawio-ai-kit";
 
 const d = new Diagram("hierarchy");
 

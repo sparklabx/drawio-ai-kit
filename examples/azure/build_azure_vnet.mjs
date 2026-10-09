@@ -3,8 +3,8 @@
 // Each subnet lays its resources side-by-side (row) so the tier→tier flow combs cleanly (no label-crossing
 // detours). Global services (Entra ID / DNS) sit OUTSIDE the RG. Run: node examples/azure/build_azure_vnet.mjs
 import { writeFileSync } from "node:fs";
-import { Diagram } from "../../src/builder.ts";
-import { frame, icon, box, renderTree } from "../../src/layout-engine.ts";
+import { Diagram } from "drawio-ai-kit";
+import { frame, icon, box, renderTree } from "drawio-ai-kit";
 
 const d = new Diagram("network");
 const BLUE = "#0078D4";

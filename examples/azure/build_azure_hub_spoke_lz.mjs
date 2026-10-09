@@ -4,8 +4,8 @@
 // the gateway. Clean house style: white frames, identity via borders + icons.
 // Run: node examples/azure/build_azure_hub_spoke_lz.mjs
 import { writeFileSync } from "node:fs";
-import { Diagram } from "../../src/builder.ts";
-import { frame, icon, box, phantom, renderTree } from "../../src/layout-engine.ts";
+import { Diagram } from "drawio-ai-kit";
+import { frame, icon, box, phantom, renderTree } from "drawio-ai-kit";
 
 const d = new Diagram("network");
 const AZ = "#0078D4", SUB = "#8AB4D8", MG = "#777777";

@@ -4,6 +4,7 @@
 //   drawio-ai style <name>
 //   drawio-ai validate <file.drawio|file.xml> [--strict]
 //   drawio-ai render <file> [-o out.png] [--scale N] [--page N] [--bake]
+//   drawio-ai run <script.mjs> [args…]
 //   drawio-ai root
 //   drawio-ai workflow
 //   drawio-ai skill install [-g] [-a <agent>] [-y]
@@ -11,9 +12,9 @@
 //   drawio-ai principles [--mode aws|azure|gcp|databricks|bpmn]
 
 import { readFileSync, existsSync } from "node:fs";
-import { execFileSync } from "node:child_process";
-import { fileURLToPath } from "node:url";
-import { basename, dirname, join } from "node:path";
+import { execFileSync, spawnSync } from "node:child_process";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { basename, dirname, join, resolve } from "node:path";
 import {
   loadCatalog,
   searchIcon,
@@ -197,13 +198,24 @@ switch (cmd) {
     const outMjs = outFlag2 ?? join(process.cwd(), rel.split("/").pop() ?? rel);
     const { writeFileSync: wf, mkdirSync } = await import("node:fs");
     mkdirSync(dirname(outMjs), { recursive: true });
-    // the bundled CLI points scripts at the bundled library; a dev clone running src/ points at src/
-    const lib = basename(__dirname) === "dist" ? "dist/kit.mjs" : "src/kit.ts";
     const name = typeof flags.name === "string" ? basename(flags.name).replace(/(\.drawio)?$/, ".drawio") : undefined;
-    const script = scaffoldSource(readFileSync(srcPath, "utf8"), packageRoot(), lib, name);
+    const script = scaffoldSource(readFileSync(srcPath, "utf8"), name);
     wf(outMjs, script);
     const drawio = script.match(/new URL\("\.\/([^"]+\.drawio)"/)?.[1];
-    out({ ok: true, path: outMjs, ...(drawio && { drawio: join(dirname(outMjs), drawio) }), run: `node ${outMjs}`, note: "script builds + validates + renders --check + prints issues in ONE run; .drawio/.png land next to it" });
+    out({ ok: true, path: outMjs, ...(drawio && { drawio: join(dirname(outMjs), drawio) }), run: `drawio-ai run ${outMjs}`, note: "script builds + validates + renders --check + prints issues in ONE run; .drawio/.png land next to it" });
+    break;
+  }
+  case "run": {
+    // drawio-ai run <script> [args…] — run a script whose `import "drawio-ai-kit"` resolves to THIS install.
+    const script = rest[0];
+    if (!script) { console.error("usage: drawio-ai run <script.mjs> [args…]"); process.exit(1); }
+    if (!existsSync(script)) { console.error(`script not found: ${resolve(script)}`); process.exit(1); }
+    const hook = join(__dirname, basename(__dirname) === "dist" ? "run-hook.mjs" : "run-hook.ts");
+    // everything after the script belongs to the script (parseFlags would swallow its flags)
+    const args = rest.slice(1);
+    const pre = process.versions.bun ? ["--no-install", "--preload", hook] : ["--import", pathToFileURL(hook).href];
+    const r = spawnSync(process.execPath, [...pre, script, ...args], { stdio: "inherit" });
+    process.exit(r.status ?? 1);
     break;
   }
   case "root":

@@ -33,8 +33,8 @@
 //   [ ] Managed AWS services sit OUTSIDE the VPC; optional GitOps band (Terraform + ArgoCD).
 // ============================================================================
 import { writeFileSync } from "node:fs";
-import { Diagram } from "../../src/builder.ts";
-import { group, frame, icon, box, band, endpoint, ossBox, onpremFrame, phantom, renderTree } from "../../src/layout-engine.ts";
+import { Diagram } from "drawio-ai-kit";
+import { group, frame, icon, box, band, endpoint, ossBox, onpremFrame, phantom, renderTree } from "drawio-ai-kit";
 
 // ---- knobs ----------------------------------------------------------------
 const REGION_CODE = "ap-southeast-1";                 // AZ labels become ap-southeast-1a/b/c
