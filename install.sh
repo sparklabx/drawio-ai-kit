@@ -131,7 +131,7 @@ if [ "$dry" = 1 ]; then
   if [ "$runtime" = bun ] && [ "$node_ok" = 0 ]; then printf '+ write bun wrapper %s -> %s\n' "$cli" "$cli_js"
   else printf '+ ln -sf %s %s\n' "$cli_js" "$cli"; fi
 else
-  [ -n "$groot" ] && [ -f "$cli_js" ] || die "installed, but could not find the package (looked for $cli_js)"
+  if [ -z "$groot" ] || [ ! -f "$cli_js" ]; then die "installed, but could not find the package (looked for $cli_js)"; fi
   mkdir -p "$bin_dir"
   rm -f "$cli"
   if [ "$runtime" = bun ] && [ "$node_ok" = 0 ]; then
