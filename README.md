@@ -6,9 +6,9 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/version-2.0.0-22D3EE?style=flat-square" alt="Version 2.0.0">
-  <img src="https://img.shields.io/badge/dependencies-0-2BB3A3?style=flat-square" alt="Dependencies: 0">
+  <img src="https://img.shields.io/badge/install-nothing%20extra-2BB3A3?style=flat-square" alt="Self-contained bundle">
   <img src="https://img.shields.io/badge/skill-1%20(all%20domains)-5AA9FF?style=flat-square" alt="1 skill, all domains">
-  <img src="https://img.shields.io/badge/node-%E2%89%A518-B98CF0?style=flat-square" alt="Node ≥18">
+  <img src="https://img.shields.io/badge/node-%E2%89%A520.6%20or%20Bun-B98CF0?style=flat-square" alt="Node ≥20.6 or Bun">
   <img src="https://img.shields.io/badge/built%20with-Bun-F9F1E1?style=flat-square" alt="Built with Bun">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-F59E0B?style=flat-square" alt="License: MIT"></a>
   <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-welcome-ff69b4?style=flat-square" alt="PRs welcome"></a>
@@ -22,7 +22,7 @@ It mitigates common AI agent hallucinations (such as generating non-existent ste
 2. **Design Principles** — Codified architectural and layout rules (`skills/drawio/references/principles.md`).
 3. **Structural Validator** — A static analysis engine that audits diagram XML to guarantee stencil references are valid and design principles are satisfied prior to serialization.
 
-Exposed to the AI via the **zero-dependency `drawio-ai` CLI**.
+Exposed to the AI via the **self-contained `drawio-ai` CLI** (one bundled file, nothing extra to install).
 
 ## Showcase
 
@@ -32,27 +32,47 @@ One diagram per platform — all generated end-to-end by the kit: no hand-placed
 
 ## Quick start
 
-Full install — the CLI plus the `drawio` skill (AWS, Azure, GCP, Databricks, multi-cloud, BPMN) — in one line:
+**Requirements:** Node.js ≥20.6 **or** Bun 1.4+. Nothing else to install.
+
+> **Bun-only machine (no `node`)?** The CLI's shebang is `#!/usr/bin/env node` (the Windows-safe standard), so `install.sh` wraps Bun's global `drawio-ai` bin to run `bun <pkg>/dist/cli.mjs`. Re-run `install.sh` after `bun update -g`. With a manual `bun add -g`, run `bun $(bun pm bin -g)/../install/global/node_modules/drawio-ai-kit/dist/cli.mjs` or install Node.
+
+### 1. One-liner (CLI + skill)
 
 ```bash
-npm i -g drawio-ai-kit && drawio-ai skill install
+curl -fsSL https://raw.githubusercontent.com/sparklabx/drawio-ai-kit/main/install.sh | sh
 ```
 
-Using Bun? Same thing:
+It installs the CLI globally with Bun (if present) or npm, then registers the `drawio` skill with every
+agent it finds. It never installs a runtime and needs no `sudo`. Prefer to read it first? Download
+`install.sh`, open it, then run `sh install.sh` (`--dry-run` prints the commands only; `--help` lists options).
+
+### 2. Manual (npm or Bun)
 
 ```bash
-bun add -g drawio-ai-kit && drawio-ai skill install
+npm i -g drawio-ai-kit && drawio-ai skill install      # npm
+bun add -g drawio-ai-kit && drawio-ai skill install    # Bun
 ```
 
 About 2 MB from the npm registry, so it takes seconds. `drawio-ai skill install` registers the skill straight
-from the installed package, with no second download.
+from the installed package, with no second download. Restart your agent, then try: *"draw an AWS 3-tier web app"*.
 
-Restart your agent, then try: *"draw an AWS 3-tier web app"*.
+### 3. As a project dependency (scripts and types)
 
-The first command puts the `drawio-ai` binary on PATH (see [INSTALL.md](INSTALL.md) to pin a version,
-install from GitHub, or install from a clone). The CLI ships as a **Bun-minified production bundle** (`dist/`, ~76 KB of JS)
-that runs on plain Node ≥18, so you only need Bun if you choose to install with it (Node must still be on PATH). The second command registers the
-single `drawio` skill with your agent (it runs the `skills` CLI, which auto-detects Claude Code, Codex, Gemini CLI, …) —
+```bash
+npm i drawio-ai-kit        # or: bun add drawio-ai-kit
+```
+
+```js
+import { Diagram, group, icon, renderTree } from "drawio-ai-kit";   // full TypeScript types included
+```
+
+Run such a script with plain `node build.mjs` or `bun build.mjs`. Without a local install, use the global CLI:
+`drawio-ai run build.mjs` (it resolves `"drawio-ai-kit"` to the installed CLI).
+
+The global install puts the `drawio-ai` binary on PATH (see [INSTALL.md](INSTALL.md) to pin a version,
+or install from a clone). The CLI ships as a **Bun-minified production bundle** (`dist/`)
+that runs on Node or Bun. Its one library (icon search) is bundled inside, so users install nothing extra.
+The skill step uses the `skills` CLI, which auto-detects Claude Code, Codex, Gemini CLI, … —
 without it the agent never picks the kit up on its own.
 
 One skill covers every domain: it asks you what's missing (which cloud? what to draw?), then
@@ -65,8 +85,8 @@ loads just that domain's reference. It is written in short, explicit steps so sm
 
 Short answer: yes — and you don't have to take my word for it.
 
-- **No hidden code.** No `postinstall` (or any lifecycle) hooks — nothing runs on `npm install`. Zero runtime dependencies. **No `sudo`, no `curl | bash`, no remote code.** The shipped `dist/` is minified, but it is a reproducible build of the readable `src/` — CI rebuilds it on every PR and fails if the committed bundle differs.
-- **Zero runtime dependencies.** The single dependency (`@modelcontextprotocol/sdk`) was removed at 1.0.0. The package is now fully self-contained.
+- **No hidden code.** No `postinstall` (or any lifecycle) hooks — nothing runs on `npm install`. No dependencies are installed alongside it. **No `sudo`, no runtime installs, no remote code at run time.** The optional one-line installer is a short POSIX script you can read first. The shipped `dist/` is minified, but it is a reproducible build of the readable `src/`: it is never committed; CI builds it on every PR (and checks the build is deterministic), and the release job builds the published copy from the tagged source.
+- **Self-contained.** The package has no runtime `dependencies`. The one library it uses (`minisearch`, for icon search) is a devDependency that Bun bundles into `dist/`, and `npm audit --omit=dev` runs in CI.
 - **Runs locally, no telemetry.** The CLI only reads/writes local files. The single optional outbound call is icon-logo fetching from public CDNs (lobe-icons), and it's opt-in.
 - **Easy to undo:**
 
@@ -92,7 +112,7 @@ To report a security issue, see [`SECURITY.md`](SECURITY.md).
 Define a diagram **topology** (`pipeline`/`hierarchy`/`network`/`hubspoke`/`hybrid`/`mesh`/`sequence`), declare the **nested structure**, and the layout engine programmatically computes spatial coordinates (x/y/w/h) — frames auto-size to fit their children, while rows and columns auto-space. You define the logical topology, not raw pixels.
 
 ```js
-import { Diagram, group, icon, box, renderTree } from "<ROOT>/dist/kit.mjs";   // <ROOT> = `drawio-ai root`
+import { Diagram, group, icon, box, renderTree } from "drawio-ai-kit";   // run: drawio-ai run build.mjs (or plain node/bun where drawio-ai-kit is installed)
 
 const d = new Diagram("network");
 const tree = group("region", "group_region", "Region", { dir: "row" }, [
@@ -108,7 +128,7 @@ const res = d.validate();            // names real? colors/nesting/labels clean?
 // d.mxfile("My VPC")  → write to .drawio, export PNG, then vision self-check
 ```
 
-Icon names are retrieved from `drawio-ai search` to prevent name fabrication; edge routing, container sizing, alignment, and contextual corner styles are dynamically computed. The AI agent defines the logical layout and iterates via a render-analyze-rectify loop (vision-based self-correction). Example: `examples/aws/build_mesh.mjs` (zero manual coordinates).
+Icon names are retrieved from `drawio-ai search` to prevent name fabrication (it tolerates typos, aliases like `k8s`/`pg`/`es`, and multi-keyword queries); edge routing, container sizing, alignment, and contextual corner styles are dynamically computed. The AI agent defines the logical layout and iterates via a render-analyze-rectify loop (vision-based self-correction). Example: `examples/aws/build_mesh.mjs` (zero manual coordinates).
 
 ## Migration (from 1.x)
 
@@ -117,7 +137,7 @@ At **2.0.0** the 5 domain skills (`drawio-aws`, `drawio-azure`, `drawio-gcp`, `d
 
 - **Skills:** `npx skills remove drawio-aws drawio-azure drawio-gcp drawio-databricks drawio-bpmn`, then `drawio-ai skill install`.
 - **CLI:** `npm i -g drawio-ai-kit` (now on the npm registry; the bin points at `dist/cli.mjs`).
-- **Your build scripts:** import everything from `<ROOT>/dist/kit.mjs` (the package no longer ships `src/`). Re-scaffold, or replace `<ROOT>/src/builder.mjs` / `layout-engine.mjs` / `bpmn.mjs` imports with that one path.
+- **Your build scripts:** import everything from `"drawio-ai-kit"` (the package no longer ships `src/`). Re-scaffold, or replace the `<ROOT>/src/builder.ts` / `layout-engine.ts` / `bpmn.ts` imports with that one name. Run with `drawio-ai run build.mjs`.
 - `drawio-ai principles --mode …` and `drawio-ai workflow` still work; they now print the skill's `references/` and `workflows/build.md`.
 
 ## Migration (from <1.0)
@@ -131,7 +151,7 @@ At **1.0.0** the MCP server and bespoke installer were removed. To migrate:
 
 ## Template library (`examples/`)
 
-Each file builds one common architecture via the layout engine (zero hardcoded coordinates) — copy one as a starting point. Examples are **organized into domain subfolders** — see [`examples/README.md`](examples/README.md) for the full index. Run any with `node examples/<dir>/<file>` → writes to `out/*.drawio`.
+Each file builds one common architecture via the layout engine (zero hardcoded coordinates) — copy one as a starting point. Examples are **organized into domain subfolders** — see [`examples/README.md`](examples/README.md) for the full index. Copy one out of the kit and run it: `drawio-ai scaffold <file> -o <dir>/build.mjs --name <name>.drawio && drawio-ai run <dir>/build.mjs` (the `.drawio` lands next to the script; never run examples inside the kit folder).
 
 **`examples/aws/`**
 
@@ -166,8 +186,8 @@ Each file builds one common architecture via the layout engine (zero hardcoded c
 | `bpmn/build_bpmn.mjs` | bpmn | BPMN swimlane process (pool → lanes × phases) |
 
 ## Runtime architecture
-- **Node 18+** (`.nvmrc` pins the current LTS) — orchestration and validation layer: CLI and validator (`src/`). Supported runtimes include Node 20, 22 (LTS), or 24.
-- **Bun 1.4+** — maintainers only: `bun test` runs the suites, `bun run build` bundles `src/` into the minified `dist/` that ships (`--production --splitting --target=node`). Users never need Bun.
+- **Node ≥20.6 or Bun** — runs the shipped `dist/` bundle (CLI, validator, library). The source in `src/` is TypeScript (`.nvmrc` = 22 for development).
+- **Bun 1.4+** — maintainers only: `bun test` runs the suites, `bun run build` bundles `src/` (and devDependencies such as minisearch) into the minified `dist/` that ships. Users need Node or Bun, not both.
 - **Python 3.11** (`.python-version`) — data ingestion and compilation pipeline: catalog generator + icon-pack builder (`scripts/build_pack.py`, stdlib only).
 
 Install the dependencies:
@@ -190,7 +210,8 @@ brew install python@3.11              # then: python3.11 --version
 | `categories` | List all catalog categories. |
 | `types` | List supported diagram topologies. |
 | `principles` | Design rules + architecture preset + catalog categories (from the skill's `references/`). Pass `--mode aws|azure|gcp|databricks|bpmn` for a domain. |
-| `root` | Print the installed Kit's absolute path (for `import` by path). |
+| `run <script> [args]` | Run a script whose `import "drawio-ai-kit"` resolves to this CLI's own install (Node >=20.6, Bun). |
+| `root` | Print the installed Kit's absolute path. |
 | `skill install` | Register the bundled `drawio` skill with your agents through the `skills` CLI (`-g`, `-a <agent>`, `-y` pass through). No extra download. |
 | `workflow` | Print the build → validate → render → write workflow (`skills/drawio/workflows/build.md`). |
 | `scaffold` | Copy a template as a runnable build script: `scaffold build_vpc.mjs -o <dir>/build.mjs --name vpc.drawio` (`--list` shows all). |
@@ -232,6 +253,9 @@ only needed for PNG render / vision-check.)
 
 ```bash
 drawio-ai search s3
+drawio-ai search "k8s, pg, es"          # one call, one best hit per service
+drawio-ai search "alb ec2 rds s3"       # spaces work too
+drawio-ai search kubenetes              # typos are fine
 drawio-ai search kubernetes --category Containers
 drawio-ai search "aws cloud" --kind group
 drawio-ai style s3
@@ -281,7 +305,7 @@ See `THIRD_PARTY_NOTICES.md` for attributions.
 ```bash
 bun test            # the node:test suites, run by Bun (fast)
 npm test            # the same suites on plain Node — must also pass
-bun run build       # bun → dist/ — commit the result; CI fails if dist/ is stale
+bun run build       # bun → dist/ (gitignored; CI and release build it; run before tests)
 bun run build:check # rebuild into a temp dir and fail if dist/ differs
 ```
 

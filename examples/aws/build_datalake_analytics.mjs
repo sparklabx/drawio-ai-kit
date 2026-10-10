@@ -1,8 +1,7 @@
 // Data lake + analytics on AWS — type "pipeline". NO hardcoded coords.
 // Ingest → medallion S3 (raw/curated) → catalog/ETL → query → BI, with a numbered flow.
 import { writeFileSync } from "node:fs";
-import { Diagram } from "../../src/builder.mjs";
-import { frame, icon, box, phantom, renderTree } from "../../src/layout-engine.mjs";
+import { Diagram, frame, icon, box, phantom, renderTree } from "drawio-ai-kit";
 
 const d = new Diagram("pipeline");
 

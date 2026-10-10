@@ -5,8 +5,7 @@
 // and a VPC Service Controls perimeter. Clean house style: white frames, identity via borders + icons.
 // Run: node examples/gcp/build_gcp_shared_vpc_landing_zone.mjs
 import { writeFileSync } from "node:fs";
-import { Diagram } from "../../src/builder.mjs";
-import { frame, icon, box, phantom, renderTree } from "../../src/layout-engine.mjs";
+import { Diagram, frame, icon, box, phantom, renderTree } from "drawio-ai-kit";
 
 const d = new Diagram("network");
 const NET = "#4285F4", SUB = "#8AB4F8", GREY = "#999999";

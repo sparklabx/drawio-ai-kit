@@ -1,7 +1,7 @@
 {
   "name": "drawio-ai-kit",
-  "version": "2.0.0",
-  "description": "Helps an AI draw correct, beautiful draw.io diagrams: ground-truth AWS/Azure/GCP/OSS icon catalogs, a declarative layout engine, a validator, and one agent skill. Zero-dependency drawio-ai CLI.",
+  "version": "3.0.0",
+  "description": "Helps an AI draw correct, beautiful draw.io diagrams: ground-truth AWS/Azure/GCP/OSS icon catalogs, a declarative layout engine, a validator, and one agent skill. drawio-ai CLI with no runtime dependencies (bundled).",
   "keywords": [
     "drawio",
     "draw.io",
@@ -28,11 +28,13 @@
     "drawio-ai": "dist/cli.mjs"
   },
   "scripts": {
-    "cli": "node src/cli.mjs",
+    "cli": "bun src/cli.ts",
     "build": "bun scripts/build.mjs",
     "build:check": "bun scripts/build.mjs --check",
     "build:analyze": "bun scripts/build.mjs --analyze",
-    "test": "node --test",
+    "typecheck": "tsc -p tsconfig.json",
+    "pretest": "node -e \"require('fs').existsSync('dist/cli.mjs')||(console.error('dist/ missing: run bun run build first'),process.exit(1))\"",
+    "test": "node --test \"test/**/*.test.ts\" \"bench/**/*.test.ts\"",
     "test:bun": "bun test",
     "test:watch": "bun test --watch",
     "coverage": "bun test --coverage",
@@ -43,6 +45,7 @@
     "catalog",
     "data/lobe-icons.json",
     "data/catalog-index.json",
+    "data/aliases.json",
     "vendor",
     "examples",
     "skills",
@@ -51,14 +54,22 @@
     "THIRD_PARTY_NOTICES.md"
   ],
   "engines": {
-    "node": ">=18"
+    "node": ">=20.6"
   },
   "license": "MIT",
   "exports": {
-    ".": "./dist/kit.mjs"
+    ".": {
+      "types": "./dist/types/kit.d.ts",
+      "default": "./dist/kit.mjs"
+    }
   },
   "publishConfig": {
     "access": "public",
     "provenance": true
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "minisearch": "^7.2.0",
+    "typescript": "^7.0.2"
   }
 }

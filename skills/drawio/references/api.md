@@ -1,16 +1,19 @@
 # Draw.io AI Kit — API Cheat Sheet (Agent Reference)
 
-This page is the whole engine API. **Import** `dist/kit.mjs`, but never **read** it (or `src/`) — everything you need is here.
+This page is the whole engine API. **Import** `drawio-ai-kit`, but never **read** its files (or `src/`) — everything you need is here.
 
 ## 1. Imports
-`drawio-ai scaffold` writes these for you. Writing a script by hand? Everything comes from ONE file —
-replace `<ROOT>` with the path `drawio-ai root` prints (shell variables do not work inside JS strings):
+`drawio-ai scaffold` writes these for you. Writing a script by hand? Everything comes from ONE package. Run the script with `drawio-ai run build.mjs`
+(it resolves `drawio-ai-kit` to the installed CLI, so no node_modules is needed):
 ```javascript
 import { writeFileSync } from "node:fs";
-import { Diagram, group, frame, grid, icon, box, phantom, renderTree, stage, band, subnet, endpoint, ossBox } from "<ROOT>/dist/kit.mjs";
-// BPMN creators come from the same file:
-import { pool, start, end, gateway, userTask, serviceTask, task } from "<ROOT>/dist/kit.mjs";
+import { Diagram, group, frame, grid, icon, box, phantom, renderTree, stage, band, subnet, endpoint, ossBox } from "drawio-ai-kit";
+// BPMN creators come from the same package:
+import { pool, start, end, gateway, userTask, serviceTask, task } from "drawio-ai-kit";
 ```
+
+## Finding icon names
+`drawio-ai search "a, b, c"` returns real catalog names. Comma or space separated (comma form returns an object keyed per keyword; space form returns one merged list); abbreviations (`k8s`, `pg`, `es`), plurals and small typos work; add `aws`/`azure`/`gcp` to scope. Pass the returned `name` to `icon(id, name, label)`.
 
 ## 2. Layout Elements
 Build node trees declaratively. **No hardcoded coordinates.**

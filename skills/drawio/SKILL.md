@@ -69,11 +69,11 @@ Colors and creators: `references/style-guide.md`.
 
 Follow `workflows/build.md`. Short version:
 
-1. `drawio-ai search "a, b, c"` — look up **all** icons in one call. Use only names it returns.
+1. `drawio-ai search "a, b, c"` — look up **all** icons in one call (comma or space separated, e.g. `"k8s pg es"`). Use only names it returns.
 2. `drawio-ai scaffold <template>.mjs -o <out-dir>/build.mjs --name <name>.drawio` — copy the closest
    template. `<out-dir>` = the folder of the output path from Step 1; the `.drawio` lands there.
 3. Edit the tree in `build.mjs`. No x/y numbers.
-4. `node <out-dir>/build.mjs` — it builds, prints `VALIDATE: {…}`, and renders a PNG with an `issues` list.
+4. `drawio-ai run <out-dir>/build.mjs` — it builds, prints `VALIDATE: {…}`, and renders a PNG with an `issues` list.
 5. Fix **all** errors/warnings/advice/issues in one edit. Run again. Repeat until all are empty (max 5 runs).
 6. Look at the PNG once. Fix what you see. Done. (No draw.io desktop app → no PNG: skip this step.)
 
@@ -99,3 +99,4 @@ diagram shows, and any assumptions you made.
 - Never invent icon names or style strings. Search for them.
 - Never hand-write draw.io XML or x/y coordinates.
 - Never read the engine's source (`dist/`, `src/`). `references/api.md` has everything.
+- Never import by file path. Scripts use `import { ... } from "drawio-ai-kit"` and run with `drawio-ai run build.mjs`.

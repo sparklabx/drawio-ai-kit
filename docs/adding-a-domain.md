@@ -18,20 +18,31 @@ the skill folder.
 Add one row to the **Step 2** table in `skills/drawio/SKILL.md`: domain → reference file → 1–4
 template names. Add the domain words to the frontmatter `description` so the skill triggers on them.
 
-## 3. (Optional) `drawio-ai principles --mode <domain>`
+## 3. Add search aliases
 
-Only for hosts that can't read the skill folder. In `src/cli.mjs`, add the file to the `cloudMap`
+Search finds icons by name and label. Add shorthand and synonyms people will type to
+`data/aliases.json`: `{ "<catalog entry name>": ["alias one", "alias two"] }`.
+
+- Every key must be a real catalog name (`drawio-ai search <x>` prints it).
+- Put the canonical service first when several entries share an alias.
+- Add one labeled query per alias to `bench/search/queries.json`, then run
+  `node scripts/bench-search.mjs --compare bench/search/baseline.json` after `bun run build`.
+
+## 4. (Optional) `drawio-ai principles --mode <domain>`
+
+Only for hosts that can't read the skill folder. In `src/cli.ts`, add the file to the `cloudMap`
 in the `principles` case (cloud-like domains get `principles.md`, `diagram-types.md` and
 `style-guide.md` appended), add the mode to `MODES`, then `bun run build`.
 
-## 4. Add a template
+## 5. Add a template
 
-Add `examples/<domain>/build_<name>.mjs` (copy `examples/aws/build_vpc.mjs`; first line = a one-line
+Add `examples/<domain>/build_<name>.mjs` (copy `examples/aws/build_vpc.mjs`; keep `import ... from "drawio-ai-kit"`; first line = a one-line
 description — `scaffold --list` prints it). Engine only, no hand-written coordinates.
 
 ## Checklist
 
 - [ ] `references/<domain>-architecture.md` written in short, explicit steps.
 - [ ] SKILL.md Step 2 row + `description` keywords added.
-- [ ] `drawio-ai scaffold build_<name>.mjs -o /tmp/t/build.mjs && node /tmp/t/build.mjs` prints `"ok":true`.
+- [ ] Aliases added to `data/aliases.json` with labeled queries; `bench-search --compare` passes.
+- [ ] `drawio-ai scaffold build_<name>.mjs -o /tmp/t/build.mjs && drawio-ai run /tmp/t/build.mjs` prints `"ok":true`.
 - [ ] `bun test` and `npm test` pass; `bun run build` committed if `src/` changed.

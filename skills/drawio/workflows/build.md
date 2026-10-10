@@ -8,7 +8,9 @@ Use this loop for every diagram. Run the commands exactly as written.
 drawio-ai search "s3, lambda, api gateway, dynamodb"
 ```
 
-- Comma-separated = one batch. Put **all** the diagram's services in one call.
+- Comma-separated = one batch. Put **all** the diagram's services in one call. Spaces also work: `"k8s pg es"` gives one hit per service.
+- Short names, abbreviations and small typos are fine: `k8s`, `pg`, `alb`, `kubenetes`.
+- Add `aws`, `azure` or `gcp` to a term to pick that cloud: `"azure sql"`.
 - Use the returned `name` field in `icon(id, name, label)`. Never guess a name.
 - Containers (VPC, subnet, region, account): add `--kind group`.
 - No good hit? Try a shorter word (`"nat"` instead of `"nat gateway service"`), or draw a
@@ -24,10 +26,10 @@ drawio-ai scaffold build_vpc.mjs -o <out-dir>/build.mjs --name <name>.drawio
 `-o` is the path of the **script**. The `.drawio` is always written **next to the script**, so pick the
 folder the user wants the diagram in: for `./docs/webapp.drawio` use `-o ./docs/build.mjs --name webapp.drawio`.
 The folder is created if needed. The JSON it prints has `drawio` — the exact path of the output file.
-Keep `build.mjs`: it is the editable source of the diagram (it imports the kit by this machine's absolute path —
-on another machine, scaffold again).
+Keep `build.mjs`: it is the editable source of the diagram (it imports `drawio-ai-kit` by name; run it with
+`drawio-ai run`, or with plain `node` inside a project that has `drawio-ai-kit` installed).
 
-The copy is ready to run: imports already point at the kit, and it validates and renders itself.
+The copy is ready to run: it imports `drawio-ai-kit`, and it validates and renders itself.
 **Always start from a template, even if none is close** — keep the `import` lines, the
 `validate`/`writeFileSync` lines and the self-check block at the end; replace only the tree and the links.
 
@@ -59,7 +61,7 @@ Rules:
 ## 4. Run it
 
 ```bash
-node <out-dir>/build.mjs
+drawio-ai run <out-dir>/build.mjs
 ```
 
 It prints:
@@ -103,12 +105,11 @@ Never write output into the kit folder (`drawio-ai root`). Write next to the use
 
 ## Writing a script without a template (last resort)
 
-Only if `scaffold` is blocked. Get the kit path with `drawio-ai root`, then put the printed
-absolute path in place of `<ROOT>` — shell variables do not work inside JS strings:
+Only if `scaffold` is blocked. Import by package name and run with `drawio-ai run`:
 
 ```js
 import { writeFileSync } from "node:fs";
-import { Diagram, group, frame, grid, icon, box, renderTree } from "<ROOT>/dist/kit.mjs";
+import { Diagram, group, frame, grid, icon, box, renderTree } from "drawio-ai-kit";
 ```
 
 ## Optional tools

@@ -1,8 +1,7 @@
 // VPC with Amazon EFS — type "network". Layout engine: NO hardcoded coords.
 // Each AZ has an EC2 + an EFS Mount Target in a private subnet; all mount targets attach to one EFS file system.
 import { writeFileSync } from "node:fs";
-import { Diagram } from "../../src/builder.mjs";
-import { group, icon, phantom, renderTree } from "../../src/layout-engine.mjs";
+import { Diagram, group, icon, phantom, renderTree } from "drawio-ai-kit";
 
 const d = new Diagram("network");
 
