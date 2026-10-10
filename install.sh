@@ -2,6 +2,7 @@
 # drawio-ai-kit installer. Usage (pipe this file to sh):
 #   curl -fsSL https://raw.githubusercontent.com/sparklabx/drawio-ai-kit/main/install.sh | sh
 # Installs the CLI globally with Bun (preferred) or npm, then registers the agent skill.
+# Installs from the npm registry only. Removes old installs first (--no-clean to keep them).
 # No sudo, never installs a runtime. Re-run to upgrade.
 set -eu
 
@@ -12,7 +13,8 @@ usage() {
   --runtime <r>     bun|npm (default: bun if present, else npm)
   --agent <name>    register the skill for this agent (repeatable)
   --no-skill        install the CLI only
-  --dry-run         print the commands, run nothing
+  --no-clean        keep existing installs (default: remove old CLI copies and skills first)
+  --dry-run        print the commands, run nothing
   -h, --help        show this help'
 }
 
@@ -23,6 +25,7 @@ version=${DRAWIO_AI_VERSION:-}
 runtime=
 agents=
 skill=1
+clean=1
 dry=0
 
 while [ $# -gt 0 ]; do
@@ -34,6 +37,7 @@ while [ $# -gt 0 ]; do
     --agent) [ $# -ge 2 ] || die "--agent needs a value"; agents="$agents --agent $2"; shift ;;
     --agent=*) agents="$agents --agent ${1#*=}" ;;
     --no-skill) skill=0 ;;
+    --no-clean) clean=0 ;;
     --dry-run) dry=1 ;;
     -h|--help) usage; exit 0 ;;
     *) usage >&2; die "unknown option: $1" ;;
@@ -75,6 +79,33 @@ run() {
 }
 
 skillcmd="skill install -g -y$agents"
+
+# Clean old installs first so exactly one copy remains: a global CLI from either package manager
+# (incl. old git installs, same package name), the bun wrapper, old skills and the pre-1.0 MCP entry.
+if [ "$clean" = 1 ]; then
+  if have npm && npm ls -g --depth=0 drawio-ai-kit >/dev/null 2>&1; then run npm uninstall -g drawio-ai-kit; fi
+  if have bun; then
+    gb=$(bun pm bin -g 2>/dev/null || true)
+    if [ -n "$gb" ] && [ -d "$gb/../install/global/node_modules/drawio-ai-kit" ]; then run bun remove -g drawio-ai-kit; fi
+    if [ -n "$gb" ] && [ -f "$gb/drawio-ai" ]; then run rm -f "$gb/drawio-ai"; fi
+  fi
+  if [ "$skill" = 1 ]; then
+    if [ "$runtime" = bun ]; then sk="bunx skills"; else sk="npx -y skills"; fi
+    # shellcheck disable=SC2086
+    run $sk remove -g -y drawio drawio-aws drawio-azure drawio-gcp drawio-databricks drawio-bpmn drawio-cloud-architect drawio-aws-architect \
+      || printf 'warning: could not remove old skills; continuing\n' >&2
+    # Pre-1.0 installers wrote skill dirs/symlinks the skills CLI does not track. Fixed legacy names only.
+    for d in .agents/skills .claude/skills .gemini/skills .gemini/antigravity-cli/skills .cursor/skills .codex/skills; do
+      for n in drawio-aws-architect drawio-cloud-architect drawio-bpmn drawio-aws drawio-azure drawio-gcp drawio-databricks; do
+        if [ -e "$HOME/$d/$n" ] || [ -L "$HOME/$d/$n" ]; then run rm -rf "$HOME/$d/$n"; fi
+      done
+    done
+  fi
+  # Pre-1.0 MCP server (deleted in 1.0); a stale entry points at a missing file.
+  if have claude && claude mcp get drawio-ai-kit >/dev/null 2>&1; then
+    run claude mcp remove drawio-ai-kit --scope user || true
+  fi
+fi
 
 if [ "$runtime" = bun ]; then run bun add -g "$pkg"; else run npm i -g "$pkg"; fi
 

@@ -18,7 +18,7 @@ snapshots of the kit's output did not change. Numbers come from `bench/RESULTS.m
 - **Valueless string flags** (e.g. `--mode` with no value) now fall back to the default instead of
   being read as `true`.
 - **`dist/` is no longer committed.** CI builds it, and so does the release job.
-  Installing straight from the GitHub repo needs `npm ci && bun run build` first.
+  **The npm registry is the only supported install source.** Installing from git or GitHub is no longer supported.
 
 ### Added
 - **TypeScript sources** (`src/*.ts`), using only erasable syntax with strict checks. They run as-is on Bun and on Node 22.18+
@@ -37,6 +37,10 @@ snapshots of the kit's output did not change. Numbers come from `bench/RESULTS.m
   - registers the skill
   - flags: `--version`, `--runtime`, `--no-skill`, `--agent`, `--dry-run`
   - on Bun-only machines, writes a small wrapper so `drawio-ai` runs without Node
+  - removes old installs before installing, so exactly one copy remains (`--no-clean` to skip):
+    - global copies from npm or Bun, including old git installs, and the Bun wrapper
+    - pre-2.0 skills and the skill folders and symlinks left by pre-1.0 installers
+    - the pre-1.0 `drawio-ai-kit` MCP entry
 - **Benchmarks**:
   - `scripts/bench.mjs`: perf, compared against `bench/baseline.json` with a 10% tolerance.
   - `scripts/bench-search.mjs`: 121 labeled queries in 12 scenarios.

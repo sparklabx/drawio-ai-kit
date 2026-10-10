@@ -7,19 +7,20 @@ import { spawnSync } from "node:child_process";
 
 const script = join(import.meta.dirname, "..", "install.sh");
 
-type Opts = { tools?: string[]; node?: string; onPath?: boolean; env?: Record<string, string> };
+// old: a previous global install already exists (bun and npm), so the cleanup step has work to do.
+type Opts = { tools?: string[]; node?: string; onPath?: boolean; old?: boolean; env?: Record<string, string> };
 
 // Runs install.sh with PATH = a dir of logging shims only (no real tools), so nothing real is touched.
-function run(args: string[], { tools = ["bun", "node", "drawio-ai"], node = "v22.1.0", onPath = true, env = {} }: Opts = {}) {
+function run(args: string[], { tools = ["bun", "node", "drawio-ai"], node = "v22.1.0", onPath = true, old = false, env = {} }: Opts = {}) {
   const root = mkdtempSync(join(tmpdir(), "install-"));
   const bin = join(root, "bin");
   const gbin = join(root, "gbin"); // bun global bin dir, on PATH only when onPath
   const nbin = join(root, "gprefix", "bin"); // npm global bin dir
-  for (const d of [bin, gbin, nbin]) mkdirSync(d, { recursive: true });
+  const tpl = join(root, "tpl"); // template of the bin that bun add links
+  for (const d of [bin, gbin, nbin, tpl]) mkdirSync(d, { recursive: true });
   const pkgDist = join(root, "install", "global", "node_modules", "drawio-ai-kit", "dist"); // bun's global pkg layout
-  mkdirSync(pkgDist, { recursive: true });
-  writeFileSync(join(pkgDist, "cli.mjs"), "");
-  for (const t of ["rm", "chmod"]) symlinkSync(`/bin/${t}`, join(bin, t)); // real coreutils the wrapper step needs
+  if (old) mkdirSync(pkgDist, { recursive: true });
+  for (const t of ["rm", "chmod", "mkdir", "cp"]) symlinkSync(`/bin/${t}`, join(bin, t)); // real coreutils the wrapper step needs
   const log = join(root, "log");
   const shim = (dir: string, name: string, body: string) => {
     const p = join(dir, name);
@@ -30,24 +31,28 @@ function run(args: string[], { tools = ["bun", "node", "drawio-ai"], node = "v22
     if (t === "drawio-ai") continue;
     const body =
       t === "node" ? `echo ${node}` :
-      t === "bun" ? `[ "$1 $2 $3" = "pm bin -g" ] && echo "${gbin}"; exit 0` :
-      `[ "$1 $2" = "prefix -g" ] && echo "${root}/gprefix"; exit 0`; // npm
+      // bun add creates the package like the real one, so the wrapper step can find it
+      t === "bun" ? `[ "$1 $2 $3" = "pm bin -g" ] && echo "${gbin}"; [ "$1" = add ] && mkdir -p "${pkgDist}" && : > "${pkgDist}/cli.mjs" && { [ -f "${gbin}/drawio-ai" ] || cp "${tpl}/drawio-ai" "${gbin}/drawio-ai"; }; exit 0` :
+      t === "npm" ? `[ "$1 $2" = "prefix -g" ] && echo "${root}/gprefix"; [ "$1" = ls ] && exit ${old ? 0 : 1}; exit 0` :
+      "exit 0"; // bunx, npx
     shim(bin, t, body);
   }
   if (tools.includes("drawio-ai")) {
     shim(onPath ? bin : gbin, "drawio-ai", "exit 0");
     shim(nbin, "drawio-ai", "exit 0");
-  }
+  } else if (old) shim(gbin, "drawio-ai", "exit 0"); // leftover bin from the old install
+  if (old || tools.includes("drawio-ai")) shim(tpl, "drawio-ai", "exit 0"); // what bun add links (again, after cleanup)
   const r = spawnSync("/bin/sh", [script, ...args], { encoding: "utf8", env: { PATH: bin, HOME: root, ...env } });
   const calls = existsSync(log) ? readFileSync(log, "utf8").trim().split("\n").filter(Boolean) : [];
   return { ...r, root, calls, out: r.stdout + r.stderr };
 }
 
 test("bun present (and preferred over npm): bun add -g, skill install, verify (exact commands)", () => {
-  const r = run([], { tools: ["bun", "npm", "node", "drawio-ai"] });
+  const r = run([], { tools: ["bun", "bunx", "npm", "node", "drawio-ai"] });
   assert.equal(r.status, 0, r.stderr);
-  assert.deepEqual(r.calls.filter((c) => !c.startsWith("bun pm")), [
+  assert.deepEqual(r.calls.filter((c) => !c.startsWith("bun pm") && !c.startsWith("npm ls")), [
     "node -v", // probed to decide whether the bun wrapper is needed
+    "bunx skills remove -g -y drawio drawio-aws drawio-azure drawio-gcp drawio-databricks drawio-bpmn drawio-cloud-architect drawio-aws-architect",
     "bun add -g drawio-ai-kit",
     "drawio-ai skill install -g -y",
     "drawio-ai root",
@@ -178,4 +183,50 @@ test("bun with node v20.5.1: wraps the global bin like the no-node case", () => 
   const r = run([], { tools: ["bun", "node", "drawio-ai"], node: "v20.5.1", onPath: false });
   assert.equal(r.status, 0, r.stderr);
   assert.match(readFileSync(join(r.root, "gbin", "drawio-ai"), "utf8"), /exec bun/);
+});
+
+test("clean: removes old CLI from both managers and old skills before installing", () => {
+  const r = run([], { tools: ["bun", "bunx", "npm", "node"], old: true, onPath: false });
+  assert.equal(r.status, 0, r.stderr);
+  const i = (c: string) => r.calls.findIndex((x) => x.startsWith(c));
+  assert.ok(i("npm uninstall -g drawio-ai-kit") >= 0);
+  assert.ok(i("bun remove -g drawio-ai-kit") >= 0);
+  assert.ok(i("bunx skills remove -g -y drawio ") >= 0);
+  assert.ok(i("bun add -g") > i("bun remove -g"), "cleanup runs before install");
+  assert.match(r.stdout, /\+ rm -f .*gbin\/drawio-ai/);
+});
+
+test("clean: removes pre-1.0 skill dirs/symlinks and the old MCP entry", () => {
+  const root = mkdtempSync(join(tmpdir(), "home-"));
+  const old = join(root, ".agents", "skills", "drawio-cloud-architect");
+  mkdirSync(old, { recursive: true });
+  writeFileSync(join(old, "SKILL.md"), "old");
+  mkdirSync(join(root, ".claude", "skills"), { recursive: true });
+  symlinkSync("/nonexistent", join(root, ".claude", "skills", "drawio-aws-architect")); // dangling v0.1 link
+  mkdirSync(join(root, ".claude", "skills", "other"));
+  const r = run([], { tools: ["bun", "bunx", "node", "drawio-ai", "claude"], env: { HOME: root } });
+  assert.equal(r.status, 0, r.stderr);
+  assert.ok(!existsSync(old));
+  assert.match(r.stdout, /\+ rm -rf .*\.claude\/skills\/drawio-aws-architect/);
+  assert.ok(existsSync(join(root, ".claude", "skills", "other")), "unrelated skills untouched");
+  assert.ok(r.calls.includes("claude mcp remove drawio-ai-kit --scope user"));
+});
+
+test("clean under npm uses npx for the skills CLI", () => {
+  const r = run([], { tools: ["npm", "npx", "node", "drawio-ai"] });
+  assert.ok(r.calls.some((c) => c.startsWith("npx -y skills remove -g -y drawio ")));
+});
+
+test("--no-clean keeps existing installs; --no-skill keeps skills", () => {
+  const r = run(["--no-clean"], { tools: ["bun", "bunx", "npm", "node", "drawio-ai"], old: true });
+  assert.ok(!r.calls.some((c) => /uninstall|remove/.test(c)));
+  const s = run(["--no-skill"], { tools: ["bun", "bunx", "npm", "node", "drawio-ai"], old: true });
+  assert.ok(s.calls.includes("npm uninstall -g drawio-ai-kit"));
+  assert.ok(!s.calls.some((c) => c.includes("skills remove")));
+});
+
+test("failing skills remove only warns", () => {
+  const r = run([], { tools: ["bun", "node", "drawio-ai"] }); // no bunx on PATH
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stderr, /could not remove old skills/);
 });

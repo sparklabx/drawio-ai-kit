@@ -20,16 +20,22 @@ This puts the `drawio-ai` binary on PATH. The npm package is about 2 MB, so the 
 Releases are published from CI with npm provenance, so each version traces back to its commit and workflow run.
 Pin a version with `drawio-ai-kit@3.0.0`.
 
-One-line alternative: `install.sh` in this repo installs the CLI (Bun or npm) and registers the skill. See the README Quick start; `sh install.sh --dry-run` prints what it would run.
+One-line alternative: `install.sh` in this repo installs the CLI (Bun or npm) and registers the skill.
+See the README Quick start. `sh install.sh --dry-run` prints what it would run. Before installing, it removes
+old installs:
+- global copies from npm or Bun, including old git installs
+- old skills and pre-1.0 skill folders
+- the pre-1.0 MCP entry
+
+`--no-clean` skips that step.
 
 As a project dependency (for scripts and TypeScript types): `npm i drawio-ai-kit` (or `bun add drawio-ai-kit`), then `import { Diagram } from "drawio-ai-kit"`.
 
 If Bun's global bin dir isn't on PATH, add `~/.bun/bin`.
 
-Fallback when the registry is blocked: build from a clone. `dist/` is not committed (CI builds it),
-so installing straight from the GitHub repo has nothing to run. In a clone:
-`npm ci && bun run build && npm i -g .` (the build needs [Bun](https://bun.sh); use `npm link`
-for live edits and re-run `bun run build` after editing `src/`).
+**The npm registry is the only supported source.** Installing from git or GitHub
+(`npm i -g github:…`, a clone) is not supported: `dist/` is not in the repo. To work on the kit itself,
+see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 The CLI is a Bun-minified production bundle in `dist/`, built by CI at release (never committed). It runs on
 plain Node or Bun, so npm users never need Bun. The package has no install scripts, so Bun's
@@ -48,13 +54,13 @@ drawio-ai skill install -g -y      # every detected agent, user-wide, no prompts
 drawio-ai skill install -a claude-code -y
 ```
 
-Any extra flags pass through to `skills add`. Without the CLI, `npx skills add sparklabx/drawio-ai-kit` still works,
-but it clones the repo.
+Any extra flags pass through to `skills add`. Install the skill this way only, from the npm package.
+Do not use `npx skills add sparklabx/drawio-ai-kit`, which clones the repo.
 
 Restart your agent after adding it. Try: *"draw an AWS 3-tier web app"*
 
-Upgrading from 1.x? Remove the old domain skills first:
-`npx skills remove drawio-aws drawio-azure drawio-gcp drawio-databricks drawio-bpmn`.
+Upgrading from an older version? Re-run `install.sh`, which removes the old skills and skill folders for you.
+To do it by hand: `npx skills remove drawio-aws drawio-azure drawio-gcp drawio-databricks drawio-bpmn`.
 
 ## Verify
 

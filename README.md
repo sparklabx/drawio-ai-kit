@@ -46,6 +46,13 @@ It installs the CLI globally with Bun (if present) or npm, then registers the `d
 agent it finds. It never installs a runtime and needs no `sudo`. Prefer to read it first? Download
 `install.sh`, open it, then run `sh install.sh` (`--dry-run` prints the commands only; `--help` lists options).
 
+Re-run it to upgrade. It first removes old installs so exactly one copy remains:
+- any global copy from npm or Bun, including old git installs
+- the old skills (`drawio-aws`, `drawio-cloud-architect`, …) and their leftover folders
+- the pre-1.0 MCP entry
+
+Pass `--no-clean` to keep them.
+
 ### 2. Manual (npm or Bun)
 
 ```bash
@@ -69,8 +76,8 @@ import { Diagram, group, icon, renderTree } from "drawio-ai-kit";   // full Type
 Run such a script with plain `node build.mjs` or `bun build.mjs`. Without a local install, use the global CLI:
 `drawio-ai run build.mjs` (it resolves `"drawio-ai-kit"` to the installed CLI).
 
-The global install puts the `drawio-ai` binary on PATH (see [INSTALL.md](INSTALL.md) to pin a version,
-or install from a clone). The CLI ships as a **Bun-minified production bundle** (`dist/`)
+The global install puts the `drawio-ai` binary on PATH (see [INSTALL.md](INSTALL.md) to pin a version).
+Install only from the npm registry; installing from git or GitHub is not supported. The CLI ships as a **Bun-minified production bundle** (`dist/`)
 that runs on Node or Bun. Its one library (icon search) is bundled inside, so users install nothing extra.
 The skill step uses the `skills` CLI, which auto-detects Claude Code, Codex, Gemini CLI, … —
 without it the agent never picks the kit up on its own.
@@ -135,8 +142,9 @@ Icon names are retrieved from `drawio-ai search` to prevent name fabrication (it
 At **2.0.0** the 5 domain skills (`drawio-aws`, `drawio-azure`, `drawio-gcp`, `drawio-databricks`,
 `drawio-bpmn`) were merged into ONE `drawio` skill, and the CLI became a Bun-minified bundle in `dist/`.
 
-- **Skills:** `npx skills remove drawio-aws drawio-azure drawio-gcp drawio-databricks drawio-bpmn`, then `drawio-ai skill install`.
-- **CLI:** `npm i -g drawio-ai-kit` (now on the npm registry; the bin points at `dist/cli.mjs`).
+- **Easiest:** re-run `install.sh`. It removes the old skills and the old CLI, then installs fresh.
+- **Skills (manual):** `npx skills remove drawio-aws drawio-azure drawio-gcp drawio-databricks drawio-bpmn`, then `drawio-ai skill install`.
+- **CLI (manual):** `npm i -g drawio-ai-kit` (from the npm registry; the bin points at `dist/cli.mjs`).
 - **Your build scripts:** import everything from `"drawio-ai-kit"` (the package no longer ships `src/`). Re-scaffold, or replace the `<ROOT>/src/builder.ts` / `layout-engine.ts` / `bpmn.ts` imports with that one name. Run with `drawio-ai run build.mjs`.
 - `drawio-ai principles --mode …` and `drawio-ai workflow` still work; they now print the skill's `references/` and `workflows/build.md`.
 
@@ -144,8 +152,10 @@ At **2.0.0** the 5 domain skills (`drawio-aws`, `drawio-azure`, `drawio-gcp`, `d
 
 At **1.0.0** the MCP server and bespoke installer were removed. To migrate:
 
-- **Install:** switch from `claude mcp add ... mcp-server.mjs` to `npm i -g github:sparklabx/drawio-ai-kit`.
-- **Skills:** replace the old `drawio-cloud-architect` skill with `npx skills add sparklabx/drawio-ai-kit`.
+- **Install:** run `install.sh`. It removes the `drawio-ai-kit` MCP entry and the old
+  `drawio-cloud-architect` / `drawio-aws-architect` skill folders, then installs the CLI from npm and the `drawio` skill.
+- **Manual:** `claude mcp remove drawio-ai-kit --scope user`, delete the old skill folders
+  (e.g. `~/.agents/skills/drawio-cloud-architect`), then `npm i -g drawio-ai-kit && drawio-ai skill install`.
 - **Vision self-check:** the inline image was replaced by `drawio-ai render` → PNG → `Read`.
 - **Uninstall:** `npm uninstall -g drawio-ai-kit` + remove each skill via the skills tooling.
 
