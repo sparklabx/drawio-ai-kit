@@ -18,7 +18,7 @@ bun add -g drawio-ai-kit
 
 This puts the `drawio-ai` binary on PATH. The npm package is about 2 MB, so the install takes seconds.
 Releases are published from CI with npm provenance, so each version traces back to its commit and workflow run.
-Pin a version with `drawio-ai-kit@3.0.0`.
+Pin a version with `drawio-ai-kit@2.0.0`.
 
 Release channels: npm `latest` tracks the `v2` branch (every version bump on `v2` publishes). Other versions
 are published from `vX.Y.Z` git tags under the dist-tag `release-<major>`; install them by exact version.

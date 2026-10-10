@@ -3,18 +3,23 @@
 All notable changes to `drawio-ai-kit`. Format follows [Keep a Changelog](https://keepachangelog.com/);
 versions follow [SemVer](https://semver.org/).
 
-## [3.0.0] - Unreleased
+## [2.0.0] - Unreleased
 
-A refactor to TypeScript plus a new search engine. The test suite and the characterization
-snapshots of the kit's output did not change. Numbers come from `bench/RESULTS.md`.
+The first public 2.x release. It folds in the earlier 2.0.0 work (one skill, a bundled CLI) and the planned 3.0.0 work
+(TypeScript, a new search engine, a new installer). The characterization snapshots of the kit's output did not change. Numbers come from `bench/RESULTS.md`.
 
 ### Breaking
+- **One skill** (`skills/drawio/`) replaces the five domain skills. Each domain is now a reference file.
+- The CLI ships as a Bun-minified bundle that runs on Node or Bun. The maintainer toolchain moved to Bun,
+  and CI tests on both runtimes.
+- Install from the npm registry (`npm i -g drawio-ai-kit` / `bun add -g`). The new command
+  `drawio-ai skill install` passes the bundled skill to the `skills` CLI.
 - **Engines: Node ≥ 20.6 or Bun ≥ 1.4** (was Node ≥ 18). `install.sh` checks for Node 20.6 or later.
 - **Scaffolds import by name.** Generated scripts use `import { Diagram } from "drawio-ai-kit"`.
   Run them with `drawio-ai run script.mjs` (or install the package locally). Path-based imports still resolve.
 - **Search result shapes.** `search "a, b, c"` (comma form) returns an object keyed per keyword.
   `search "a b c"` (space form) returns one merged list that takes hits from each keyword in turn.
-  Ranking differs from 2.x. `--full` output no longer has `score`.
+  Ranking differs from 1.x. `--full` output no longer has `score`.
 - **Valueless string flags** (e.g. `--mode` with no value) now fall back to the default instead of
   being read as `true`.
 - **`dist/` is no longer committed.** CI builds it, and so does the release job.
@@ -49,11 +54,16 @@ snapshots of the kit's output did not change. Numbers come from `bench/RESULTS.m
   - `scripts/bench.mjs`: perf, compared against `bench/baseline.json` with a 10% tolerance.
   - `scripts/bench-search.mjs`: 166 labeled queries in 12 scenarios (53 typo queries, all top-1).
 - **Characterization tests** (`test/characterization/`) that snapshot CLI and builder output.
+- CI checks the package size budget, smoke-tests the tarball and publishes to npm with provenance.
+- `suggest-layout` warning for wasted white space; `stack:N` layout option.
+- Numbered step edges on service pipeline spines.
 - ADRs 0006 (TypeScript), 0007 (package import + `run`), 0008 (minisearch).
 
 ### Improved
 - **Search quality**: on the original 98-query set, the pass rate went from 60.2% to 100%. All 166 queries
   in the current set pass. `k8s, pg, es` returns Kubernetes, PostgreSQL and Elasticsearch in the top K.
+- Icon packs load lazily from a slim catalog index, and each catalog is parsed once per process.
+- Icons are embedded as minified SVG. PNGs were shrunk to 96 px.
 - **Startup and memory** (`drawio-ai root`):
 
   | Runtime | Time | RSS |
@@ -72,34 +82,14 @@ snapshots of the kit's output did not change. Numbers come from `bench/RESULTS.m
   it). Other versions publish from `vX.Y.Z` tags under `release-<major>`.
 
 ### Fixed
-- `skill install` uses `bunx` under Bun and reports a missing launcher instead of crashing.
-- `dist/cli.mjs` keeps a `#!/usr/bin/env node` shebang, so the Windows npm shims work.
-- `spanV` now falls back cleanly when it is given no members. Public types match the runtime exports.
-
-## [2.0.0] - 2026-10-09
-
-### Changed
-- **One skill** (`skills/drawio/`) replaces the five domain skills. Each domain is now a reference file.
-- The CLI ships as a Bun-minified bundle that runs on Node or Bun. The maintainer toolchain moved to Bun,
-  and CI tests on both runtimes.
-- Install from the npm registry (`npm i -g drawio-ai-kit` / `bun add -g`). The new command
-  `drawio-ai skill install` passes the bundled skill to the `skills` CLI.
-
-### Added
-- CI checks the package size budget, smoke-tests the tarball and publishes to npm with provenance.
-- `suggest-layout` warning for wasted white space; `stack:N` layout option.
-- Numbered step edges on service pipeline spines.
-
-### Performance
-- Icon packs load lazily from a slim catalog index, and each catalog is parsed once per process.
-- Icons are embedded as minified SVG. PNGs were shrunk to 96 px.
-
-### Fixed
 - `render` was broken: draw.io page indexes are 1-based.
 - Edges stay off frames and captions. Fixed pointless kinks, and fixed the straightener merging two wires onto one track.
 - Caption height follows the line count; the equal-height stretch is capped.
 - Subnet icons use the padlock glyph. `group_security_group` was labeled "Private subnet" and now has the right label.
   Searches now favour icons whose name ends with the query's main noun.
+- `skill install` uses `bunx` under Bun and reports a missing launcher instead of crashing.
+- `dist/cli.mjs` keeps a `#!/usr/bin/env node` shebang, so the Windows npm shims work.
+- `spanV` now falls back cleanly when it is given no members. Public types match the runtime exports.
 
 ## [1.0.2] - 2026-08-04
 
@@ -173,8 +163,7 @@ snapshots of the kit's output did not change. Numbers come from `bench/RESULTS.m
 - House design system (theme tokens) and a geometric validator.
 - Template examples and a one-line installer.
 
-[3.0.0]: https://github.com/sparklabx/drawio-ai-kit/compare/v2.0.0...HEAD
-[2.0.0]: https://github.com/sparklabx/drawio-ai-kit/compare/v1.0.2...v2.0.0
+[2.0.0]: https://github.com/sparklabx/drawio-ai-kit/compare/v1.0.2...HEAD
 [1.0.2]: https://github.com/sparklabx/drawio-ai-kit/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/sparklabx/drawio-ai-kit/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/sparklabx/drawio-ai-kit/compare/v0.3.0...v1.0.0
