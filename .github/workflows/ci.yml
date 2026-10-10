@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, v2]
   pull_request:
-    branches: [main]
+    branches: [main, v2]
 
 permissions:
   contents: read
@@ -12,9 +12,14 @@ permissions:
 jobs:
   # Plain Node, no Bun. Node 24 strips types natively, so the TS tests run as-is.
   test:
+    needs: bun
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: dist
+          path: dist
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 24
@@ -52,9 +57,14 @@ jobs:
 
   # The user path: dist/ is plain ESM and must run on the oldest supported Node (20.6). No TypeScript, no tests.
   smoke-node20:
+    needs: bun
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: dist
+          path: dist
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 20.6.0
@@ -65,7 +75,8 @@ jobs:
           node dist/cli.mjs run "$RUNNER_TEMP/smoke/build.mjs" | grep -q '"ok":true'
           node dist/cli.mjs validate "$RUNNER_TEMP/smoke/smoke.drawio"
 
-  # The maintainer path: Bun runs the same suites, rebuilds dist/, and proves it is fresh + deterministic.
+  # The maintainer path: Bun builds dist/ (never committed), proves the build is deterministic, runs the
+  # suites, and hands dist/ to the Node jobs as an artifact.
   bun:
     runs-on: ubuntu-latest
     steps:
@@ -74,14 +85,18 @@ jobs:
         with:
           bun-version: 1.4.2
       - run: npm ci   # tsc (declarations) is a devDependency
-      - name: Tests (bun test, with coverage report)
-        run: bun test --coverage
-      - name: dist/ is the fresh bundle of src/
-        run: |
-          bun run build
-          git diff --exit-code --stat -- dist || { echo "::error::dist/ is stale — run 'bun run build' and commit it"; exit 1; }
+      - name: Build dist/
+        run: bun run build
       - name: The build is deterministic (second build matches the first)
         run: bun run build:check
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dist
+          path: dist
+          if-no-files-found: error
+          retention-days: 7
+      - name: Tests (bun test, with coverage report)
+        run: bun test --coverage
       - name: Smoke-test the bundled CLI on Bun
         run: |
           bun dist/cli.mjs search "s3, lambda" >/dev/null

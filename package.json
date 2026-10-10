@@ -33,6 +33,7 @@
     "build:check": "bun scripts/build.mjs --check",
     "build:analyze": "bun scripts/build.mjs --analyze",
     "typecheck": "tsc -p tsconfig.json",
+    "pretest": "node -e \"require('fs').existsSync('dist/cli.mjs')||(console.error('dist/ missing: run bun run build first'),process.exit(1))\"",
     "test": "node --test \"test/**/*.test.ts\" \"bench/**/*.test.ts\"",
     "test:bun": "bun test",
     "test:watch": "bun test --watch",

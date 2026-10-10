@@ -70,7 +70,7 @@ Run such a script with plain `node build.mjs` or `bun build.mjs`. Without a loca
 `drawio-ai run build.mjs` (it resolves `"drawio-ai-kit"` to the installed CLI).
 
 The global install puts the `drawio-ai` binary on PATH (see [INSTALL.md](INSTALL.md) to pin a version,
-install from GitHub, or install from a clone). The CLI ships as a **Bun-minified production bundle** (`dist/`)
+or install from a clone). The CLI ships as a **Bun-minified production bundle** (`dist/`)
 that runs on Node or Bun. Its one library (icon search) is bundled inside, so users install nothing extra.
 The skill step uses the `skills` CLI, which auto-detects Claude Code, Codex, Gemini CLI, … —
 without it the agent never picks the kit up on its own.
@@ -85,7 +85,7 @@ loads just that domain's reference. It is written in short, explicit steps so sm
 
 Short answer: yes — and you don't have to take my word for it.
 
-- **No hidden code.** No `postinstall` (or any lifecycle) hooks — nothing runs on `npm install`. No dependencies are installed alongside it. **No `sudo`, no runtime installs, no remote code at run time.** The optional one-line installer is a short POSIX script you can read first. The shipped `dist/` is minified, but it is a reproducible build of the readable `src/` — CI rebuilds it on every PR and fails if the committed bundle differs.
+- **No hidden code.** No `postinstall` (or any lifecycle) hooks — nothing runs on `npm install`. No dependencies are installed alongside it. **No `sudo`, no runtime installs, no remote code at run time.** The optional one-line installer is a short POSIX script you can read first. The shipped `dist/` is minified, but it is a reproducible build of the readable `src/`: it is never committed; CI builds it on every PR (and checks the build is deterministic), and the release job builds the published copy from the tagged source.
 - **Self-contained.** The package has no runtime `dependencies`. The one library it uses (`minisearch`, for icon search) is a devDependency that Bun bundles into `dist/`, and `npm audit --omit=dev` runs in CI.
 - **Runs locally, no telemetry.** The CLI only reads/writes local files. The single optional outbound call is icon-logo fetching from public CDNs (lobe-icons), and it's opt-in.
 - **Easy to undo:**
@@ -305,7 +305,7 @@ See `THIRD_PARTY_NOTICES.md` for attributions.
 ```bash
 bun test            # the node:test suites, run by Bun (fast)
 npm test            # the same suites on plain Node — must also pass
-bun run build       # bun → dist/ — commit the result; CI fails if dist/ is stale
+bun run build       # bun → dist/ (gitignored; CI and release build it; run before tests)
 bun run build:check # rebuild into a temp dir and fail if dist/ differs
 ```
 

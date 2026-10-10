@@ -4,7 +4,7 @@
 // The OUTPUT is plain Node >=20 ESM — users never need Bun or TypeScript.
 //
 //   bun run build            rebuild dist/ (+ dist/types/) + data/catalog-index.json and print a size report
-//   bun run build:check      rebuild into a temp dir; fail if dist/ differs (stale or non-deterministic)
+//   bun run build:check      rebuild into a temp dir; fail if it differs from dist/ (non-deterministic build)
 //   bun run build:analyze    also write a module-graph report (metafile JSON + markdown) to $TMPDIR
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { buildCatalogIndex, CATALOG_INDEX } from "../src/core.ts";
@@ -60,6 +60,10 @@ if (check) {
     console.error("data/catalog-index.json is stale — run 'bun run build' and commit it");
     process.exit(1);
   }
+  if (!existsSync(DIST)) {
+    console.error("dist/ missing — run 'bun run build' first");
+    process.exit(1);
+  }
   const tmp = mkdtempSync(join(tmpdir(), "drawio-dist-"));
   await bundle(tmp);
   const want = files(tmp);
@@ -69,7 +73,7 @@ if (check) {
   );
   rmSync(tmp, { recursive: true, force: true });
   if (stale.length) {
-    console.error(`dist/ is stale (${stale.join(", ")}) — run 'bun run build' and commit it`);
+    console.error(`dist/ differs from a fresh build (${stale.join(", ")}) — run 'bun run build' (stale or non-deterministic)`);
     process.exit(1);
   }
   console.log(`dist/ is up to date (${have.length} files)`);

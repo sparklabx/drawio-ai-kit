@@ -14,8 +14,8 @@ The latest `main` is supported.
 ## What this project runs (threat surface)
 
 - **No runtime dependencies** — the package declares none. The one library it uses
-  (`minisearch`) is a devDependency bundled into the committed `dist/`, which CI rebuilds
-  and compares on every PR.
+  (`minisearch`) is a devDependency bundled into `dist/`. `dist/` is never committed: CI
+  builds it on every PR and the release job builds the published copy from the tagged source.
 - **No `postinstall` (or any lifecycle) hooks** — nothing executes on `npm install`.
 - The **CLI runs locally** and sends **no telemetry**. The only optional outbound
   calls are icon-logo fetches from public CDNs (lobe-icons), invoked explicitly by `drawio-ai logo`.

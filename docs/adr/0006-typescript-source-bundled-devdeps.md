@@ -24,7 +24,7 @@ package and `npm audit --omit=dev` stays clean.
    is used only to bundle `dist/`.
 2. **Shared types live in `src/model.ts`**, types only, so it erases to nothing
    at runtime. A type used by one module stays in that module.
-3. **`dist/` ships types**: `dist/types/*.d.ts` is generated and committed, and
+3. **`dist/` ships types**: `dist/types/*.d.ts` is generated at build time, and
    `package.json` `exports["."].types` points at `dist/types/kit.d.ts`. Users
    who import `"drawio-ai-kit"` get typings.
 4. **The zero-runtime-dependency rule is dropped.** Libraries go in
@@ -42,8 +42,9 @@ package and `npm audit --omit=dev` stays clean.
 - `dist/` grows when a library is bundled (minisearch: 77 KB to 98 KB of
   `.mjs`, see `bench/RESULTS.md`). The npm tarball stays under the 2.5 MB
   budget enforced in CI.
-- `dist/` must be rebuilt and committed after any `src/` change; CI fails on
-  drift (`bun run build:check`).
+- `dist/` is not committed (amended in 3.0.0): CI builds it on every PR and
+  shares it with the Node jobs as an artifact; the release job builds the
+  published copy. `bun run build:check` guards determinism.
 - Contributors must run the bench gates (`AGENTS.md`) because a bundled
   library can move cold-start time.
 - README, SECURITY.md and `AGENTS.md` no longer claim "zero dependencies".

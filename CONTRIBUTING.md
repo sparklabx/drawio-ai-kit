@@ -8,7 +8,7 @@ Thanks for helping make AI-drawn diagrams better. PRs and issues welcome.
 git clone https://github.com/sparklabx/drawio-ai-kit && cd drawio-ai-kit
 bun test           # fast runner for the node:test suites (no test framework dependency)
 npm test           # the same suites on plain Node (node --test): the compatibility check
-bun run build      # rebuild dist/ (commit it; CI fails if it is stale)
+bun run build      # build dist/ (gitignored; tests use it, run before testing)
 ```
 
 Dev tooling is [Bun](https://bun.sh) 1.4+ plus Node ≥20 (`.nvmrc` = 22). Run `npm ci` first (typescript and minisearch are devDependencies). The code is erasable-syntax TypeScript (`.ts`) and must stay

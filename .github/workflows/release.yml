@@ -1,6 +1,6 @@
 name: Release
 
-# Push a tag `vX.Y.Z` (matching package.json "version") → test, verify dist/, publish to npm with provenance.
+# Push a tag `vX.Y.Z` (matching package.json "version") → build dist/, test, publish to npm with provenance.
 # Auth: npm Trusted Publishing (OIDC, no token) once it is configured for this repo + workflow on npmjs.com.
 # Until then (e.g. the very first publish), an NPM_TOKEN repo secret is used as the fallback.
 on:
@@ -26,9 +26,10 @@ jobs:
           bun-version: 1.4.2
       - name: Tag matches package.json version
         run: test "v$(node -p 'require("./package.json").version')" = "$GITHUB_REF_NAME"
+      - run: npm ci
+      - name: Build dist/ (not committed; built here and shipped in the tarball)
+        run: bun run build && bun run build:check
       - run: npm test
-      - name: dist/ is the fresh bundle of src/
-        run: bun run build:check
       - name: Publish
         run: npm publish --provenance --access public
         env:

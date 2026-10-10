@@ -72,7 +72,7 @@ const report = d.validate({ strict: true }); // { ok, errors, warnings, audit, s
 | Path | Purpose |
 |------|---------|
 | `src/` | Erasable-syntax TypeScript — the readable source of the runtime (see Important Files). Not shipped. |
-| `dist/` | **Shipped runtime**: Bun `--production` bundle of `src/cli.ts` + `src/kit.ts` (`bun run build` → `scripts/build.mjs`), plus `dist/types/*.d.ts`. Bundled devDependencies (minisearch) are inlined. Committed; CI fails if stale or non-deterministic. |
+| `dist/` | **Shipped runtime**: Bun `--production` bundle of `src/cli.ts` + `src/kit.ts` (`bun run build` → `scripts/build.mjs`), plus `dist/types/*.d.ts`. Bundled devDependencies (minisearch) are inlined. Gitignored: built by CI (artifact shared by the Node jobs) and by the release job; CI fails if the build is non-deterministic. |
 | `data/aliases.json` | Curated search shorthand and synonyms: `{ "<entry name>": ["alias", ...] }`. Read by `src/search.ts`; shipped in the package. Every key must be a real catalog name. |
 | `bench/`, `scripts/bench*.mjs` | Perf and search-quality gates (see Benchmarks below). |
 | `catalog/*.json` | **Prebuilt icon catalogs** (aws + 8 packs). Committed. One schema: `{ meta, categoryColors, groups[], icons[] }` where each icon carries verbatim draw.io `style` strings. `loadCatalog()` auto-merges every sibling file. |
@@ -83,7 +83,7 @@ const report = d.validate({ strict: true }); // { ok, errors, warnings, audit, s
 | `examples/<domain>/build_*.mjs` | 18 declarative templates grouped by domain (`aws/`, `azure/`, `gcp/`, `multicloud/`, `bpmn/`). Run → `out/<name>_kit.drawio`. |
 | `scripts/*.py` | Catalog regenerators (Python 3.11, stdlib only). |
 | `install.sh` | POSIX one-line installer: global install (Bun or npm) + `drawio-ai skill install -g -y`; `--dry-run` prints the commands. CI runs shellcheck on it. |
-| `scripts/build.mjs` | Bun-only maintainer build (`Bun.build`): writes `dist/` + a size report; `--check` verifies dist is fresh, `--analyze` writes a metafile + module-graph markdown to `$TMPDIR`. |
+| `scripts/build.mjs` | Bun-only maintainer build (`Bun.build`): writes `dist/` + a size report; `--check` verifies the build is deterministic, `--analyze` writes a metafile + module-graph markdown to `$TMPDIR`. |
 | `vendor/*.py` | Runtime helpers (third-party/MIT): autolayout, encode URL, repair PNG, aiicons. |
 | `test/` | `core.test.ts` (engine), `edges.test.ts` (edge audits), `save-guard.test.ts` (kit-is-read-only), `cli.test.ts` (`cli-lib.ts` pure fns), `run.test.ts` (`drawio-ai run`), `characterization/` (snapshots of the dist CLI, API and 30 examples; `UPDATE_SNAPSHOTS=1` regenerates). |
 
@@ -110,8 +110,8 @@ bun test --watch         # re-run on change (also: bun run test:watch)
 bun run coverage         # bun test --coverage (report only, no gate)
 npm test                 # node --test — the Node compatibility check; must also pass
 bun run cli search s3    # bun src/cli.ts (the CLI itself runs on Node)
-bun run build            # scripts/build.mjs → dist/ + size report (commit it)
-bun run build:check      # rebuild into a temp dir; fail if dist/ differs
+bun run build            # scripts/build.mjs → dist/ + size report (gitignored; run before tests)
+bun run build:check      # rebuild into a temp dir; fail if it differs (non-deterministic)
 bun run build:analyze    # build + metafile.json / bundle.md module-graph report in $TMPDIR
 bun run gen:catalog      # python3.11 scripts/ingest_index.py → catalog/aws.json
 node dist/cli.mjs search s3  # the shipped bundle, as users run it
