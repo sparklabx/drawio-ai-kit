@@ -60,3 +60,17 @@ test("exact hit leads, then its family pads the list (no lone result)", () => {
   }
   assert.ok(names("rds").includes("rds_instance"));
 });
+
+test("typos correct to the nearest known word and rank the icon first", () => {
+  const cases: Record<string, string> = {
+    kubernets: "kubernetes", kafak: "kafka", terafrom: "terraform", rdis: "redis", databrics: "databricks",
+    promethues: "prometheus", aiflow: "airflow", "cloud wtach": "cloudwatch_2", dyanmodb: "dynamodb",
+  };
+  for (const [q, want] of Object.entries(cases)) assert.equal(names(q)[0], want, `${q} → ${names(q, 3).join()}`);
+});
+
+test("typo correction leaves prefixes, acronyms and nonsense alone", () => {
+  assert.equal(names("lamb")[0], "lambda"); // a prefix being typed
+  assert.equal(names("sns")[0], "sns"); // short words are never corrected
+  assert.deepEqual(names("qwxzv"), []);
+});

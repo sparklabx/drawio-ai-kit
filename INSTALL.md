@@ -20,7 +20,12 @@ This puts the `drawio-ai` binary on PATH. The npm package is about 2 MB, so the 
 Releases are published from CI with npm provenance, so each version traces back to its commit and workflow run.
 Pin a version with `drawio-ai-kit@3.0.0`.
 
-One-line alternative: `install.sh` in this repo installs the CLI (Bun or npm) and registers the skill.
+Release channels: npm `latest` tracks the `v2` branch (every version bump on `v2` publishes). Other versions
+are published from `vX.Y.Z` git tags under the dist-tag `release-<major>`; install them by exact version.
+
+One-line alternative: `install.sh` in this repo installs `drawio-ai-kit@latest` (Bun or npm), links the
+`drawio-ai` command into `~/.local/bin` and registers the skill. Use `BIN_DIR=/dir` or `--bin-dir /dir` for
+another location, `--version X.Y.Z` to pin.
 See the README Quick start. `sh install.sh --dry-run` prints what it would run. Before installing, it removes
 old installs:
 - global copies from npm or Bun, including old git installs
@@ -31,7 +36,8 @@ old installs:
 
 As a project dependency (for scripts and TypeScript types): `npm i drawio-ai-kit` (or `bun add drawio-ai-kit`), then `import { Diagram } from "drawio-ai-kit"`.
 
-If Bun's global bin dir isn't on PATH, add `~/.bun/bin`.
+If `~/.local/bin` (or your `BIN_DIR`) isn't on PATH, the installer prints the `export PATH=…` line to add.
+With a manual `bun add -g`, Bun's own bin dir `~/.bun/bin` must be on PATH instead.
 
 **The npm registry is the only supported source.** Installing from git or GitHub
 (`npm i -g github:…`, a clone) is not supported: `dist/` is not in the repo. To work on the kit itself,

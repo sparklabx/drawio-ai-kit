@@ -1,7 +1,8 @@
 #!/bin/sh
 # drawio-ai-kit installer. Usage (pipe this file to sh):
-#   curl -fsSL https://raw.githubusercontent.com/sparklabx/drawio-ai-kit/main/install.sh | sh
-# Installs the CLI globally with Bun (preferred) or npm, then registers the agent skill.
+#   curl -fsSL https://raw.githubusercontent.com/sparklabx/drawio-ai-kit/refs/heads/v2/install.sh | sh
+# Installs drawio-ai-kit@latest globally with Bun (preferred) or npm, links the drawio-ai command into
+# ~/.local/bin (or $BIN_DIR / --bin-dir), then registers the agent skill.
 # Installs from the npm registry only. Removes old installs first (--no-clean to keep them).
 # No sudo, never installs a runtime. Re-run to upgrade.
 set -eu
@@ -9,7 +10,8 @@ set -eu
 # printf, not cat: keeps the script free of external commands
 usage() {
   printf '%s\n' 'Usage: install.sh [options]
-  --version <v>     install drawio-ai-kit@<v> (env: DRAWIO_AI_VERSION; default: latest)
+  --version <v>     install drawio-ai-kit@<v> (env: DRAWIO_AI_VERSION; default: latest, built from v2)
+  --bin-dir <dir>   where to put the drawio-ai command (env: BIN_DIR; default: ~/.local/bin)
   --runtime <r>     bun|npm (default: bun if present, else npm)
   --agent <name>    register the skill for this agent (repeatable)
   --no-skill        install the CLI only
@@ -22,6 +24,7 @@ die() { printf 'install.sh: %s\n' "$*" >&2; exit 1; }
 have() { command -v "$1" >/dev/null 2>&1; }
 
 version=${DRAWIO_AI_VERSION:-}
+bin_dir=${BIN_DIR:-$HOME/.local/bin}
 runtime=
 agents=
 skill=1
@@ -32,6 +35,8 @@ while [ $# -gt 0 ]; do
   case $1 in
     --version) [ $# -ge 2 ] || die "--version needs a value"; version=$2; shift ;;
     --version=*) version=${1#*=} ;;
+    --bin-dir) [ $# -ge 2 ] || die "--bin-dir needs a value"; bin_dir=$2; shift ;;
+    --bin-dir=*) bin_dir=${1#*=} ;;
     --runtime) [ $# -ge 2 ] || die "--runtime needs a value"; runtime=$2; shift ;;
     --runtime=*) runtime=${1#*=} ;;
     --agent) [ $# -ge 2 ] || die "--agent needs a value"; agents="$agents --agent $2"; shift ;;
@@ -70,7 +75,7 @@ if [ "$runtime" = npm ]; then
   [ "$node_ok" = 1 ] || die "Node >=20.6 required (found v$nv). Upgrade Node, or install Bun: https://bun.sh"
 fi
 
-pkg=drawio-ai-kit${version:+@$version}
+pkg=drawio-ai-kit@${version:-latest}
 
 # Print then run a command line. Word splitting is intentional: no argument contains spaces.
 run() {
@@ -83,6 +88,7 @@ skillcmd="skill install -g -y$agents"
 # Clean old installs first so exactly one copy remains: a global CLI from either package manager
 # (incl. old git installs, same package name), the bun wrapper, old skills and the pre-1.0 MCP entry.
 if [ "$clean" = 1 ]; then
+  if [ -e "$bin_dir/drawio-ai" ] || [ -L "$bin_dir/drawio-ai" ]; then run rm -f "$bin_dir/drawio-ai"; fi
   if have npm && npm ls -g --depth=0 drawio-ai-kit >/dev/null 2>&1; then run npm uninstall -g drawio-ai-kit; fi
   if have bun; then
     gb=$(bun pm bin -g 2>/dev/null || true)
@@ -109,44 +115,37 @@ fi
 
 if [ "$runtime" = bun ]; then run bun add -g "$pkg"; else run npm i -g "$pkg"; fi
 
-# Bun-only machine: dist/cli.mjs has a `#!/usr/bin/env node` shebang (Windows-safe), so with no node the
-# bin Bun linked would fail (same when node is older than 20.6). Replace it with a wrapper that runs the CLI under bun. Re-run after `bun update -g`.
-if [ "$runtime" = bun ] && [ "$node_ok" = 0 ]; then
-  if [ "$dry" = 1 ]; then
-    printf '+ write bun wrapper over the global drawio-ai bin\n'
-  else
-    gb=$(bun pm bin -g 2>/dev/null || true)
-    cli_js=$gb/../install/global/node_modules/drawio-ai-kit/dist/cli.mjs
-    if [ -n "$gb" ] && [ -f "$cli_js" ]; then
-      rm -f "$gb/drawio-ai"
-      printf '#!/bin/sh\nexec bun "%s" "$@"\n' "$cli_js" > "$gb/drawio-ai"
-      chmod +x "$gb/drawio-ai"
-      printf 'No node >=20.6 found: wrapped %s to run under bun (re-run install.sh after "bun update -g").\n' "$gb/drawio-ai"
-    else
-      printf 'warning: could not locate the global drawio-ai-kit package to wrap for bun\n' >&2
-    fi
-  fi
-fi
-
-# Find the global bin dir so the CLI runs even if it is not on PATH yet.
-if [ "$dry" = 1 ]; then
-  cli=drawio-ai
+# Link the CLI into $bin_dir (default ~/.local/bin): one predictable path, whatever the package
+# manager's own global bin dir is. Bun-only machine (or node older than 20.6): dist/cli.mjs has a
+# `#!/usr/bin/env node` shebang (Windows-safe), so write a wrapper that runs it under bun instead.
+if [ "$runtime" = bun ]; then
+  gb=$(bun pm bin -g 2>/dev/null || true)
+  groot=${gb:+$gb/../install/global/node_modules}
 else
-  if [ "$runtime" = bun ]; then
-    gbin=$(bun pm bin -g 2>/dev/null || true)
+  groot=$(npm root -g 2>/dev/null || true)
+fi
+cli_js=${groot:-<global node_modules>}/drawio-ai-kit/dist/cli.mjs
+cli=$bin_dir/drawio-ai
+if [ "$dry" = 1 ]; then
+  printf '+ mkdir -p %s\n' "$bin_dir"
+  if [ "$runtime" = bun ] && [ "$node_ok" = 0 ]; then printf '+ write bun wrapper %s -> %s\n' "$cli" "$cli_js"
+  else printf '+ ln -sf %s %s\n' "$cli_js" "$cli"; fi
+else
+  [ -n "$groot" ] && [ -f "$cli_js" ] || die "installed, but could not find the package (looked for $cli_js)"
+  mkdir -p "$bin_dir"
+  rm -f "$cli"
+  if [ "$runtime" = bun ] && [ "$node_ok" = 0 ]; then
+    printf '#!/bin/sh\nexec bun "%s" "$@"\n' "$cli_js" > "$cli"
+    chmod +x "$cli"
+    printf 'No node >=20.6 found: %s runs the CLI under bun.\n' "$cli"
   else
-    gbin=$(npm prefix -g 2>/dev/null || true)
-    [ -z "$gbin" ] || gbin=$gbin/bin
+    ln -s "$cli_js" "$cli"
   fi
-  if have drawio-ai; then
-    cli=drawio-ai
-  elif [ -n "$gbin" ] && [ -x "$gbin/drawio-ai" ]; then
-    cli=$gbin/drawio-ai
-    # shellcheck disable=SC2016 # literal $PATH is printed for the user to copy
-    printf '\nNote: %s is not on your PATH. Add it, e.g.:\n  export PATH="%s:$PATH"\n\n' "$gbin" "$gbin"
-  else
-    die "install finished but drawio-ai was not found. Check your global bin dir (${gbin:-unknown}) and PATH."
-  fi
+  # shellcheck disable=SC2016 # literal $PATH is printed for the user to copy
+  case ":$PATH:" in
+    *":$bin_dir:"*) ;;
+    *) printf '\nNote: %s is not on your PATH. Add it, e.g.:\n  export PATH="%s:$PATH"\n\n' "$bin_dir" "$bin_dir" ;;
+  esac
 fi
 
 # shellcheck disable=SC2086

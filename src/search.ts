@@ -16,7 +16,10 @@ const words = (s: unknown): string[] =>
 const stem = (t: string) => (t.length > 3 && /[^s]s$/.test(t) ? t.slice(0, -1) : t);
 const flat = (s: unknown) => words(s).join("");
 
-interface Index { ms: () => MiniSearch; byFlat: Map<string, CatalogEntry[]>; curated: Map<string, CatalogEntry[]> }
+interface Index {
+  ms: () => MiniSearch; byFlat: Map<string, CatalogEntry[]>; curated: Map<string, CatalogEntry[]>;
+  vocab: () => Map<string, number>; // known term → entry count, for typo correction
+}
 // ponytail: runtime-built index (bench/RESULTS.md: prebuilt JSON costs more to parse than the build saves).
 // MiniSearch itself is built on first use: exact-name and curated-alias hits never need it (one-shot CLI speed).
 const INDEXES = new WeakMap<Catalog, Index>();
@@ -43,9 +46,62 @@ function indexOf(catalog: Catalog): Index {
     })));
     return ms;
   };
-  INDEXES.set(catalog, (ix = { ms: build, byFlat, curated }));
+  let vocab: Map<string, number> | undefined;
+  const buildVocab = () => {
+    if (vocab) return vocab;
+    vocab = new Map();
+    for (const e of catalog.byName.values()) {
+      const text = [e.name, e.label, ...(aliases[e.name] ?? []), ...(e.aliases ?? []), ...(e.keywords ?? [])];
+      for (const t of new Set([...words(text.join(" ")), flat(e.name), ...text.map(flat)]))
+        vocab.set(t, (vocab.get(t) ?? 0) + 1);
+    }
+    return vocab;
+  };
+  INDEXES.set(catalog, (ix = { ms: build, byFlat, curated, vocab: buildVocab }));
   return ix;
 }
+
+// Optimal string alignment distance (an adjacent swap costs 1), or max+1 once it is certainly above max.
+function editDistance(a: string, b: string, max: number): number {
+  if (Math.abs(a.length - b.length) > max) return max + 1;
+  let pp: number[] = [], p = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const c = [i];
+    let low = i;
+    for (let j = 1; j <= b.length; j++) {
+      let d = Math.min(p[j]! + 1, c[j - 1]! + 1, p[j - 1]! + (a[i - 1] === b[j - 1] ? 0 : 1));
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d = Math.min(d, pp[j - 2]! + 1);
+      c.push(d);
+      low = Math.min(low, d);
+    }
+    if (low > max) return max + 1;
+    [pp, p] = [p, c];
+  }
+  return p[b.length]!;
+}
+
+// Did-you-mean: replace a word no icon uses (and no icon word starts with) by the closest known word.
+// One edit for 4-letter words, two from 5. Ties go to a word that is itself an icon name or alias, then to
+// a word the typo dropped a letter from ("rdis" → redis, not rds), then to the word more icons use. Shorter words stay as typed (mostly acronyms: "rds", "sns").
+// ponytail: linear scan of the vocabulary per unknown word (~1 ms); a BK-tree if queries ever batch in bulk.
+function correct(toks: string[], ix: Index): string[] {
+  const vocab = ix.vocab();
+  return toks.map((t) => {
+    const st = stem(t);
+    if (t.length < 4 || vocab.has(st) || vocab.has(t)) return t;
+    for (const v of vocab.keys()) if (v.startsWith(t)) return t; // a prefix being typed, not a typo
+    const max = t.length >= 5 ? 2 : 1;
+    let best = t, bestKey = [max + 1, 0, 0];
+    for (const [v, n] of vocab) {
+      const d = editDistance(t, v, max);
+      if (d > max) continue;
+      const key = [d, ix.byFlat.has(v) || ix.curated.has(stem(v)) ? 0 : 1, v.length < t.length ? 1 : 0, -n];
+      if (less(key, bestKey)) [best, bestKey] = [v, key];
+    }
+    return best;
+  });
+}
+const less = (a: number[], b: number[]) => { for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return a[i]! < b[i]!; return false; };
 
 const OPTS = {
   boost: { name: 3, label: 2, alias: 4 },
@@ -59,7 +115,8 @@ export function searchEntries(
   catalog: Catalog, query: string, limit: number,
   keep: (e: CatalogEntry) => boolean,
 ): CatalogEntry[] {
-  const { ms: getMs, byFlat, curated } = indexOf(catalog);
+  const ix = indexOf(catalog);
+  const { ms: getMs, byFlat, curated } = ix;
   let toks = words(query);
   const vendor = toks.length > 1 ? toks.map((t) => VENDOR[t]).find(Boolean) : undefined;
   if (vendor) toks = toks.filter((t) => !VENDOR[t]);
@@ -68,7 +125,8 @@ export function searchEntries(
 
   // exact (joined) name, then curated alias, beat any score: "nat gateway" → nat_gateway, "aks" → AKS first
   const exactOf = (ts: string[], pred: (e: CatalogEntry) => boolean) =>
-    [...new Set([...(byFlat.get(ts.join("")) ?? []), ...(curated.get(ts.map(stem).join(" ")) ?? [])])].filter(pred);
+    [...new Set([...(byFlat.get(ts.join("")) ?? []), ...(curated.get(ts.map(stem).join(" ")) ?? []),
+      ...(curated.get(stem(ts.join(""))) ?? [])])].filter(pred); // "cloud watch" = alias "cloudwatch"
   const run = (ts: string[], pred: (e: CatalogEntry) => boolean): CatalogEntry[] => {
     const filter = (r: { id: string }) => pred(catalog.byName.get(r.id)!);
     const hits = getMs().search(ts.join(" "), { ...OPTS, combineWith: "AND", filter });
@@ -82,7 +140,8 @@ export function searchEntries(
   };
 
   // Whole query names one icon or alias: answer without building the index.
-  const fast = exactOf(toks, pred);
+  let fast = exactOf(toks, pred);
+  if (!fast.length) { toks = correct(toks, ix); fast = exactOf(toks, pred); } // "kubernets" → kubernetes first
   if (fast.length) {
     // ...then pad with its family ("rds" → rds_instance, rds_multi_az): a name prefix scan, still no index.
     const prefixes = [flat(toks.join(" ")) + "_", ...fast.map((e) => e.name + "_")];

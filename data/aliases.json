@@ -1,5 +1,6 @@
 {
-  "kubernetes": ["k8s", "kube", "container orchestration"],
+  "kubernetes": ["kubernetes", "k8s", "kube", "container orchestration"],
+  "cloudwatch_2": ["cloudwatch", "cloud watch"],
   "eks": ["k8s", "kubernetes"],
   "azure_kubernetes_services": ["aks", "k8s", "kubernetes"],
   "gcp_google_kubernetes_engine": ["gke", "k8s", "kubernetes"],

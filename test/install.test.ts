@@ -1,70 +1,87 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, writeFileSync, chmodSync, mkdirSync, readFileSync, existsSync, symlinkSync } from "node:fs";
+import { mkdtempSync, writeFileSync, chmodSync, mkdirSync, readFileSync, existsSync, symlinkSync, readlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 
 const script = join(import.meta.dirname, "..", "install.sh");
 
-// old: a previous global install already exists (bun and npm), so the cleanup step has work to do.
-type Opts = { tools?: string[]; node?: string; onPath?: boolean; old?: boolean; env?: Record<string, string> };
+// old: a previous install exists (bun + npm globals, a stale ~/.local/bin link), so cleanup has work to do.
+// broken: the package manager "succeeds" but leaves no package behind.
+type Opts = { tools?: string[]; node?: string; onPath?: boolean; old?: boolean; broken?: boolean; env?: Record<string, string> };
 
-// Runs install.sh with PATH = a dir of logging shims only (no real tools), so nothing real is touched.
-function run(args: string[], { tools = ["bun", "node", "drawio-ai"], node = "v22.1.0", onPath = true, old = false, env = {} }: Opts = {}) {
+// Runs install.sh with PATH = a dir of logging shims only (no real tools), HOME = a temp dir, so nothing real
+// is touched. `bun add` / `npm i` create a fake package whose dist/cli.mjs logs as "drawio-ai".
+function run(args: string[], { tools = ["bun", "node"], node = "v22.1.0", onPath = true, old = false, broken = false, env = {} }: Opts = {}) {
   const root = mkdtempSync(join(tmpdir(), "install-"));
   const bin = join(root, "bin");
-  const gbin = join(root, "gbin"); // bun global bin dir, on PATH only when onPath
-  const nbin = join(root, "gprefix", "bin"); // npm global bin dir
-  const tpl = join(root, "tpl"); // template of the bin that bun add links
-  for (const d of [bin, gbin, nbin, tpl]) mkdirSync(d, { recursive: true });
-  const pkgDist = join(root, "install", "global", "node_modules", "drawio-ai-kit", "dist"); // bun's global pkg layout
-  if (old) mkdirSync(pkgDist, { recursive: true });
-  for (const t of ["rm", "chmod", "mkdir", "cp"]) symlinkSync(`/bin/${t}`, join(bin, t)); // real coreutils the wrapper step needs
+  const gbin = join(root, "gbin"); // bun global bin dir
+  const local = join(root, ".local", "bin"); // default BIN_DIR (HOME=root)
+  const bunPkg = join(root, "install", "global", "node_modules", "drawio-ai-kit"); // bun's global layout
+  const npmRoot = join(root, "gprefix", "lib", "node_modules");
+  for (const d of [bin, gbin]) mkdirSync(d, { recursive: true });
+  for (const t of ["rm", "chmod", "mkdir", "ln"]) symlinkSync(`/bin/${t}`, join(bin, t)); // real coreutils the link step needs
   const log = join(root, "log");
-  const shim = (dir: string, name: string, body: string) => {
+  const shim = (dir: string, name: string, body = "exit 0") => {
+    mkdirSync(dir, { recursive: true });
     const p = join(dir, name);
-    writeFileSync(p, `#!/bin/sh\necho "${name} $*" >> "${log}"\n${body}\n`);
+    writeFileSync(p, `#!/bin/sh\necho "${name.replace(/\.mjs$/, "") === "cli" ? "drawio-ai" : name} $*" >> "${log}"\n${body}\n`);
     chmodSync(p, 0o755);
   };
+  // a package manager install: writes <pkg>/dist/cli.mjs (a logging shim) unless broken
+  const pkgOf = (dir: string) => broken ? "" : `/bin/mkdir -p "${dir}/dist" && printf '#!/bin/sh\\necho "drawio-ai $*" >> "${log}"\\n' > "${dir}/dist/cli.mjs" && /bin/chmod +x "${dir}/dist/cli.mjs";`;
   for (const t of tools) {
-    if (t === "drawio-ai") continue;
     const body =
       t === "node" ? `echo ${node}` :
-      // bun add creates the package like the real one, so the wrapper step can find it
-      t === "bun" ? `[ "$1 $2 $3" = "pm bin -g" ] && echo "${gbin}"; [ "$1" = add ] && mkdir -p "${pkgDist}" && : > "${pkgDist}/cli.mjs" && { [ -f "${gbin}/drawio-ai" ] || cp "${tpl}/drawio-ai" "${gbin}/drawio-ai"; }; exit 0` :
-      t === "npm" ? `[ "$1 $2" = "prefix -g" ] && echo "${root}/gprefix"; [ "$1" = ls ] && exit ${old ? 0 : 1}; exit 0` :
-      "exit 0"; // bunx, npx
+      t === "bun" ? `[ "$1 $2 $3" = "pm bin -g" ] && echo "${gbin}"; [ "$1" = add ] && { ${pkgOf(bunPkg)} :; }; exit 0` :
+      t === "npm" ? `[ "$1 $2" = "root -g" ] && echo "${npmRoot}"; [ "$1" = ls ] && exit ${old ? 0 : 1}; [ "$1" = i ] && { ${pkgOf(join(npmRoot, "drawio-ai-kit"))} :; }; exit 0` :
+      "exit 0"; // bunx, npx, claude
     shim(bin, t, body);
   }
-  if (tools.includes("drawio-ai")) {
-    shim(onPath ? bin : gbin, "drawio-ai", "exit 0");
-    shim(nbin, "drawio-ai", "exit 0");
-  } else if (old) shim(gbin, "drawio-ai", "exit 0"); // leftover bin from the old install
-  if (old || tools.includes("drawio-ai")) shim(tpl, "drawio-ai", "exit 0"); // what bun add links (again, after cleanup)
-  const r = spawnSync("/bin/sh", [script, ...args], { encoding: "utf8", env: { PATH: bin, HOME: root, ...env } });
+  if (old) {
+    mkdirSync(bunPkg, { recursive: true });
+    shim(gbin, "drawio-ai"); // bun's old bin link
+    shim(local, "drawio-ai"); // stale link from an earlier install.sh
+  }
+  const PATH = onPath ? `${bin}:${local}` : bin;
+  const r = spawnSync("/bin/sh", [script, ...args], { encoding: "utf8", env: { PATH, HOME: root, ...env } });
   const calls = existsSync(log) ? readFileSync(log, "utf8").trim().split("\n").filter(Boolean) : [];
-  return { ...r, root, calls, out: r.stdout + r.stderr };
+  return { ...r, root, local, calls, out: r.stdout + r.stderr };
 }
 
-test("bun present (and preferred over npm): bun add -g, skill install, verify (exact commands)", () => {
-  const r = run([], { tools: ["bun", "bunx", "npm", "node", "drawio-ai"] });
+test("bun present (and preferred over npm): bun add -g @latest, link, skill install, verify (exact commands)", () => {
+  const r = run([], { tools: ["bun", "bunx", "npm", "node"] });
   assert.equal(r.status, 0, r.stderr);
   assert.deepEqual(r.calls.filter((c) => !c.startsWith("bun pm") && !c.startsWith("npm ls")), [
     "node -v", // probed to decide whether the bun wrapper is needed
     "bunx skills remove -g -y drawio drawio-aws drawio-azure drawio-gcp drawio-databricks drawio-bpmn drawio-cloud-architect drawio-aws-architect",
-    "bun add -g drawio-ai-kit",
+    "bun add -g drawio-ai-kit@latest",
     "drawio-ai skill install -g -y",
     "drawio-ai root",
   ]);
+  assert.match(readlinkSync(join(r.local, "drawio-ai")), /install\/global\/node_modules\/drawio-ai-kit\/dist\/cli\.mjs$/);
 });
 
-test("npm only: node checked, npm i -g", () => {
-  const r = run([], { tools: ["npm", "node", "drawio-ai"] });
+test("npm only: node checked, npm i -g @latest, linked into ~/.local/bin", () => {
+  const r = run([], { tools: ["npm", "node"] });
   assert.equal(r.status, 0, r.stderr);
   assert.ok(r.calls.includes("node -v"));
-  assert.ok(r.calls.includes("npm i -g drawio-ai-kit"));
+  assert.ok(r.calls.includes("npm i -g drawio-ai-kit@latest"));
   assert.ok(r.calls.includes("drawio-ai skill install -g -y"));
+  assert.match(readlinkSync(join(r.local, "drawio-ai")), /gprefix\/lib\/node_modules\/drawio-ai-kit\/dist\/cli\.mjs$/);
+});
+
+test("BIN_DIR env and --bin-dir choose where the command goes", () => {
+  const dir = mkdtempSync(join(tmpdir(), "bindir-"));
+  const e = run([], { env: { BIN_DIR: join(dir, "a") } });
+  assert.equal(e.status, 0, e.stderr);
+  assert.ok(existsSync(join(dir, "a", "drawio-ai")));
+  const f = run(["--bin-dir", join(dir, "b")]);
+  assert.equal(f.status, 0, f.stderr);
+  assert.ok(existsSync(join(dir, "b", "drawio-ai")));
+  assert.ok(run([`--bin-dir=${join(dir, "c")}`]).calls.includes("drawio-ai root"));
+  assert.ok(!existsSync(join(e.local, "drawio-ai")), "default dir untouched when BIN_DIR is set");
 });
 
 test("neither: clear error, nonzero exit, nothing run", () => {
@@ -88,14 +105,14 @@ test("old node does not block bun", () => {
 
 test("version pin via env and flag", () => {
   assert.ok(run([], { env: { DRAWIO_AI_VERSION: "2.1.0" } }).calls.includes("bun add -g drawio-ai-kit@2.1.0"));
-  assert.ok(run(["--version", "2.0.0"], { tools: ["npm", "node", "drawio-ai"] }).calls.includes("npm i -g drawio-ai-kit@2.0.0"));
+  assert.ok(run(["--version", "2.0.0"], { tools: ["npm", "node"] }).calls.includes("npm i -g drawio-ai-kit@2.0.0"));
   assert.ok(run(["--version=2.0.0"]).calls.includes("bun add -g drawio-ai-kit@2.0.0"));
 });
 
 test("--runtime override and validation", () => {
-  const r = run(["--runtime", "npm"], { tools: ["bun", "npm", "node", "drawio-ai"] });
-  assert.ok(r.calls.includes("npm i -g drawio-ai-kit"));
-  assert.notEqual(run(["--runtime", "npm"], { tools: ["bun", "drawio-ai"] }).status, 0);
+  const r = run(["--runtime", "npm"], { tools: ["bun", "npm", "node"] });
+  assert.ok(r.calls.includes("npm i -g drawio-ai-kit@latest"));
+  assert.notEqual(run(["--runtime", "npm"], { tools: ["bun"] }).status, 0);
   assert.notEqual(run(["--runtime", "yarn"]).status, 0);
 });
 
@@ -115,52 +132,52 @@ test("--dry-run prints commands and runs nothing", () => {
   const r = run(["--dry-run", "--agent", "cursor"]);
   assert.equal(r.status, 0, r.stderr);
   assert.ok(!r.calls.some((c) => c.startsWith("bun add") || c.startsWith("drawio-ai")));
-  assert.match(r.stdout, /\+ bun add -g drawio-ai-kit/);
-  assert.match(r.stdout, /\+ drawio-ai skill install -g -y --agent cursor/);
+  assert.match(r.stdout, /\+ bun add -g drawio-ai-kit@latest/);
+  assert.match(r.stdout, /\+ ln -sf .*cli\.mjs .*\.local\/bin\/drawio-ai/);
+  assert.match(r.stdout, /\+ .*\.local\/bin\/drawio-ai skill install -g -y --agent cursor/);
+  assert.ok(!existsSync(join(r.local, "drawio-ai")));
 });
 
-test("PATH hint when global bin is not on PATH (bun)", () => {
+test("PATH hint when BIN_DIR is not on PATH", () => {
   const r = run([], { onPath: false });
   assert.equal(r.status, 0, r.stderr);
-  assert.match(r.out, /not on your PATH/);
-  assert.match(r.out, /gbin/);
-  assert.ok(r.calls.includes("drawio-ai root"));
-});
-
-test("PATH hint (npm)", () => {
-  const r = run([], { tools: ["npm", "node", "drawio-ai"], onPath: false });
-  assert.match(r.out, /gprefix\/bin/);
+  assert.match(r.out, /\.local\/bin is not on your PATH/);
+  assert.ok(r.calls.includes("drawio-ai root"), "CLI still runs from its full path");
 });
 
 test("no PATH hint when on PATH", () => {
   assert.doesNotMatch(run([]).out, /PATH/);
 });
 
-test("install that yields no drawio-ai exits nonzero", () => {
-  assert.notEqual(run([], { tools: ["bun", "node"] }).status, 0);
+test("install that leaves no package exits nonzero", () => {
+  const r = run([], { broken: true });
+  assert.notEqual(r.status, 0);
+  assert.match(r.stderr, /could not find the package/);
 });
 
 test("--help, unknown flag, missing value", () => {
   const h = run(["--help"], { tools: [] });
   assert.equal(h.status, 0);
   assert.match(h.stdout, /--dry-run/);
+  assert.match(h.stdout, /--bin-dir/);
   assert.notEqual(run(["--bogus"]).status, 0);
   assert.notEqual(run(["--version"]).status, 0);
+  assert.notEqual(run(["--bin-dir"]).status, 0);
 });
 
-test("bun without node: wraps the global bin to exec bun (idempotent)", () => {
-  const go = () => run([], { tools: ["bun", "drawio-ai"], onPath: false });
+test("bun without node: BIN_DIR gets a wrapper that execs bun (idempotent)", () => {
+  const go = () => run([], { tools: ["bun"], onPath: false });
   const r = go();
   assert.equal(r.status, 0, r.stderr);
-  const w = readFileSync(join(r.root, "gbin", "drawio-ai"), "utf8");
+  const w = readFileSync(join(r.local, "drawio-ai"), "utf8");
   assert.match(w, /^#!\/bin\/sh\nexec bun ".*\/drawio-ai-kit\/dist\/cli\.mjs" "\$@"\n$/);
   assert.ok(r.calls.some((c) => /^bun .*cli\.mjs root$/.test(c)), "CLI ran through bun");
   assert.equal(go().status, 0);
 });
 
-test("bun with node: bin left alone (no wrapper)", () => {
-  const r = run([], { onPath: false });
-  assert.doesNotMatch(readFileSync(join(r.root, "gbin", "drawio-ai"), "utf8"), /exec bun/);
+test("bun with node: a plain symlink (no wrapper)", () => {
+  const r = run([]);
+  assert.match(readlinkSync(join(r.local, "drawio-ai")), /cli\.mjs$/);
 });
 
 test("dist/cli.mjs keeps the Windows-safe node shebang", () => {
@@ -176,19 +193,20 @@ test("node v20.5.1 (below 20.6): npm path refuses with '>=20.6'", () => {
 });
 
 test("node v20.6.0 passes the npm check", () => {
-  assert.equal(run([], { tools: ["npm", "node", "drawio-ai"], node: "v20.6.0" }).status, 0);
+  assert.equal(run([], { tools: ["npm", "node"], node: "v20.6.0" }).status, 0);
 });
 
-test("bun with node v20.5.1: wraps the global bin like the no-node case", () => {
-  const r = run([], { tools: ["bun", "node", "drawio-ai"], node: "v20.5.1", onPath: false });
+test("bun with node v20.5.1: wrapper like the no-node case", () => {
+  const r = run([], { tools: ["bun", "node"], node: "v20.5.1" });
   assert.equal(r.status, 0, r.stderr);
-  assert.match(readFileSync(join(r.root, "gbin", "drawio-ai"), "utf8"), /exec bun/);
+  assert.match(readFileSync(join(r.local, "drawio-ai"), "utf8"), /exec bun/);
 });
 
 test("clean: removes old CLI from both managers and old skills before installing", () => {
-  const r = run([], { tools: ["bun", "bunx", "npm", "node"], old: true, onPath: false });
+  const r = run([], { tools: ["bun", "bunx", "npm", "node"], old: true });
   assert.equal(r.status, 0, r.stderr);
   const i = (c: string) => r.calls.findIndex((x) => x.startsWith(c));
+  assert.match(r.stdout, /\+ rm -f .*\.local\/bin\/drawio-ai/);
   assert.ok(i("npm uninstall -g drawio-ai-kit") >= 0);
   assert.ok(i("bun remove -g drawio-ai-kit") >= 0);
   assert.ok(i("bunx skills remove -g -y drawio ") >= 0);
@@ -204,7 +222,7 @@ test("clean: removes pre-1.0 skill dirs/symlinks and the old MCP entry", () => {
   mkdirSync(join(root, ".claude", "skills"), { recursive: true });
   symlinkSync("/nonexistent", join(root, ".claude", "skills", "drawio-aws-architect")); // dangling v0.1 link
   mkdirSync(join(root, ".claude", "skills", "other"));
-  const r = run([], { tools: ["bun", "bunx", "node", "drawio-ai", "claude"], env: { HOME: root } });
+  const r = run([], { tools: ["bun", "bunx", "node", "claude"], env: { HOME: root } });
   assert.equal(r.status, 0, r.stderr);
   assert.ok(!existsSync(old));
   assert.match(r.stdout, /\+ rm -rf .*\.claude\/skills\/drawio-aws-architect/);
@@ -213,20 +231,20 @@ test("clean: removes pre-1.0 skill dirs/symlinks and the old MCP entry", () => {
 });
 
 test("clean under npm uses npx for the skills CLI", () => {
-  const r = run([], { tools: ["npm", "npx", "node", "drawio-ai"] });
+  const r = run([], { tools: ["npm", "npx", "node"] });
   assert.ok(r.calls.some((c) => c.startsWith("npx -y skills remove -g -y drawio ")));
 });
 
 test("--no-clean keeps existing installs; --no-skill keeps skills", () => {
-  const r = run(["--no-clean"], { tools: ["bun", "bunx", "npm", "node", "drawio-ai"], old: true });
+  const r = run(["--no-clean"], { tools: ["bun", "bunx", "npm", "node"], old: true });
   assert.ok(!r.calls.some((c) => /uninstall|remove/.test(c)));
-  const s = run(["--no-skill"], { tools: ["bun", "bunx", "npm", "node", "drawio-ai"], old: true });
+  const s = run(["--no-skill"], { tools: ["bun", "bunx", "npm", "node"], old: true });
   assert.ok(s.calls.includes("npm uninstall -g drawio-ai-kit"));
   assert.ok(!s.calls.some((c) => c.includes("skills remove")));
 });
 
 test("failing skills remove only warns", () => {
-  const r = run([], { tools: ["bun", "node", "drawio-ai"] }); // no bunx on PATH
+  const r = run([], { tools: ["bun", "node"] }); // no bunx on PATH
   assert.equal(r.status, 0, r.stderr);
   assert.match(r.stderr, /could not remove old skills/);
 });

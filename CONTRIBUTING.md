@@ -37,7 +37,10 @@ Architecture details live in [docs/developer-guide.md](docs/developer-guide.md);
 
 ## Releasing
 
-1. Bump `version` in `package.json`, run `bun run build`, and commit.
-2. Tag and push the tag: `git tag v2.0.1 && git push origin v2.0.1`.
-3. `.github/workflows/release.yml` checks that the tag matches the version, runs the tests and `build:check`, then runs `npm publish --provenance`.
+`.github/workflows/release.yml` publishes whatever `version` in `package.json` says, if npm doesn't have it yet:
+- **Latest (normal release):** bump `version` on `v2` and push. CI runs the tests and `build:check`, runs
+  `npm publish --provenance --tag latest`, then tags the commit `vX.Y.Z`.
+- **Other versions (old lines, backports):** bump `version` on that branch, then `git tag vX.Y.Z && git push origin vX.Y.Z`.
+  CI checks the tag matches the version and publishes under `release-<major>` (prereleases: `next`), so `latest` never moves.
+- Pushes to `v2` that don't change the version publish nothing.
    Auth uses npm trusted publishing (OIDC) for `sparklabx/drawio-ai-kit` + `release.yml` + environment `npm`, falling back to the `NPM_TOKEN` secret.

@@ -29,13 +29,17 @@ snapshots of the kit's output did not change. Numbers come from `bench/RESULTS.m
   through a Node `module.register` hook or a Bun preload plugin.
 - **minisearch-based icon search**, with:
   - an alias table (`data/aliases.json`: `k8s`, `pg`, `es`, `tf`, …)
-  - typo tolerance, plurals, vendor scoping and stopwords
+  - typo correction against the catalog vocabulary (1 edit for 4-letter words, 2 from 5 letters; swaps count as one),
+    so `kubernets`, `terafrom`, `promethues`, `cloud wtach` rank the right icon first
+  - plurals, vendor scoping and stopwords
   - multi-keyword queries
   - an exact or alias fast path that fills the rest of the results with icons sharing the name prefix
 - **`install.sh`**, a POSIX one-line installer:
   - uses Bun if present, otherwise npm
   - registers the skill
-  - flags: `--version`, `--runtime`, `--no-skill`, `--agent`, `--dry-run`
+  - installs `drawio-ai-kit@latest` by default (`--version` to pin)
+  - links `drawio-ai` into `~/.local/bin`, or `BIN_DIR` / `--bin-dir`, and prints a PATH hint if that dir isn't on PATH
+  - flags: `--version`, `--bin-dir`, `--runtime`, `--no-skill`, `--agent`, `--dry-run`
   - on Bun-only machines, writes a small wrapper so `drawio-ai` runs without Node
   - removes old installs before installing, so exactly one copy remains (`--no-clean` to skip):
     - global copies from npm or Bun, including old git installs, and the Bun wrapper
@@ -43,12 +47,12 @@ snapshots of the kit's output did not change. Numbers come from `bench/RESULTS.m
     - the pre-1.0 `drawio-ai-kit` MCP entry
 - **Benchmarks**:
   - `scripts/bench.mjs`: perf, compared against `bench/baseline.json` with a 10% tolerance.
-  - `scripts/bench-search.mjs`: 121 labeled queries in 12 scenarios.
+  - `scripts/bench-search.mjs`: 166 labeled queries in 12 scenarios (53 typo queries, all top-1).
 - **Characterization tests** (`test/characterization/`) that snapshot CLI and builder output.
 - ADRs 0006 (TypeScript), 0007 (package import + `run`), 0008 (minisearch).
 
 ### Improved
-- **Search quality**: on the original 98-query set, the pass rate went from 60.2% to 100%. All 121 queries
+- **Search quality**: on the original 98-query set, the pass rate went from 60.2% to 100%. All 166 queries
   in the current set pass. `k8s, pg, es` returns Kubernetes, PostgreSQL and Elasticsearch in the top K.
 - **Startup and memory** (`drawio-ai root`):
 
@@ -64,6 +68,8 @@ snapshots of the kit's output did not change. Numbers come from `bench/RESULTS.m
   - runs on `main` and `v2`
   - the Bun job builds `dist/`, checks that the build is deterministic and shares `dist/` as an artifact
   - tests run on Node 24, and a smoke test checks the bundle on Node 20.6.0
+- **Releases**: npm `latest` publishes from the `v2` branch when `package.json` gains a new version (CI then tags
+  it). Other versions publish from `vX.Y.Z` tags under `release-<major>`.
 
 ### Fixed
 - `skill install` uses `bunx` under Bun and reports a missing launcher instead of crashing.
