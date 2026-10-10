@@ -43,7 +43,7 @@ curl -fsSL https://raw.githubusercontent.com/sparklabx/drawio-ai-kit/refs/heads/
 ```
 
 It installs `drawio-ai-kit@latest` globally with Bun (if present) or npm, links the `drawio-ai` command into
-`~/.local/bin` (pick another dir with `BIN_DIR=/dir` or `--bin-dir /dir`; pin a version with `--version 2.0.0`), then registers the `drawio` skill with every
+`~/.local/bin` (pick another dir with `BIN_DIR=/dir` or `--bin-dir /dir`; pin a version with `--version 2.0.1`), then registers the `drawio` skill with every
 agent it finds. It never installs a runtime and needs no `sudo`. Prefer to read it first? Download
 `install.sh`, open it, then run `sh install.sh` (`--dry-run` prints the commands only; `--help` lists options).
 

@@ -42,7 +42,7 @@ package and `npm audit --omit=dev` stays clean.
 - `dist/` grows when a library is bundled (minisearch: 77 KB to 98 KB of
   `.mjs`, see `bench/RESULTS.md`). The npm tarball stays under the 2.5 MB
   budget enforced in CI.
-- `dist/` is not committed (amended in 2.0.0): CI builds it on every PR and
+- `dist/` is not committed (amended in 2.0.1): CI builds it on every PR and
   shares it with the Node jobs as an artifact; the release job builds the
   published copy. `bun run build:check` guards determinism.
 - Contributors must run the bench gates (`AGENTS.md`) because a bundled

@@ -3,9 +3,9 @@
 All notable changes to `drawio-ai-kit`. Format follows [Keep a Changelog](https://keepachangelog.com/);
 versions follow [SemVer](https://semver.org/).
 
-## [2.0.0] - Unreleased
+## [2.0.1] - 2026-10-10
 
-The first public 2.x release. It folds in the earlier 2.0.0 work (one skill, a bundled CLI) and the planned 3.0.0 work
+The first public 2.x release (npm already held an early `2.0.0` build that never had real users). It folds in the earlier 2.0.0 work (one skill, a bundled CLI) and the planned 3.0.0 work
 (TypeScript, a new search engine, a new installer). The characterization snapshots of the kit's output did not change. Numbers come from `bench/RESULTS.md`.
 
 ### Breaking
@@ -163,7 +163,7 @@ The first public 2.x release. It folds in the earlier 2.0.0 work (one skill, a b
 - House design system (theme tokens) and a geometric validator.
 - Template examples and a one-line installer.
 
-[2.0.0]: https://github.com/sparklabx/drawio-ai-kit/compare/v1.0.2...HEAD
+[2.0.1]: https://github.com/sparklabx/drawio-ai-kit/compare/v1.0.2...v2.0.1
 [1.0.2]: https://github.com/sparklabx/drawio-ai-kit/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/sparklabx/drawio-ai-kit/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/sparklabx/drawio-ai-kit/compare/v0.3.0...v1.0.0

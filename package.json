@@ -1,6 +1,6 @@
 {
   "name": "drawio-ai-kit",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Helps an AI draw correct, beautiful draw.io diagrams: ground-truth AWS/Azure/GCP/OSS icon catalogs, a declarative layout engine, a validator, and one agent skill. drawio-ai CLI with no runtime dependencies (bundled).",
   "keywords": [
     "drawio",
