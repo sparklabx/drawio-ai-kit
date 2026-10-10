@@ -111,6 +111,7 @@ else
     cli=drawio-ai
   elif [ -n "$gbin" ] && [ -x "$gbin/drawio-ai" ]; then
     cli=$gbin/drawio-ai
+    # shellcheck disable=SC2016 # literal $PATH is printed for the user to copy
     printf '\nNote: %s is not on your PATH. Add it, e.g.:\n  export PATH="%s:$PATH"\n\n' "$gbin" "$gbin"
   else
     die "install finished but drawio-ai was not found. Check your global bin dir (${gbin:-unknown}) and PATH."
