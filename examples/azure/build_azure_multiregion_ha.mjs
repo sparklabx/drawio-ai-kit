@@ -4,8 +4,7 @@
 // (primary → readable secondary) for cross-region data HA. White frames; identity via border + corner icon.
 // Sibling regions are equal-height (engine-enforced). Run: node examples/azure/build_azure_multiregion_ha.mjs
 import { writeFileSync } from "node:fs";
-import { Diagram } from "../../src/builder.mjs";
-import { frame, icon, phantom, renderTree } from "../../src/layout-engine.mjs";
+import { Diagram, frame, icon, phantom, renderTree } from "drawio-ai-kit";
 
 const d = new Diagram("network");
 const AZ = "#0078D4", SUB = "#8AB4D8", RGN = "#777777";

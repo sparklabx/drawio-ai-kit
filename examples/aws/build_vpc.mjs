@@ -2,8 +2,7 @@
 // STANDARD VPC LAYOUT: each AZ is a VERTICAL COLUMN, AZs sit side by side, the VPC is the
 // horizontal box wrapping them; subnets are tiers stacked top→bottom, same tier aligned across AZs.
 import { writeFileSync } from "node:fs";
-import { Diagram } from "../../src/builder.mjs";
-import { group, frame, icon, box, phantom, renderTree } from "../../src/layout-engine.mjs";
+import { Diagram, group, frame, icon, box, phantom, renderTree } from "drawio-ai-kit";
 
 const d = new Diagram("network");
 

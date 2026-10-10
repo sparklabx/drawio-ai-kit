@@ -1,7 +1,7 @@
 {
   "meta": {
     "pack": "bpmn",
-    "source": "BPMN 2.0 Tier-1 swimlane elements. Uses draw.io's PARAMETRIC mxgraph.bpmn shapes (event/gateway2/task2) with outline=/symbol=/gwType=/taskMarker= selectors — verified against draw.io's Sidebar-BPMN.js (dev branch). Canonical monochrome (white fill, neutral stroke); red accent for blocker end events (error/cancel/terminate). Plain Task and collapsed Sub-process are composed (rounded rect) in src/bpmn.mjs — no stencil.",
+    "source": "BPMN 2.0 Tier-1 swimlane elements. Uses draw.io's PARAMETRIC mxgraph.bpmn shapes (event/gateway2/task2) with outline=/symbol=/gwType=/taskMarker= selectors — verified against draw.io's Sidebar-BPMN.js (dev branch). Canonical monochrome (white fill, neutral stroke); red accent for blocker end events (error/cancel/terminate). Plain Task and collapsed Sub-process are composed (rounded rect) in src/bpmn.ts — no stencil.",
     "generator": "manual"
   },
   "categoryColors": {

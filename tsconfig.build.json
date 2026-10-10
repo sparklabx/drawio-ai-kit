@@ -1,0 +1,16 @@
+{
+  // Public API declarations only: src/kit.ts (+ everything it re-exports) → dist/types/*.d.ts.
+  // noCheck: emit does not gate on type errors; `npm run typecheck` is the gate.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "noCheck": true,
+    "allowJs": false,
+    "rootDir": "src",
+    "outDir": "dist/types"
+  },
+  "include": ["src/kit.ts"],
+  "exclude": []
+}

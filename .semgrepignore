@@ -1,3 +1,7 @@
 # Maintainer-only catalog-generation tooling — not shipped in the installed package,
 # not reachable via the skill/CLI. Excluded from the security scan surface.
 scripts/
+
+# Minified bundle generated from src/ (which IS scanned). Minification strips the inline
+# `nosemgrep` justifications; CI fails if dist/ differs from a fresh build of src/.
+dist/

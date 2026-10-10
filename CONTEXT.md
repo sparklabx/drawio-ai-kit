@@ -7,8 +7,8 @@ live in code and ADRs, not here.
 
 **drawio-ai-kit** — the deterministic *tooling backend*. The repo itself: the
 AWS/OSS stencil catalog, the `drawio-ai` CLI, the diagram engine, and the
-rules. A zero-dependency global npm package
-(`npm i -g github:sparklabx/drawio-ai-kit`) on Node 18+. Has no opinions about which
+rules. A self-contained global npm package
+(`npm i -g drawio-ai-kit`, or the `install.sh` one-liner) on Node 20.6+ or Bun; libraries are bundled into `dist/`. Has no opinions about which
 agent consumes it.
 
 ## CLI
@@ -20,21 +20,20 @@ Skills call the CLI at any time.
 
 ## Shared Workflow
 
-The build → validate → render → write-path loop every Domain Skill shares,
+The build → validate → render → write-path loop every diagram follows (`skills/drawio/workflows/build.md`),
 served once by `drawio-ai workflow` (not copied into each skill).
 
-## Domain Skill
+## Skill
 
-A small, single-domain `SKILL.md` an agent reads to produce diagrams — one per
-rule domain (`drawio-aws`, `drawio-azure`, `drawio-gcp`, `drawio-databricks`,
-`drawio-bpmn`). The agent-facing frontend. Each is thin: a sharp trigger
-description, a preflight that checks the CLI is installed, a pointer to the
-Shared Workflow, and its own rules via `drawio-ai principles --mode <domain>`.
-A Domain Skill is inert without the Kit behind it.
+The single agent-facing frontend, `skills/drawio/`. `SKILL.md` routes: check the CLI, ask the
+user only what's missing (domain, scope), load **one** domain reference from `references/`, then
+run `workflows/build.md`. Replaced the five per-domain Domain Skills at 2.0.0 — a capable agent
+picks the domain by asking, so one skill with strong references beats five thin ones. Written in
+short explicit steps so a small model (Haiku-class) can drive it. Inert without the Kit behind it.
 
 ## Agent
 
-The coding assistant a Domain Skill is installed *into* — Claude Code, Codex,
+The coding assistant the skill is installed *into* — Claude Code, Codex,
 Gemini CLI, Cursor, etc. Each Agent has its own skills directory; skills are
 distributed via the standard npm skills tooling.
 
@@ -84,7 +83,7 @@ The edge-routing engine that decides how arrows run between elements. Two
 coexist:
 
 - **Kit router** — the in-process A* + nudge orthogonal router. Collision-free,
-  deterministic, zero-dependency. Used for the bake contract.
+  deterministic, no network. Used for the bake contract.
 - **Graphviz** (`dot`, optional) — an external binary detected at runtime. When
   available it replaces the kit router for the bake contract, producing
   higher-quality presentation routes. When absent, the kit router is the

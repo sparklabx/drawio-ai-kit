@@ -1,0 +1,65 @@
+name: Release
+
+# Two channels, one job. package.json "version" is the version that ships; a version already on npm is skipped.
+# - Push to v2         → publish with dist-tag `latest` (install.sh and `npm i -g drawio-ai-kit` get it),
+#                        then tag the commit vX.Y.Z. Bump the version in package.json to release.
+# - Push tag vX.Y.Z    → publish that version with dist-tag `release-<major>` (prereleases: `next`).
+#                        For old lines / backports; never moves `latest`. Install with drawio-ai-kit@X.Y.Z.
+# Auth: npm Trusted Publishing (OIDC, no token) once it is configured for this repo + workflow on npmjs.com.
+# Until then (e.g. the very first publish), an NPM_TOKEN repo secret is used as the fallback.
+on:
+  push:
+    branches: [v2]
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: write # push the vX.Y.Z tag after a v2 publish
+  id-token: write # npm provenance + trusted publishing
+
+concurrency: release
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: npm
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 24 # npm ≥ 11.5 for trusted publishing
+          registry-url: https://registry.npmjs.org
+      - name: Pick version and dist-tag
+        id: v
+        run: |
+          v=$(node -p 'require("./package.json").version')
+          if [ "$GITHUB_REF_TYPE" = tag ]; then
+            test "v$v" = "$GITHUB_REF_NAME" || { echo "tag $GITHUB_REF_NAME != package.json v$v"; exit 1; }
+            case $v in *-*) dist=next ;; *) dist=release-${v%%.*} ;; esac
+          else
+            dist=latest
+          fi
+          if npm view "drawio-ai-kit@$v" version >/dev/null 2>&1; then
+            echo "drawio-ai-kit@$v is already on npm; nothing to publish"; skip=1
+          else skip=0; fi
+          { echo "version=$v"; echo "dist=$dist"; echo "skip=$skip"; } >> "$GITHUB_OUTPUT"
+      - if: steps.v.outputs.skip == '0'
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.2
+      - if: steps.v.outputs.skip == '0'
+        run: npm ci
+      - name: Build dist/ (not committed; built here and shipped in the tarball)
+        if: steps.v.outputs.skip == '0'
+        run: bun run build && bun run build:check
+      - if: steps.v.outputs.skip == '0'
+        run: npm test
+      - name: Publish
+        if: steps.v.outputs.skip == '0'
+        run: npm publish --provenance --access public --tag "${{ steps.v.outputs.dist }}"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Tag the release commit
+        if: steps.v.outputs.skip == '0' && github.ref_type == 'branch'
+        run: |
+          git tag "v${{ steps.v.outputs.version }}"
+          git push origin "v${{ steps.v.outputs.version }}" # GITHUB_TOKEN pushes don't retrigger this workflow

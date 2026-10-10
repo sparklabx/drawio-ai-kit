@@ -1,0 +1,500 @@
+{
+  "_list": [
+    "aws/build_datalake_analytics.mjs",
+    "aws/build_eventdriven.mjs",
+    "aws/build_hybrid.mjs",
+    "aws/build_iam_accounts.mjs",
+    "aws/build_landingzone.mjs",
+    "aws/build_landingzone_hubspoke_template.mjs",
+    "aws/build_mesh.mjs",
+    "aws/build_microservices_ecs.mjs",
+    "aws/build_multiaz_template.mjs",
+    "aws/build_pipeline.mjs",
+    "aws/build_serverless.mjs",
+    "aws/build_vpc.mjs",
+    "aws/build_vpc_efs.mjs",
+    "aws/build_vpc_eks.mjs",
+    "aws/build_vpc_routing.mjs",
+    "aws/build_web3tier.mjs",
+    "azure/build_azure_hub_spoke_lz.mjs",
+    "azure/build_azure_hybrid_dr.mjs",
+    "azure/build_azure_multiregion_ha.mjs",
+    "azure/build_azure_vnet.mjs",
+    "bpmn/build_bpmn.mjs",
+    "databricks/build_data_intelligence_platform.mjs",
+    "databricks/build_data_platform.mjs",
+    "databricks/build_lakehouse.mjs",
+    "databricks/build_mlops.mjs",
+    "databricks/build_platform.mjs",
+    "gcp/build_gcp_hybrid_dr.mjs",
+    "gcp/build_gcp_multiregion_ha.mjs",
+    "gcp/build_gcp_shared_vpc_landing_zone.mjs",
+    "gcp/build_gcp_vpc.mjs",
+    "multicloud/build_multicloud.mjs"
+  ],
+  "aws/build_datalake_analytics.mjs": {
+    "files": {
+      "datalake_analytics_kit.drawio": {
+        "sha256": "f4bcf6ab09ec5741a6e1cae38feab9a5700d7bee46455b259a6edb98fd147c21",
+        "bytes": 10538,
+        "cells": 23,
+        "vertices": 13,
+        "edges": 8,
+        "pages": 1
+      }
+    },
+    "validate": [
+      "VALIDATE: {\"ok\":true,\"errors\":[],\"warnings\":[],\"advice\":[]}"
+    ]
+  },
+  "aws/build_eventdriven.mjs": {
+    "files": {
+      "eventdriven_kit.drawio": {
+        "sha256": "6bfe891840ea0e9501b38bd3fb91f5467fedf15a96e5d3f59db3b815af04c6b7",
+        "bytes": 9953,
+        "cells": 21,
+        "vertices": 11,
+        "edges": 8,
+        "pages": 1
+      }
+    },
+    "validate": [
+      "VALIDATE: {\"ok\":true,\"errors\":[],\"warnings\":[],\"advice\":[]}"
+    ]
+  },
+  "aws/build_hybrid.mjs": {
+    "files": {
+      "hybrid_kit.drawio": {
+        "sha256": "9cf0d0f62d72e28ba89b85eaf328e52c28da7902bb5a54daea6cb26b19f8515f",
+        "bytes": 10781,
+        "cells": 23,
+        "vertices": 15,
+        "edges": 6,
+        "pages": 1
+      }
+    },
+    "validate": [
+      "VALIDATE: {\"ok\":true,\"errors\":[],\"warnings\":[],\"advice\":[]}"
+    ]
+  },
+  "aws/build_iam_accounts.mjs": {
+    "files": {
+      "iam_accounts_kit.drawio": {
+        "sha256": "1c2e018a87de507f32e25fb944980e010bb9805ff6fc4566a074440332e92ebb",
+        "bytes": 5592,
+        "cells": 13,
+        "vertices": 6,
+        "edges": 5,
+        "pages": 1
+      }
+    },
+    "validate": [
+      "VALIDATE: {\"ok\":true,\"errors\":[],\"warnings\":[],\"advice\":[]}"
+    ]
+  },
+  "aws/build_landingzone.mjs": {
+    "files": {
+      "landingzone_kit.drawio": {
+        "sha256": "e5a5efb7bd93732c46d41c6f10e9a0b8fa6bacfeb8f1795f69ef0e39dba38fe3",
+        "bytes": 23780,
+        "cells": 44,
+        "vertices": 36,
+        "edges": 6,
+        "pages": 1
+      }
+    },
+    "validate": [
+      "VALIDATE: {\"ok\":true,\"errors\":[],\"warnings\":[],\"advice\":[]}"
+    ]
+  },
+  "aws/build_landingzone_hubspoke_template.mjs": {
+    "files": {
+      "sa_landingzone_template.drawio": {
+        "sha256": "9ec08ef615a907bb7d793cefdb46a23a846230f4a2b3fc7ef42a6f44a75a4af1",
+        "bytes": 115258,
+        "cells": 182,
+        "vertices": 128,
+        "edges": 40,
+        "pages": 7
+      }
+    },
+    "validate": [
+      "VALIDATE: {\"ok\":true,\"errors\":[],\"warnings\":[],\"advice\":[]}"
+    ]
+  },
+  "aws/build_mesh.mjs": {
+    "files": {
+      "mesh_kit.drawio": {
+        "sha256": "b7c9c9c2770775146d721c277cb36ca23041517c8a26f7c19da161bd562fadef",
+        "bytes": 10747,
+        "cells": 24,
+        "vertices": 18,
+        "edges": 4,
+        "pages": 1
+      }
+    },
+    "validate": [
+      "VALIDATE: {\"ok\":true,\"errors\":[],\"warnings\":[],\"advice\":[]}"
+    ]
+  },
+  "aws/build_microservices_ecs.mjs": {
+    "files": {
+      "microservices_ecs_kit.drawio": {
+        "sha256": "4fc5a3904ac9ac99d64cb691b8bb82bd07c92ce1e3081fbb9d2c515a0d5951e9",
+        "bytes": 12421,
+        "cells": 26,
+        "vertices": 16,
+        "edges": 8,
+        "pages": 1
+      }
+    },
+    "validate": [
+      "VALIDATE: {\"ok\":true,\"errors\":[],\"warnings\":[],\"advice\":[]}"
+    ]
+  },
+  "aws/build_multiaz_template.mjs": {
+    "files": {
+      "multiaz_template.drawio": {
+        "sha256": "41a6ce95e8b9690cf9d38e0403477bd9d2aa011b3a74befe799bcbe6f928149f",
+        "bytes": 108329,
+        "cells": 49,
+        "vertices": 39,
+        "edges": 7,
+        "pages": 1
+      }
+    },
+    "validate": [
+      "VALIDATE: {\"ok\":true,\"errors\":[],\"warnings\":[],\"advice\":[]}"
+    ]
+  },
+  "aws/build_pipeline.mjs": {
+    "files": {
+      "pipeline_kit.drawio": {
+        "sha256": "13b1425609e4a0524ace3899c5a830c2345472df8a5c20407f8eafa4df739f1f",
+        "bytes": 18252,
+        "cells": 38,
+        "vertices": 26,
+        "edges": 10,
+        "pages": 1
+      }
+    },
+    "validate": [
+      "VALIDATE: {\"ok\":true,\"errors\":[],\"warnings\":[],\"advice\":[]}"
+    ]
+  },
+  "aws/build_serverless.mjs": {
+    "files": {
+      "serverless_kit.drawio": {
+        "sha256": "f1a85868ae2b10f1d1105753a0050d7da2460761374edffd09aa8dedfd54ed46",
+        "bytes": 8790,
+        "cells": 20,
+        "vertices": 11,
+        "edges": 7,
+        "pages": 1
+      }
+    },
+    "validate": [
+      "VALIDATE: {\"ok\":true,\"errors\":[],\"warnings\":[],\"advice\":[]}"
+    ]
+  },
+  "aws/build_vpc.mjs": {
+    "files": {
+      "vpc_multiaz_kit.drawio": {
+        "sha256": "f6832c0908e76bedcbb0bbd274db3c1feceabe9497930eca828edd5645b06dfd",
+        "bytes": 15266,
+        "cells": 33,
+        "vertices": 24,
+        "edges": 7,
+        "pages": 1
+      }
+    },
+    "validate": [
+      "VALIDATE: {\"ok\":true,\"errors\":[],\"warnings\":[],\"advice\":[]}"
+    ]
+  },
+  "aws/build_vpc_efs.mjs": {
+    "files": {
+      "vpc_efs_kit.drawio": {
+        "sha256": "3c9905dbfad051db3a816dfdfcc92191416814ad752121c75913a9141e867b4c",
+        "bytes": 10455,
+        "cells": 23,
+        "vertices": 17,
+        "edges": 4,
+        "pages": 1
+      }
+    },
+    "validate": [
+      "VALIDATE: {\"ok\":true,\"errors\":[],\"warnings\":[],\"advice\":[]}"
+    ]
+  },
+  "aws/build_vpc_eks.mjs": {
+    "files": {
+      "vpc_eks_kit.drawio": {
+        "sha256": "c669d3caeee52af2358885988629e4e1acedccb9407b1cf4cef7cc0100bc3031",
+        "bytes": 10963,
+        "cells": 25,
+        "vertices": 18,
+        "edges": 4,
+        "pages": 1
+      }
+    },
+    "validate": [
+      "VALIDATE: {\"ok\":true,\"errors\":[],\"warnings\":[],\"advice\":[]}"
+    ]
+  },
+  "aws/build_vpc_routing.mjs": {
+    "files": {
+      "vpc_routing_kit.drawio": {
+        "sha256": "329c5ea57465e8b5e620eccb3510e0b71f44016da668dc2db68396f784fe5bcb",
+        "bytes": 12409,
+        "cells": 29,
+        "vertices": 20,
+        "edges": 7,
+        "pages": 1
+      }
+    },
+    "validate": [
+      "VALIDATE: {\"ok\":true,\"errors\":[],\"warnings\":[],\"advice\":[]}"
+    ]
+  },
+  "aws/build_web3tier.mjs": {
+    "files": {
+      "web3tier_kit.drawio": {
+        "sha256": "c7860a8a4993fa0cc8c4165ccd9a12a47f2f81c5d03fbf8189279019904c998a",
+        "bytes": 12428,
+        "cells": 27,
+        "vertices": 17,
+        "edges": 8,
+        "pages": 1
+      }
+    },
+    "validate": [
+      "VALIDATE: {\"ok\":true,\"errors\":[],\"warnings\":[],\"advice\":[]}"
+    ]
+  },
+  "azure/build_azure_hub_spoke_lz.mjs": {
+    "files": {
+      "azure_hub_spoke_lz_kit.drawio": {
+        "sha256": "43e1686c30fd7815fbbf6743e131c02425598427ca9c263497ccdfa153cc6ce7",
+        "bytes": 113314,
+        "cells": 65,
+        "vertices": 56,
+        "edges": 7,
+        "pages": 1
+      }
+    },
+    "validate": [
+      "VALIDATE: {\"ok\":true,\"errors\":[],\"warnings\":[],\"advice\":[]}"
+    ]
+  },
+  "azure/build_azure_hybrid_dr.mjs": {
+    "files": {
+      "azure_hybrid_dr_kit.drawio": {
+        "sha256": "ea6d67deab17fbf8e96052b241dc319c8f862f1b503477d28d96f9e24e7481df",
+        "bytes": 49214,
+        "cells": 36,
+        "vertices": 28,
+        "edges": 6,
+        "pages": 1
+      }
+    },
+    "validate": [
+      "VALIDATE: {\"ok\":true,\"errors\":[],\"warnings\":[],\"advice\":[]}"
+    ]
+  },
+  "azure/build_azure_multiregion_ha.mjs": {
+    "files": {
+      "azure_multiregion_ha_kit.drawio": {
+        "sha256": "757dfb3373d6418e7de679cb4c1efce95601935047520aa9c84282e2d2e503b5",
+        "bytes": 65686,
+        "cells": 47,
+        "vertices": 36,
+        "edges": 9,
+        "pages": 1
+      }
+    },
+    "validate": [
+      "VALIDATE: {\"ok\":true,\"errors\":[],\"warnings\":[],\"advice\":[]}"
+    ]
+  },
+  "azure/build_azure_vnet.mjs": {
+    "files": {
+      "azure_vnet_kit.drawio": {
+        "sha256": "99eb370ce4d1f5e1122289b5cf96542d2bb66d1d2e115b65e14407805ca79fe1",
+        "bytes": 57587,
+        "cells": 32,
+        "vertices": 26,
+        "edges": 4,
+        "pages": 1
+      }
+    },
+    "validate": [
+      "VALIDATE: {\"ok\":true,\"errors\":[],\"warnings\":[],\"advice\":[]}"
+    ]
+  },
+  "bpmn/build_bpmn.mjs": {
+    "files": {
+      "bpmn_kit.drawio": {
+        "sha256": "7bac4ddfd0168c20545edb80ae945d5f427664d0d91945ff66c652ca82959b5b",
+        "bytes": 9942,
+        "cells": 28,
+        "vertices": 19,
+        "edges": 7,
+        "pages": 1
+      }
+    },
+    "validate": [
+      "VALIDATE: {\"ok\":true,\"errors\":[],\"warnings\":[],\"advice\":[]}"
+    ]
+  },
+  "databricks/build_data_intelligence_platform.mjs": {
+    "files": {
+      "databricks_dip_kit.drawio": {
+        "sha256": "139f25c58784e5025bd0a62b1ce51f07384fbb0f00161993773279299379b384",
+        "bytes": 177878,
+        "cells": 53,
+        "vertices": 42,
+        "edges": 9,
+        "pages": 1
+      }
+    },
+    "validate": [
+      "VALIDATE: {\"ok\":true,\"errors\":[],\"warnings\":[],\"advice\":[]}"
+    ]
+  },
+  "databricks/build_data_platform.mjs": {
+    "files": {
+      "data_platform_kit.drawio": {
+        "sha256": "e15d24e051dabb90fcbdeb798da37c4dd4558b87a2d03996ee84f38233b9133e",
+        "bytes": 65024,
+        "cells": 56,
+        "vertices": 48,
+        "edges": 6,
+        "pages": 1
+      }
+    },
+    "validate": [
+      "VALIDATE: {\"ok\":true,\"errors\":[],\"warnings\":[],\"advice\":[]}"
+    ]
+  },
+  "databricks/build_lakehouse.mjs": {
+    "files": {
+      "databricks_lakehouse_kit.drawio": {
+        "sha256": "d35ec7e026797bddca5c8f1197f7ef7883c5e23cd8e99fed596e3cfd95e3cf72",
+        "bytes": 76043,
+        "cells": 36,
+        "vertices": 23,
+        "edges": 11,
+        "pages": 1
+      }
+    },
+    "validate": [
+      "VALIDATE: {\"ok\":true,\"errors\":[],\"warnings\":[],\"advice\":[\"Edge(s) run THROUGH a node they don't connect to (unity→med ⟂ dbsql, unity→med ⟂ mosaic, unity→med ⟂ bi, unity→med ⟂ tab) — reroute so the connector bends around the node instead of passing through it.\"]}"
+    ]
+  },
+  "databricks/build_mlops.mjs": {
+    "files": {
+      "databricks_mlops_kit.drawio": {
+        "sha256": "6c0bf88814d90f6eebe9c41101a2e9741ad56d4e4700f06b6c6c4786c6591eb7",
+        "bytes": 155103,
+        "cells": 54,
+        "vertices": 43,
+        "edges": 9,
+        "pages": 1
+      }
+    },
+    "validate": [
+      "VALIDATE: {\"ok\":true,\"errors\":[],\"advice\":[\"Edge(s) run THROUGH a node they don't connect to (cd→prod ⟂ stg_h, dev→devcat ⟂ uc_h, dev→devcat ⟂ prodcat_h) — reroute so the connector bends around the node instead of passing through it.\"]}"
+    ]
+  },
+  "databricks/build_platform.mjs": {
+    "files": {
+      "databricks_platform_kit.drawio": {
+        "sha256": "8ac98164af5d1bf0342b8409714dde4b6071f63cd3fa25647f6c33bdeddf876b",
+        "bytes": 67369,
+        "cells": 32,
+        "vertices": 23,
+        "edges": 7,
+        "pages": 1
+      }
+    },
+    "validate": [
+      "VALIDATE: {\"ok\":true,\"errors\":[],\"warnings\":[],\"advice\":[]}"
+    ]
+  },
+  "gcp/build_gcp_hybrid_dr.mjs": {
+    "files": {
+      "gcp_hybrid_dr_kit.drawio": {
+        "sha256": "7149431f206d12858a7026bbfc283116faa13930f635babc8ea0ce78c666c29a",
+        "bytes": 25563,
+        "cells": 28,
+        "vertices": 19,
+        "edges": 7,
+        "pages": 1
+      }
+    },
+    "validate": [
+      "VALIDATE: {\"ok\":true,\"errors\":[],\"warnings\":[],\"advice\":[]}"
+    ]
+  },
+  "gcp/build_gcp_multiregion_ha.mjs": {
+    "files": {
+      "gcp_multiregion_ha_kit.drawio": {
+        "sha256": "a9f6f0f2bae39e5cfe39a41b1b0c439c656c3d942eb6ee68238ebf376b32323e",
+        "bytes": 26539,
+        "cells": 28,
+        "vertices": 22,
+        "edges": 4,
+        "pages": 1
+      }
+    },
+    "validate": [
+      "VALIDATE: {\"ok\":true,\"errors\":[],\"warnings\":[],\"advice\":[]}"
+    ]
+  },
+  "gcp/build_gcp_shared_vpc_landing_zone.mjs": {
+    "files": {
+      "gcp_shared_vpc_landing_zone_kit.drawio": {
+        "sha256": "5241e9374d902bfedbd0a66a00d2a6f4b42894b380706179475d7d89aa649917",
+        "bytes": 43711,
+        "cells": 41,
+        "vertices": 34,
+        "edges": 5,
+        "pages": 1
+      }
+    },
+    "validate": [
+      "VALIDATE: {\"ok\":true,\"errors\":[],\"warnings\":[],\"advice\":[]}"
+    ]
+  },
+  "gcp/build_gcp_vpc.mjs": {
+    "files": {
+      "gcp_vpc_kit.drawio": {
+        "sha256": "447641cc834f3473cbb70be00a8d03beb0b6898e393aa36279604061ee5c70f4",
+        "bytes": 28940,
+        "cells": 27,
+        "vertices": 21,
+        "edges": 4,
+        "pages": 1
+      }
+    },
+    "validate": [
+      "VALIDATE: {\"ok\":true,\"errors\":[],\"warnings\":[],\"advice\":[]}"
+    ]
+  },
+  "multicloud/build_multicloud.mjs": {
+    "files": {
+      "multicloud_kit.drawio": {
+        "sha256": "59cf31107ad391d776bf8a3b07d91bbe09fa8af898f908fde5554d4477636983",
+        "bytes": 13854,
+        "cells": 22,
+        "vertices": 16,
+        "edges": 4,
+        "pages": 1
+      }
+    },
+    "validate": [
+      "VALIDATE: {\"ok\":true,\"errors\":[],\"warnings\":[],\"advice\":[]}"
+    ]
+  }
+}
