@@ -3,6 +3,12 @@
 All notable changes to `drawio-ai-kit`. Format follows [Keep a Changelog](https://keepachangelog.com/);
 versions follow [SemVer](https://semver.org/).
 
+## [2.0.2] - 2026-10-12
+
+### Fixed
+- The install one-liner in `README.md` and in `install.sh`'s own usage comment fetched the script from
+  the `v2` branch. It now points at `main`, the default branch.
+
 ## [2.0.1] - 2026-10-10
 
 The first public 2.x release (npm already held an early `2.0.0` build that never had real users). It folds in the earlier 2.0.0 work (one skill, a bundled CLI) and the planned 3.0.0 work
