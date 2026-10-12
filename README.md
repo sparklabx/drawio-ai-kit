@@ -39,7 +39,7 @@ One diagram per platform — all generated end-to-end by the kit: no hand-placed
 ### 1. One-liner (CLI + skill)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/sparklabx/drawio-ai-kit/refs/heads/v2/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/sparklabx/drawio-ai-kit/refs/heads/main/install.sh | sh
 ```
 
 It installs `drawio-ai-kit@latest` globally with Bun (if present) or npm, links the `drawio-ai` command into

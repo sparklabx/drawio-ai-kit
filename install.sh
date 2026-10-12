@@ -1,6 +1,6 @@
 #!/bin/sh
 # drawio-ai-kit installer. Usage (pipe this file to sh):
-#   curl -fsSL https://raw.githubusercontent.com/sparklabx/drawio-ai-kit/refs/heads/v2/install.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/sparklabx/drawio-ai-kit/refs/heads/main/install.sh | sh
 # Installs drawio-ai-kit@latest globally with Bun (preferred) or npm, links the drawio-ai command into
 # ~/.local/bin (or $BIN_DIR / --bin-dir), then registers the agent skill.
 # Installs from the npm registry only. Removes old installs first (--no-clean to keep them).
