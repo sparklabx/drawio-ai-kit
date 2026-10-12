@@ -1,19 +1,20 @@
 name: Release
 
 # Two channels, one job. package.json "version" is the version that ships; a version already on npm is skipped.
-# - Push to v2         → publish with dist-tag `latest` (install.sh and `npm i -g drawio-ai-kit` get it),
-#                        then tag the commit vX.Y.Z. Bump the version in package.json to release.
+# - Push to main       → publish with dist-tag `latest` (install.sh and `npm i -g drawio-ai-kit` get it),
+#                        then tag the commit vX.Y.Z and cut the GitHub Release. Bump the version in
+#                        package.json to release.
 # - Push tag vX.Y.Z    → publish that version with dist-tag `release-<major>` (prereleases: `next`).
 #                        For old lines / backports; never moves `latest`. Install with drawio-ai-kit@X.Y.Z.
 # Auth: npm Trusted Publishing (OIDC, no token) once it is configured for this repo + workflow on npmjs.com.
 # Until then (e.g. the very first publish), an NPM_TOKEN repo secret is used as the fallback.
 on:
   push:
-    branches: [v2]
+    branches: [main]
     tags: ["v*.*.*"]
 
 permissions:
-  contents: write # push the vX.Y.Z tag after a v2 publish
+  contents: write # push the vX.Y.Z tag and create the GitHub Release
   id-token: write # npm provenance + trusted publishing
 
 concurrency: release
@@ -63,3 +64,15 @@ jobs:
         run: |
           git tag "v${{ steps.v.outputs.version }}"
           git push origin "v${{ steps.v.outputs.version }}" # GITHUB_TOKEN pushes don't retrigger this workflow
+      - name: GitHub Release
+        if: steps.v.outputs.skip == '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          V: ${{ steps.v.outputs.version }}
+        run: |
+          # Notes come from this version's CHANGELOG section; fall back to generated notes.
+          awk -v v="## [$V]" 'index($0,v)==1{f=1;next} /^## \[/{f=0} f' CHANGELOG.md > notes.md
+          if [ -s notes.md ]; then notes="--notes-file notes.md"; else notes=--generate-notes; fi
+          # A backport published from a tag must never steal "Latest" from the current line.
+          [ "$GITHUB_REF_TYPE" = tag ] && latest=false || latest=true
+          gh release create "v$V" --verify-tag --title "v$V" --latest="$latest" $notes
