@@ -1,0 +1,21 @@
+{
+  // Whole-project typecheck (`npm run typecheck`). Never emits: Bun bundles dist/*.mjs, tsconfig.build.json emits the .d.ts.
+  // Erasable syntax only, so Node's native type stripping runs src/ and test/ as-is (no enums/namespaces/parameter properties).
+  "compilerOptions": {
+    "target": "es2022",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "lib": ["es2023"],
+    "types": ["node"],
+    "strict": true,
+    "noEmit": true,
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+    "allowImportingTsExtensions": true,
+    "skipLibCheck": true,
+    // bench/search/bench-search.test.ts imports dist/kit.mjs: allowJs lets it resolve (else TS7016).
+    "allowJs": true
+  },
+  "include": ["src/**/*.ts", "test/**/*.ts", "bench/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}

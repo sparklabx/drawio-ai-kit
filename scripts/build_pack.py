@@ -7,7 +7,9 @@ Each manifest icon resolves a square AWS-style tile one of three ways:
   - neither                      → coloured text tile (fallback) using "abbr" or "label".
 
 catalog/*.json packs are merged by core.loadCatalog, so icons become searchable like AWS ones.
-Stdlib only. Usage: python3 scripts/build_pack.py <pack>   (default: bigdata)
+Stdlib only. Usage: python3 scripts/build_pack.py <pack>... [--raster]   (default: bigdata)
+Default embeds minified SVG (a 96 px PNG when that is smaller). --raster forces PNG (macOS qlmanage).
+--shrink-png re-encodes the PNGs already in catalog/<pack>.json at 96 px, in place (macOS sips).
 """
 import sys, json, base64, re, glob, shutil, subprocess, tempfile, urllib.request
 from collections import Counter
@@ -97,10 +99,13 @@ def png_tile(png_bytes, framed=True):  # a vendored PNG logo centred on a tile (
             f'xlink:href="data:image/png;base64,{b64}"/></svg>')
 
 
-def rasterize(svg, size=256):
-    # draw.io's PNG/PDF export does NOT rasterize embedded SVG data-URIs (they render only in the
-    # live editor), so bake the tile to PNG first. macOS QuickLook (WebKit) renders SVG paths + text
-    # faithfully with zero extra deps. ponytail: macOS-only — on Linux install librsvg + use rsvg-convert.
+PNG_PX = 96  # icons draw at 48 px; 96 keeps them sharp on 2x screens. 256 px tiles were ~3x larger for no gain.
+SVG_MAX = 12_000  # a minified SVG above this usually wraps a big raster (delta, kyverno…) → a 96 px PNG is smaller
+
+
+def rasterize(svg, size=PNG_PX):
+    # Bake a tile to PNG. macOS QuickLook (WebKit) renders SVG paths + text faithfully with zero extra
+    # deps. ponytail: macOS-only — on Linux install librsvg + use rsvg-convert.
     if not shutil.which("qlmanage"):
         return None
     with tempfile.TemporaryDirectory() as td:
@@ -111,14 +116,53 @@ def rasterize(svg, size=256):
         return (Path(out[0])).read_bytes() if out else None
 
 
+def minify_svg(svg):
+    # Strip what draw.io never draws (prolog, comments, editor metadata, inter-tag whitespace) and round
+    # coordinates to 2 decimals — invisible at icon size (0.01 of an 18-unit viewBox ≈ 0.03 px at 48 px).
+    svg = re.sub(r"<\?xml[^>]*\?>|<!DOCTYPE[^>]*>|<!--.*?-->", "", svg, flags=re.S)
+    svg = re.sub(r"<(metadata|title|desc|sodipodi:namedview)\b.*?(</\1>|/>)", "", svg, flags=re.S)
+    svg = re.sub(r"(-?\d*\.\d{2})\d+", r"\1", svg)
+    return re.sub(r">\s+<", "><", svg).strip()
+
+
 def data_uri(svg):
     # drawio splits style tokens on ";", so the usual "data:image/png;base64," breaks the image=
     # value. drawio's own convention drops ";base64" — "data:image/<type>,<base64>" (comma) — and
     # assumes base64. Match it.
-    png = rasterize(svg)
-    if png:
+    # Default: embed the (minified) SVG — ~8x smaller than a 256 px PNG, and current draw.io desktop
+    # exports SVG data-URIs fine (verified with rlespinasse/drawio-desktop-headless). --raster keeps the
+    # old PNG bake for draw.io builds that don't.
+    small = minify_svg(svg)
+    png = rasterize(svg) if RASTER or len(small) > SVG_MAX else None
+    if png and (RASTER or len(png) < len(small)):
         return "data:image/png," + base64.b64encode(png).decode("ascii")
-    return "data:image/svg+xml," + base64.b64encode(svg.encode("utf-8")).decode("ascii")
+    return "data:image/svg+xml," + base64.b64encode(small.encode("utf-8")).decode("ascii")
+
+
+def shrink_png(pack):
+    # Re-encode the PNGs already embedded in catalog/<pack>.json at PNG_PX, in place — offline, and it
+    # keeps hand-tuned entries (e.g. network/keycloak) that a manifest rebuild would drop.
+    p = ROOT / "catalog" / f"{pack}.json"
+    cat = json.loads(p.read_text())
+    before = after = 0
+    with tempfile.TemporaryDirectory() as td:
+        for i in cat["icons"]:
+            m = re.search(r"image=data:image/png,([^;]+)", i["style"])
+            if not m:
+                continue
+            src, out = Path(td) / "in.png", Path(td) / "out.png"
+            src.write_bytes(base64.b64decode(m.group(1)))
+            subprocess.run(["sips", "-Z", str(PNG_PX), str(src), "--out", str(out)],
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+            new = base64.b64encode(out.read_bytes()).decode("ascii")
+            before += len(m.group(1))
+            if len(new) < len(m.group(1)):
+                i["style"] = i["style"].replace(m.group(1), new)
+                after += len(new)
+            else:
+                after += len(m.group(1))
+    p.write_text(json.dumps(cat, ensure_ascii=False, indent=1))
+    print(f"shrunk catalog/{pack}.json PNGs: {before // 1024} KB -> {after // 1024} KB")
 
 
 def main(pack):
@@ -167,5 +211,9 @@ def main(pack):
     print(f"wrote catalog/{pack}.json ({len(icons)} icons: {dict(Counter(i['src'] for i in icons))})")
 
 
+RASTER = "--raster" in sys.argv
+
 if __name__ == "__main__":
-    main(sys.argv[1] if len(sys.argv) > 1 else "bigdata")
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    for pack in args or ["bigdata"]:
+        shrink_png(pack) if "--shrink-png" in sys.argv else main(pack)

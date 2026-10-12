@@ -1,8 +1,7 @@
 // VPC Lattice multi-account service mesh — type "mesh".
 // NO hardcoded coordinates: only declare the structure, the layout engine computes x/y/w/h.
 import { writeFileSync } from "node:fs";
-import { Diagram } from "../../src/builder.mjs";
-import { group, frame, icon, box, renderTree } from "../../src/layout-engine.mjs";
+import { Diagram, group, frame, icon, box, renderTree } from "drawio-ai-kit";
 
 const d = new Diagram("mesh");
 

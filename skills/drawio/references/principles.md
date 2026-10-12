@@ -1,0 +1,75 @@
+# Principles for beautiful draw.io diagrams (AWS & system architecture)
+
+Goal: draw.io XML with **correct stencil names**, **clean layout**, and a **readable flow** on the first try.
+
+## 0. Mandatory workflow for the AI
+
+- **Match a template first.** Run `drawio-ai scaffold --list`, scaffold the closest template, reproduce its structure. Don't free-hand a pattern a template already encodes.
+- **Look up every icon via `drawio-ai search`** — do NOT recall or invent stencil names. Batch all lookups for the diagram in ONE call: `drawio-ai search "s3, lambda, nat gateway"`. Build with `icon("<name>")` using the returned `name`.
+
+## 1. Density & compactness — pack, don't scatter (DEFAULT)
+
+The engine computes all x/y, spacing, alignment, and sibling-size equalization; icon sizes/`aspect=fixed` come from the catalog. But it can only lay out the structure you declare — the #1 quality failure is a **sparse** sheet where every service floats alone in its own big frame. Diagrams must read **dense by default**. Structure for that:
+
+- **Group related services into ONE labelled box, packed as a grid.** A functional area (Ingestion, Storage, Compute, Governance, Serving, AI/ML…) is a single `grid(id, null, "<Area>", { cols: 3, gap: 14, pad: 12 }, [icon, icon, …])` — NOT one `frame`/`group` per icon. **3–8 icons per area box is normal.**
+- **Never give a wide/tall frame a single centered icon** — it renders as a big empty box. Either pack more services in, or drop the frame and place the icon directly.
+- **Hug content:** inside a packed box use tight gaps (`gap: 12–16`) and let it size to its grid; do not hand-set oversized widths, and don't stretch a giant full-width banner.
+- **Few dense boxes beat many sparse ones.** Aim for a compact grid of labelled area-boxes, each full of icons — not a scattered field of lone icons.
+- Need per-component detail? Put a short caption `box` (or `note`) under the icon; keep the glyph normal-sized and the box tight — never inflate spacing to fill a page.
+- One consistent icon size per diagram (`new Diagram({ iconSize })` bumps them all if a page-embedded figure needs bigger glyphs).
+- **Balance siblings so the row reads level.** Frames side by side share a bottom edge *when their heights are close* — the engine stops equalising once the stretch would exceed ~200px, so a far-shorter box hugs its content instead of becoming a white hole (you get a ragged bottom, which is the better of the two). You still get a tidier sheet by sizing the boxes yourself: pick each grid's `cols` so the siblings' **row counts** come out close (`rows ≈ ceil(n / cols)` — 5 icons at `cols: 2` = 3 rows sits level with a 2-row neighbour). `suggest-layout` reports any `empty band` that survives, but that is the safety net, not the plan.
+- **Don't overload one icon with arrows.** A 48px glyph has room for about one arrow per side: two edges
+  arriving on the same side end up ~10px apart and read as a doubled line. That is the icon's width, not
+  a routing bug, so no amount of router work fixes it. Instead, **retarget the edge coming from far away
+  onto the enclosing container** (`d.link("ecr", "ml_vpc", …)` rather than `"eks"`) — a frame has a whole
+  perimeter to land on, and "ECR feeds the ML account" is the truer statement anyway. Pinning a side with
+  `route:` only moves the crowding somewhere else.
+- **A badge/label on a short edge between stacked icons lands in the caption.** Slide it clear with
+  `badgePos` (-1 source … 1 target) instead of accepting text on text.
+- **Dense is not cramped — nothing may overlap.** Icons, boxes, arrows and **text** (icon captions AND edge labels) must never sit on top of each other; a line crossing a caption reads as a broken wire. The engine spaces siblings and the router avoids obstacles and caption bands, so fix overlap by **restructuring** (pack into a grid, offset the node) — never by nudging coordinates. `validate` reports any residual overlap: clear it before delivering.
+
+Sparsity is an **authoring** problem (one-icon-per-frame), not an engine limit — pack into grids and the engine hugs + balances the rest.
+
+## 2. Flow direction
+
+- Default **left → right** for data pipelines / request flows; **top → bottom** for tiered layering.
+- Keep one consistent direction; avoid back-pointing arrows unless they represent feedback/sync (use dashed lines).
+
+## 3. Group with official containers
+
+Use real group shapes (`drawio-ai search "<name>" --kind group`) and nest them parent-child in the real order — see the nesting tree in your domain preset (e.g. `aws-architecture.md` "Containers").
+
+## 4. Color — restrained & theme-aware
+
+- Icons keep their official **category** color (hex table in the domain preset) — don't recolor icons arbitrarily.
+- For **backgrounds/frames/notes**, use a **small cohesive palette** — a few neutral greys plus one or two soft accents. Do NOT scatter many ad-hoc pastel fills. Target ≤ ~8 distinct fill colors per diagram.
+- **Pipeline/stage layers MAY carry a soft tint per stage** — the classic pale progression (light green → amber → yellow → purple) reads as ordered stages and looks good *when the tints are pale and cohesive*. That is desirable, not "rainbow". What to avoid is the **garish** look: saturated/clashing fills, a different colour on every small box, or colour with no meaning. For non-stage containers (Region/VPC/account), neutral grey or the AWS group stencil's own light fill is safest — let the service icons carry most of the colour.
+- Prefer theme-aware tokens like `fillColor=light-dark(#fbe7d4, #3a2a16)` for backgrounds/accents so the diagram looks right in **both light and dark mode**.
+- Reserve strong color for emphasis/notes (e.g. a red `#f8cecc` note box), not for every box.
+
+## 5. Labels & typography
+
+- Service labels kept short: service name + (role).
+- **Limit to 3–4 font sizes** and keep label text **≤ 14px**; never jump to oversized (18+) titles inside the canvas — put a title in its own area.
+- Long notes/constraints go in a separate **note box**, never crammed into the icon label.
+
+## 6. Edges — meaning is *intentional*
+
+The builder applies the edge style, corner rounding by role, connection-point pinning, and label waypoints automatically — your calls are the *role* and the *line semantics*:
+
+- **Solid** = primary data/control flow; **dashed** = sync/dependency/policy enforcement/lineage. Color edges by source layer to trace them.
+- Double-headed arrows for bidirectional links (Direct Connect, metadata sync).
+- **Default to a bare `d.link(src, tgt)`** — the router picks the facing side and port, avoids icons and caption text, and de-collides parallel runs. Reach for a routing opt (`rail`, `dir`) only after a render shows a plain link failing; a pre-emptive opt or hand-placed waypoint usually makes the edge worse. Two nodes stacked directly in one column with a long caption between them cannot be wired cleanly either way — **offset them instead**.
+
+## 7. Managed vs self-managed
+
+- **Managed** cloud services: use the official icon + (optional) a "▸ managed" label.
+- Third-party/OSS components (no official icon) → rounded box clearly noting "(on EKS)"/"(on EC2)", placed next to the compute icon it runs on.
+
+## 8. Recommended overall layout
+
+Left: **sources/clients**. Center: the **cloud frame** holding the pipeline. Right: **consumer systems**. Cross-cutting layers (security, monitoring, governance, CI/CD) as their own band/column with dashed links to the components they touch.
+
+## 9. Self-check
+
+Run `drawio-ai validate <file>`; clear ALL `errors`, `warnings`, and `audit.advice` before delivering.

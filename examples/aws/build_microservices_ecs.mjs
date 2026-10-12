@@ -1,8 +1,7 @@
 // Microservices on ECS/Fargate behind an ALB in a VPC — type "network". NO hardcoded coords.
 // Edge → ALB → service tier (Fargate tasks) → data stores, with ECR + observability, numbered flow.
 import { writeFileSync } from "node:fs";
-import { Diagram } from "../../src/builder.mjs";
-import { group, frame, icon, box, phantom, renderTree } from "../../src/layout-engine.mjs";
+import { Diagram, group, frame, icon, box, phantom, renderTree } from "drawio-ai-kit";
 
 const d = new Diagram("network");
 

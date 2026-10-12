@@ -1,0 +1,500 @@
+{
+  "BPMN": {
+    "fill": "#FFFFFF",
+    "stroke": "#232F3E",
+    "red": "#D90000",
+    "taskW": 110,
+    "taskH": 56
+  },
+  "DIAGRAM_TYPES": {
+    "pipeline": {
+      "label": "Layered pipeline (data / request flow)",
+      "orientation": "LR",
+      "edgeCorner": "rounded",
+      "laneStrategy": "corridor",
+      "grouping": "columns-by-tier",
+      "notes": "Spine on the same row → straight horizontal edges; offset edges use 2 waypoints through the middle of the gap."
+    },
+    "hierarchy": {
+      "label": "Hierarchy / org tree (Landing Zone, org structure)",
+      "orientation": "TB",
+      "edgeCorner": "sharp",
+      "laneStrategy": "shared-bus",
+      "grouping": "nested-ou",
+      "notes": "Fan from one parent through a shared lane right below the parent → looks like a branching bus."
+    },
+    "network": {
+      "label": "VPC network topology (Multi-AZ)",
+      "orientation": "LR",
+      "edgeCorner": "rounded",
+      "laneStrategy": "corridor",
+      "grouping": "nested-region-az-subnet",
+      "mirrorAZ": true,
+      "notes": "STANDARD VPC LAYOUT: each Availability Zone is a VERTICAL COLUMN, the AZs sit side by side, and the VPC is the horizontal box that wraps them (Region → VPC → AZ columns → subnets). Inside an AZ, subnets are tiers stacked top→bottom (e.g. Public, then Private/App, then Data); keep the SAME tier aligned horizontally across AZs (public-a level with public-b). A shared LB/NAT/bus spans HORIZONTALLY across the AZ columns; replication/DR between mirrored AZs uses dashed edges."
+    },
+    "hubspoke": {
+      "label": "Hub-and-spoke / event bus",
+      "orientation": "radial",
+      "edgeCorner": "rounded",
+      "laneStrategy": "hub-center",
+      "grouping": "center-hub",
+      "notes": "Place the hub (bus/TGW/EventBridge) at the middle of the row; spokes connect horizontally on both sides (exitX=1 / exitX=0) → no crossing."
+    },
+    "hybrid": {
+      "label": "Hybrid / DR (on-prem ↔ cloud)",
+      "orientation": "LR",
+      "edgeCorner": "rounded",
+      "laneStrategy": "site-link",
+      "grouping": "two-sites",
+      "notes": "Two sites as separate blocks; connect via a Direct Connect/VPN node; mirror the components on both sides; bidirectional link uses dashed edges."
+    },
+    "mesh": {
+      "label": "Multi-account connectivity / service mesh (VPC Lattice · TGW · peering · RAM)",
+      "orientation": "free",
+      "edgeCorner": "rounded",
+      "laneStrategy": "association",
+      "grouping": "peer-accounts",
+      "notes": "Accounts are peer containers; one shared/network account at the center, the other accounts 'associate' to it (service network / TGW / RAM share). Association/sharing edges are clearly labeled; prefer hub-and-spoke through the shared account over a many-to-many mesh (Well-Architected REL02-BP04)."
+    },
+    "sequence": {
+      "label": "Sequence / interaction (numbered request walkthrough)",
+      "orientation": "steps",
+      "edgeCorner": "rounded",
+      "laneStrategy": "numbered-steps",
+      "grouping": "components",
+      "notes": "Number the steps along the request flow (1→N) on the architecture diagram; each arrow carries a sequence number; read by number, edges need not all point the same way."
+    },
+    "bpmn": {
+      "label": "BPMN swimlane process (roles × phases)",
+      "orientation": "LR",
+      "edgeCorner": "rounded",
+      "laneStrategy": "swimlane",
+      "grouping": "pool-lane-phase",
+      "notes": "Horizontal swimlanes: lanes = roles stacked vertically, phases = vertical milestone bands with a header row. Sequence flow stays within a pool (solid); message flow connects pools (dashed). One start event top-left, end events on the right; gateways where paths split/merge."
+    }
+  },
+  "THEME": {
+    "stages": [
+      "light-dark(#eaf3ec,#16241b)",
+      "light-dark(#fff3e9,#2a1d12)",
+      "light-dark(#fff8e6,#2a2410)",
+      "light-dark(#f3eef8,#241b2e)",
+      "light-dark(#e9eef4,#19222e)"
+    ],
+    "stageStroke": [
+      "#82B366",
+      "#D79B00",
+      "#D6B656",
+      "#9673A6",
+      "#6C8EBF"
+    ],
+    "base": "light-dark(#ffffff,#0f1620)",
+    "baseStroke": "#5A6B7B",
+    "endpoint": "light-dark(#eaf3ff,#10202e)",
+    "endpointStroke": "#6C8EBF",
+    "band": "light-dark(#eef1f5,#1b2430)",
+    "bandStroke": "#8593A3",
+    "subnetPublic": "light-dark(#eef5e6,#1a2410)",
+    "subnetPublicStroke": "#7AA116",
+    "subnetPrivate": "light-dark(#e6f4f4,#0f2424)",
+    "subnetPrivateStroke": "#00A4A6",
+    "regionStroke": "#147EBA",
+    "vpcStroke": "#8C4FFF",
+    "accountStroke": "#C2487A",
+    "azStroke": "#2F9491",
+    "note": "light-dark(#fbe7d4,#3a2a16)",
+    "noteStroke": "#D79B00",
+    "onprem": "light-dark(#eef1f5,#181f29)",
+    "onpremStroke": "#666666",
+    "fontColor": "light-dark(#1B2733,#CFE0F0)",
+    "edge": {
+      "stroke": "light-dark(#1A1A1A,#E0E0E0)",
+      "strokeWidth": 1,
+      "fontColor": "light-dark(#1B2733,#CFE0F0)",
+      "labelBg": "light-dark(#FFFFFF,#0B0F14)"
+    },
+    "fonts": {
+      "title": 14,
+      "label": 11,
+      "small": 10
+    },
+    "gaps": {
+      "layer": 50,
+      "item": 16
+    }
+  },
+  "audit.probe": {
+    "advice": [],
+    "metrics": {
+      "fontSizes": [
+        12
+      ],
+      "fillColors": 1,
+      "edges": 2,
+      "fanOutSources": 0
+    }
+  },
+  "catalog.keys": [
+    "byName",
+    "categoryColors",
+    "groups",
+    "icons",
+    "meta",
+    "validNames"
+  ],
+  "diagram.probe": {
+    "sha256": "bbf85a4bbf4ec587d8dcc53e2099a6d84a889cf231f5fc9d6f37be31c59075eb",
+    "bytes": 3179,
+    "ok": true,
+    "errors": [],
+    "warnings": []
+  },
+  "exports": [
+    "BPMN:object",
+    "CATALOG_INDEX:string",
+    "DEFAULT_CATALOG:string",
+    "DIAGRAM_TYPES:object",
+    "Diagram:function",
+    "THEME:object",
+    "_loadedPacks:function",
+    "auditAesthetics:function",
+    "auditArchitecture:function",
+    "auditAwsConventions:function",
+    "auditBpmn:function",
+    "auditEdgeLabels:function",
+    "auditEdges:function",
+    "auditGeometry:function",
+    "band:function",
+    "box:function",
+    "buildCatalogIndex:function",
+    "businessRuleTask:function",
+    "edgeRounded:function",
+    "end:function",
+    "endpoint:function",
+    "frame:function",
+    "gateway:function",
+    "getIcon:function",
+    "graphFromXml:function",
+    "grid:function",
+    "group:function",
+    "icon:function",
+    "intermediate:function",
+    "listCategories:function",
+    "listTypes:function",
+    "loadCatalog:function",
+    "manualTask:function",
+    "onpremFrame:function",
+    "ossBox:function",
+    "phantom:function",
+    "pool:function",
+    "renderTree:function",
+    "scriptTask:function",
+    "searchIcon:function",
+    "serviceTask:function",
+    "stage:function",
+    "stageFill:function",
+    "stageStroke:function",
+    "start:function",
+    "styleForGroup:function",
+    "styleForIcon:function",
+    "subProcess:function",
+    "subnet:function",
+    "suggestLayout:function",
+    "task:function",
+    "typePreset:function",
+    "userTask:function",
+    "validateDiagram:function"
+  ],
+  "getIcon.group_vpc": {
+    "name": "group_vpc",
+    "fqn": "mxgraph.aws4.group_vpc",
+    "label": "VPC",
+    "category": "Group",
+    "kind": "group",
+    "color": "none",
+    "aliases": [],
+    "style": "sketch=0;outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=12;fontStyle=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_vpc;strokeColor=#879196;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;fontColor=#879196;dashed=0;",
+    "width": 130,
+    "height": 130
+  },
+  "getIcon.missing": null,
+  "getIcon.s3": {
+    "name": "s3",
+    "fqn": "mxgraph.aws4.s3",
+    "label": "Simple Storage Service (S3)",
+    "category": "Storage",
+    "kind": "icon",
+    "color": "#7AA116",
+    "aliases": [],
+    "style": "sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;fillColor=#7AA116;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.s3;",
+    "width": 78,
+    "height": 78
+  },
+  "graph.probe": {
+    "recommended": "network",
+    "family": "nested-topology",
+    "reason": "topology boundaries (VPC/region/subnet/zone/account…)",
+    "signals": {
+      "hubScore": 1,
+      "containmentRatio": 1,
+      "topologyBoundary": true,
+      "feedbackRatio": 0,
+      "nodeCount": 3,
+      "maxIconsPerGroup": 3
+    },
+    "warnings": []
+  },
+  "listCategories": [
+    {
+      "category": "AI / ML",
+      "count": 26
+    },
+    {
+      "category": "AI + Machine Learning",
+      "count": 33
+    },
+    {
+      "category": "Analytics",
+      "count": 17
+    },
+    {
+      "category": "App Services",
+      "count": 7
+    },
+    {
+      "category": "Application Integration",
+      "count": 1
+    },
+    {
+      "category": "Azure Ecosystem",
+      "count": 3
+    },
+    {
+      "category": "Azure Stack",
+      "count": 7
+    },
+    {
+      "category": "Big Data",
+      "count": 54
+    },
+    {
+      "category": "Blockchain",
+      "count": 6
+    },
+    {
+      "category": "BPMN",
+      "count": 19
+    },
+    {
+      "category": "CI/CD",
+      "count": 42
+    },
+    {
+      "category": "Compute",
+      "count": 217
+    },
+    {
+      "category": "Containers",
+      "count": 2
+    },
+    {
+      "category": "Containers & Kubernetes",
+      "count": 26
+    },
+    {
+      "category": "Database",
+      "count": 139
+    },
+    {
+      "category": "Databases",
+      "count": 23
+    },
+    {
+      "category": "Databricks",
+      "count": 49
+    },
+    {
+      "category": "DevOps",
+      "count": 14
+    },
+    {
+      "category": "General",
+      "count": 319
+    },
+    {
+      "category": "Google Cloud",
+      "count": 216
+    },
+    {
+      "category": "Group",
+      "count": 19
+    },
+    {
+      "category": "Hybrid + Multicloud",
+      "count": 6
+    },
+    {
+      "category": "Identity",
+      "count": 32
+    },
+    {
+      "category": "Identity & Access",
+      "count": 1
+    },
+    {
+      "category": "Integration",
+      "count": 23
+    },
+    {
+      "category": "Intune",
+      "count": 17
+    },
+    {
+      "category": "IoT",
+      "count": 17
+    },
+    {
+      "category": "Management",
+      "count": 84
+    },
+    {
+      "category": "Management + Governance",
+      "count": 31
+    },
+    {
+      "category": "Menu",
+      "count": 1
+    },
+    {
+      "category": "Migrate",
+      "count": 2
+    },
+    {
+      "category": "Migration/ML",
+      "count": 95
+    },
+    {
+      "category": "Mixed Reality",
+      "count": 2
+    },
+    {
+      "category": "Monitor",
+      "count": 3
+    },
+    {
+      "category": "Network & Gateway",
+      "count": 15
+    },
+    {
+      "category": "Networking",
+      "count": 48
+    },
+    {
+      "category": "Networking/Analytics",
+      "count": 108
+    },
+    {
+      "category": "New Icons",
+      "count": 38
+    },
+    {
+      "category": "Observability",
+      "count": 26
+    },
+    {
+      "category": "Other",
+      "count": 129
+    },
+    {
+      "category": "Security",
+      "count": 89
+    },
+    {
+      "category": "Storage",
+      "count": 156
+    },
+    {
+      "category": "Web",
+      "count": 6
+    }
+  ],
+  "listTypes": [
+    {
+      "key": "pipeline",
+      "label": "Layered pipeline (data / request flow)",
+      "orientation": "LR",
+      "edgeCorner": "rounded",
+      "laneStrategy": "corridor",
+      "grouping": "columns-by-tier",
+      "notes": "Spine on the same row → straight horizontal edges; offset edges use 2 waypoints through the middle of the gap."
+    },
+    {
+      "key": "hierarchy",
+      "label": "Hierarchy / org tree (Landing Zone, org structure)",
+      "orientation": "TB",
+      "edgeCorner": "sharp",
+      "laneStrategy": "shared-bus",
+      "grouping": "nested-ou",
+      "notes": "Fan from one parent through a shared lane right below the parent → looks like a branching bus."
+    },
+    {
+      "key": "network",
+      "label": "VPC network topology (Multi-AZ)",
+      "orientation": "LR",
+      "edgeCorner": "rounded",
+      "laneStrategy": "corridor",
+      "grouping": "nested-region-az-subnet",
+      "mirrorAZ": true,
+      "notes": "STANDARD VPC LAYOUT: each Availability Zone is a VERTICAL COLUMN, the AZs sit side by side, and the VPC is the horizontal box that wraps them (Region → VPC → AZ columns → subnets). Inside an AZ, subnets are tiers stacked top→bottom (e.g. Public, then Private/App, then Data); keep the SAME tier aligned horizontally across AZs (public-a level with public-b). A shared LB/NAT/bus spans HORIZONTALLY across the AZ columns; replication/DR between mirrored AZs uses dashed edges."
+    },
+    {
+      "key": "hubspoke",
+      "label": "Hub-and-spoke / event bus",
+      "orientation": "radial",
+      "edgeCorner": "rounded",
+      "laneStrategy": "hub-center",
+      "grouping": "center-hub",
+      "notes": "Place the hub (bus/TGW/EventBridge) at the middle of the row; spokes connect horizontally on both sides (exitX=1 / exitX=0) → no crossing."
+    },
+    {
+      "key": "hybrid",
+      "label": "Hybrid / DR (on-prem ↔ cloud)",
+      "orientation": "LR",
+      "edgeCorner": "rounded",
+      "laneStrategy": "site-link",
+      "grouping": "two-sites",
+      "notes": "Two sites as separate blocks; connect via a Direct Connect/VPN node; mirror the components on both sides; bidirectional link uses dashed edges."
+    },
+    {
+      "key": "mesh",
+      "label": "Multi-account connectivity / service mesh (VPC Lattice · TGW · peering · RAM)",
+      "orientation": "free",
+      "edgeCorner": "rounded",
+      "laneStrategy": "association",
+      "grouping": "peer-accounts",
+      "notes": "Accounts are peer containers; one shared/network account at the center, the other accounts 'associate' to it (service network / TGW / RAM share). Association/sharing edges are clearly labeled; prefer hub-and-spoke through the shared account over a many-to-many mesh (Well-Architected REL02-BP04)."
+    },
+    {
+      "key": "sequence",
+      "label": "Sequence / interaction (numbered request walkthrough)",
+      "orientation": "steps",
+      "edgeCorner": "rounded",
+      "laneStrategy": "numbered-steps",
+      "grouping": "components",
+      "notes": "Number the steps along the request flow (1→N) on the architecture diagram; each arrow carries a sequence number; read by number, edges need not all point the same way."
+    },
+    {
+      "key": "bpmn",
+      "label": "BPMN swimlane process (roles × phases)",
+      "orientation": "LR",
+      "edgeCorner": "rounded",
+      "laneStrategy": "swimlane",
+      "grouping": "pool-lane-phase",
+      "notes": "Horizontal swimlanes: lanes = roles stacked vertically, phases = vertical milestone bands with a header row. Sequence flow stays within a pool (solid); message flow connects pools (dashed). One start event top-left, end events on the right; gateways where paths split/merge."
+    }
+  ],
+  "paths": {
+    "CATALOG_INDEX": "<ROOT>/data/catalog-index.json",
+    "DEFAULT_CATALOG": "<ROOT>/catalog/aws.json"
+  }
+}

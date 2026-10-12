@@ -2,8 +2,7 @@
 // Layout engine: NO hardcoded coords. Static path (S3+CloudFront) and dynamic path (API GW→Lambda→DynamoDB).
 // Numbered step badges (opts.step) mark the request flow — the AWS reference-diagram convention.
 import { writeFileSync } from "node:fs";
-import { Diagram } from "../../src/builder.mjs";
-import { frame, icon, box, phantom, renderTree } from "../../src/layout-engine.mjs";
+import { Diagram, frame, icon, box, phantom, renderTree } from "drawio-ai-kit";
 
 const d = new Diagram("sequence");
 

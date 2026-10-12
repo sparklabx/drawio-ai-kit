@@ -3,8 +3,7 @@
 // each functional box packs its services into a GRID (not a sprawling row) so the layout stays compact
 // and hugs its content. Layout engine: NO hardcoded coords. Run: node examples/databricks/build_data_platform.mjs
 import { writeFileSync } from "node:fs";
-import { frame, grid, icon, box, phantom, renderTree } from "../../src/layout-engine.mjs";
-import { Diagram } from "../../src/builder.mjs";
+import { frame, grid, icon, box, phantom, renderTree, Diagram } from "drawio-ai-kit";
 
 const d = new Diagram("hierarchy");
 const GREEN = { fill: "#E9F3DE", stroke: "#7AC143" };

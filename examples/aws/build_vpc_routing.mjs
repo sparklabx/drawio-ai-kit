@@ -1,8 +1,7 @@
 // VPC subnet & routing detail — type "network". Layout engine: NO hardcoded coords.
 // Public/Private subnets across 2 AZ, IGW + NAT, route tables, and a VPC Endpoint (Gateway) to S3.
 import { writeFileSync } from "node:fs";
-import { Diagram } from "../../src/builder.mjs";
-import { group, frame, icon, box, phantom, renderTree } from "../../src/layout-engine.mjs";
+import { Diagram, group, frame, icon, box, phantom, renderTree } from "drawio-ai-kit";
 
 const d = new Diagram("network");
 const rt = (id, title, rows) => box(id, `${title}\n${rows}`, { w: 210, h: 70, fill: "#FFFFFF", stroke: "#5A6B7B", va: "top", fs: 10 });
